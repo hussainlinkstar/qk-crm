@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Button from "./Button";
 import StatsCard from "./StatsCard";
 import LeadDetail from "./LeadDetail";
+import LeadUser from "./LeadUser";
+import ConfirmDialog from "./ConfirmDialog";
 
 const actions = [
   { id: 1, title: "Review 5 new Signal leads", detail: "5 registrations need follow-up", owner: "Ed", due: "Today", priority: "High", status: "Pending" },
@@ -13,11 +15,44 @@ const actions = [
 ];
 
 const initialLeads = [
-  { id: 1, name: "Amelia Hart", email: "amelia@northstar.com", company: "Northstar Retail", source: "Qiko Signal", activity: "Completed a free scan", time: "32 min ago", status: "Qualified", owner: "Ed", score: 92 },
-  { id: 2, name: "Marcus Chen", email: "marcus@fieldhouse.io", company: "Fieldhouse", source: "Website", activity: "Submitted an enquiry", time: "2 hours ago", status: "New", owner: "Ed", score: 78 },
-  { id: 3, name: "Priya Shah", email: "priya@atlaslabs.ai", company: "Atlas Labs", source: "Qiko Signal", activity: "Created an account", time: "Yesterday", status: "Contacted", owner: "Ed", score: 68 },
-  { id: 4, name: "Liam O'Connor", email: "liam@harbour.co", company: "Harbour & Co", source: "Free audit", activity: "Downloaded a scan report", time: "Yesterday", status: "Qualified", owner: "Ed", score: 84 },
+  { id: 1, name: "Amelia Hart", email: "amelia@northstar.com", company: "Northstar Retail", source: "Qiko Signal", activity: "Completed a free scan", time: "32 min ago", status: "Qualified", owner: "Ed Walker", score: 92 },
+  { id: 2, name: "Marcus Chen", email: "marcus@fieldhouse.io", company: "Fieldhouse", source: "Website", activity: "Submitted an enquiry", time: "2 hours ago", status: "New", owner: "Ed Walker", score: 78 },
+  { id: 3, name: "Priya Shah", email: "priya@atlaslabs.ai", company: "Atlas Labs", source: "Qiko Signal", activity: "Created an account", time: "Yesterday", status: "Contacted", owner: "Ed Walker", score: 68 },
+  { id: 4, name: "Liam O'Connor", email: "liam@harbour.co", company: "Harbour & Co", source: "Free audit", activity: "Downloaded a scan report", time: "Yesterday", status: "Qualified", owner: "Ed Walker", score: 84 },
 ];
+const leadStatuses = ["New", "Contacted", "Qualified", "Won", "Lost"];
+const demoOwners = [
+  { name: "Ed Walker", email: "ed.walker@qiko.ai" },
+  { name: "Sarah Ahmed", email: "sarah.ahmed@qiko.ai" },
+  { name: "Ali Khan", email: "ali.khan@qiko.ai" },
+  { name: "Maya Patel", email: "maya.patel@qiko.ai" },
+];
+type LeadMessage = { id: number; channel: "email" | "whatsapp"; recipient: string; sender: string; direction: "sent" | "received"; subject?: string; body: string; sentAt: string };
+type LeadFieldChange = { leadId: number; field: "status" | "owner"; previousValue: string; nextValue: string };
+type NewTaskDetails = { title: string; detail: string; owner: string; due: string; priority: string };
+const initialLeadMessages: Record<number, LeadMessage[]> = {
+  1: [
+    { id: 1, channel: "email", recipient: "amelia@northstar.com", sender: "Ed Walker", direction: "sent", subject: "Following up on your Qiko Signal scan", body: "Hi Amelia, thanks for completing the scan. I would be happy to walk you through the findings and discuss next steps for Northstar Retail.", sentAt: "Oct 29, 2026 · 9:15 AM" },
+    { id: 2, channel: "email", recipient: "ed.walker@qiko.ai", sender: "Amelia Hart", direction: "received", subject: "Re: Following up on your Qiko Signal scan", body: "Thanks, Ed. A short walkthrough next week would be helpful. Tuesday morning works well for me.", sentAt: "Oct 29, 2026 · 10:02 AM" },
+    { id: 3, channel: "whatsapp", recipient: "+1 202 555 0143", sender: "Ed Walker", direction: "sent", body: "Hi Amelia, I sent over a few times for a scan review by email. Let me know which one works for you.", sentAt: "Oct 29, 2026 · 10:18 AM" },
+    { id: 4, channel: "whatsapp", recipient: "+1 202 555 0143", sender: "Amelia Hart", direction: "received", body: "Tuesday at 10 works. Thank you!", sentAt: "Oct 29, 2026 · 10:26 AM" },
+  ],
+  2: [
+    { id: 5, channel: "email", recipient: "marcus@fieldhouse.io", sender: "Ed Walker", direction: "sent", subject: "Thanks for contacting Qiko", body: "Hi Marcus, thanks for getting in touch. Could you share a little more about the workflow you are hoping to improve at Fieldhouse?", sentAt: "Oct 29, 2026 · 8:42 AM" },
+    { id: 6, channel: "email", recipient: "ed.walker@qiko.ai", sender: "Marcus Chen", direction: "received", subject: "Re: Thanks for contacting Qiko", body: "We are looking at ways to make our weekly reporting more efficient. Happy to explain on a quick call.", sentAt: "Oct 29, 2026 · 9:03 AM" },
+    { id: 7, channel: "whatsapp", recipient: "+1 202 555 0176", sender: "Ed Walker", direction: "sent", body: "Hi Marcus, thanks for the enquiry. I have replied by email and would be glad to arrange a quick introductory call.", sentAt: "Oct 29, 2026 · 9:20 AM" },
+  ],
+  3: [
+    { id: 8, channel: "email", recipient: "priya@atlaslabs.ai", sender: "Ed Walker", direction: "sent", subject: "Getting started with Qiko Signal", body: "Hi Priya, welcome to Qiko Signal. I noticed you created an account and wanted to see if you have any questions while getting set up.", sentAt: "Oct 28, 2026 · 2:35 PM" },
+    { id: 9, channel: "email", recipient: "ed.walker@qiko.ai", sender: "Priya Shah", direction: "received", subject: "Re: Getting started with Qiko Signal", body: "Thanks, Ed. I have finished the initial setup and would like to learn about the reporting options.", sentAt: "Oct 28, 2026 · 3:11 PM" },
+    { id: 10, channel: "whatsapp", recipient: "+1 202 555 0194", sender: "Ed Walker", direction: "sent", body: "Hi Priya, happy to show you the reporting features. Would a brief call tomorrow afternoon suit you?", sentAt: "Oct 29, 2026 · 9:30 AM" },
+  ],
+  4: [
+    { id: 11, channel: "email", recipient: "liam@harbour.co", sender: "Ed Walker", direction: "sent", subject: "Your free audit report", body: "Hi Liam, I hope you found the audit report useful. I can arrange a short call to review the recommendations for Harbour & Co.", sentAt: "Oct 28, 2026 · 11:10 AM" },
+    { id: 12, channel: "email", recipient: "ed.walker@qiko.ai", sender: "Liam O'Connor", direction: "received", subject: "Re: Your free audit report", body: "The report was helpful. Please send over a couple of possible times for a review.", sentAt: "Oct 28, 2026 · 12:01 PM" },
+    { id: 13, channel: "whatsapp", recipient: "+1 202 555 0128", sender: "Ed Walker", direction: "sent", body: "Hi Liam, I have sent some options for a report review to your email. Let me know if you would prefer another time.", sentAt: "Oct 28, 2026 · 12:15 PM" },
+  ],
+};
 
 export default function CoreApp({ sales = false }: { sales?: boolean }) {
   const router = useRouter();
@@ -29,6 +64,8 @@ export default function CoreApp({ sales = false }: { sales?: boolean }) {
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [signupName, setSignupName] = useState("");
   const [selectedLead, setSelectedLead] = useState<number | null>(null);
+  const [pendingLeadFieldChange, setPendingLeadFieldChange] = useState<LeadFieldChange | null>(null);
+  const [leadMessages, setLeadMessages] = useState<Record<number, LeadMessage[]>>(initialLeadMessages);
   const [actionStatus, setActionStatus] = useState<Record<number, string>>({});
   const [query, setQuery] = useState("");
   const [leads, setLeads] = useState(initialLeads);
@@ -94,7 +131,7 @@ export default function CoreApp({ sales = false }: { sales?: boolean }) {
       activity: "Lead added manually",
       time: "Just now",
       status: newLead.status,
-      owner: "Ed",
+      owner: "Ed Walker",
       score: 50,
     }, ...current]);
     setNewLead({ name: "", email: "", company: "", source: "Manual entry", status: "New" });
@@ -102,21 +139,47 @@ export default function CoreApp({ sales = false }: { sales?: boolean }) {
     setQuery("");
   }
 
-  function createFollowUpTask() {
+  function updateLead(leadId: number, updates: Partial<(typeof initialLeads)[number]>) {
+    setLeads((current) => current.map((item) => item.id === leadId ? { ...item, ...updates } : item));
+  }
+
+  function requestLeadFieldChange(leadId: number, field: "status" | "owner", previousValue: string, nextValue: string) {
+    if (previousValue !== nextValue) {
+      setPendingLeadFieldChange({ leadId, field, previousValue, nextValue });
+    }
+  }
+
+  function confirmLeadFieldChange() {
+    if (!pendingLeadFieldChange) return;
+    updateLead(pendingLeadFieldChange.leadId, { [pendingLeadFieldChange.field]: pendingLeadFieldChange.nextValue });
+    setPendingLeadFieldChange(null);
+  }
+
+  function cancelLeadFieldChange() {
+    setPendingLeadFieldChange(null);
+  }
+
+  function sendLeadMessage(leadId: number, message: Omit<LeadMessage, "id" | "sentAt" | "sender" | "direction">) {
+    setLeadMessages((current) => ({
+      ...current,
+      [leadId]: [
+        ...(current[leadId] ?? []),
+        { ...message, id: Date.now(), sender: "Ed Walker", direction: "sent", sentAt: new Date().toLocaleString() },
+      ],
+    }));
+  }
+
+  function createFollowUpTask(task: NewTaskDetails) {
     if (!lead) return;
     const taskId = Math.max(...tasks.map((item) => item.id), 0) + 1;
     setTasks((current) => [{
       id: taskId,
-      title: `Follow up with ${lead.name}`,
-      detail: `${lead.company} · ${lead.email}`,
-      owner: "Ed",
-      due: "Today",
-      priority: "High",
-      status: "In progress",
+      ...task,
+      detail: task.detail || `${lead.company} · ${lead.email}`,
+      status: "Pending",
     }, ...current]);
     setActionStatus((current) => ({ ...current, [lead.id]: "Task created" }));
-    setTaskToast(`Follow-up task created for ${lead.name}`);
-    setSelectedLead(null);
+    setTaskToast(`Task created for ${lead.name}`);
     window.setTimeout(() => setTaskToast(""), 3200);
   }
 
@@ -146,7 +209,7 @@ export default function CoreApp({ sales = false }: { sales?: boolean }) {
       </aside>
 
       <main className="workspace">
-        <header className="topbar"><div className="mobile-brand">Qiko Core</div><label className="global-search"><span>⌕</span><input aria-label="Search Qiko Core" placeholder="Search anything" /><kbd>⌘ K</kbd></label><button className="help-button" aria-label="Help">?</button><button className="notification-button" aria-label="Notifications"><span>♢</span><i /></button><button className="top-avatar" aria-label="Ed Walker profile">E</button></header>
+        <header className="topbar"><div className="mobile-brand">Qiko Core</div><button className="help-button" aria-label="Help">?</button><button className="notification-button" aria-label="Notifications"><span>♢</span><i /></button><button className="top-avatar" aria-label="Ed Walker profile">E</button></header>
         {!sales ? (
           <div className="content home-content">
             {taskToast && <div className="task-toast" role="status"><span>✓</span>{taskToast}</div>}
@@ -170,12 +233,21 @@ export default function CoreApp({ sales = false }: { sales?: boolean }) {
             {showAddLead && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowAddLead(false); }}><form className="add-lead-modal" onSubmit={addLead}><div className="modal-heading"><div><span className="eyebrow">NEW CRM RECORD</span><h2>Add lead</h2></div><button type="button" className="close-panel modal-close" onClick={() => setShowAddLead(false)}>×</button></div><label>Full name<input required value={newLead.name} onChange={(event) => setNewLead({ ...newLead, name: event.target.value })} placeholder="e.g. Alex Morgan" /></label><label>Email address<input required type="email" value={newLead.email} onChange={(event) => setNewLead({ ...newLead, email: event.target.value })} placeholder="alex@company.com" /></label><label>Company<input value={newLead.company} onChange={(event) => setNewLead({ ...newLead, company: event.target.value })} placeholder="Company name" /></label><div className="form-row"><label>Source<select value={newLead.source} onChange={(event) => setNewLead({ ...newLead, source: event.target.value })}><option>Manual entry</option><option>Qiko Signal</option><option>Website</option><option>Free audit</option></select></label><label>Status<select value={newLead.status} onChange={(event) => setNewLead({ ...newLead, status: event.target.value })}><option>New</option><option>Contacted</option><option>Qualified</option><option>Won</option><option>Lost</option></select></label></div><div className="modal-actions"><Button variant="secondary" onClick={() => setShowAddLead(false)}>Cancel</Button><Button type="submit">Add lead</Button></div></form></div>}
             <section className="analytics-grid"><article className="chart-card"><div className="chart-heading"><div><span className="eyebrow">30 DAY TREND</span><h2>Lead activity</h2></div><div className="chart-total"><strong>148</strong><span>+12.4%</span></div></div><div className="line-chart" aria-label="Lead activity trend"><svg viewBox="0 0 600 180" role="img"><defs><linearGradient id="activityFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7657e8" stopOpacity=".22"/><stop offset="100%" stopColor="#7657e8" stopOpacity="0"/></linearGradient></defs><g className="chart-grid"><line x1="0" y1="150" x2="600" y2="150"/><line x1="0" y1="105" x2="600" y2="105"/><line x1="0" y1="60" x2="600" y2="60"/><line x1="0" y1="15" x2="600" y2="15"/></g><path className="chart-area" d="M0 145 C45 138 62 120 100 124 S158 108 200 112 S260 78 300 88 S350 58 400 66 S455 43 500 50 S558 22 600 28 L600 150 L0 150 Z"/><path className="chart-line" d="M0 145 C45 138 62 120 100 124 S158 108 200 112 S260 78 300 88 S350 58 400 66 S455 43 500 50 S558 22 600 28"/><circle cx="600" cy="28" r="5"/></svg><div className="chart-axis"><span>Oct 1</span><span>Oct 8</span><span>Oct 15</span><span>Oct 22</span><span>Oct 29</span></div></div></article><article className="chart-card source-card"><div className="chart-heading"><div><span className="eyebrow">BY SOURCE</span><h2>Lead sources</h2></div><span className="chart-period">This month</span></div><div className="source-chart"><div className="donut-chart"><div><strong>148</strong><span>Total leads</span></div></div><div className="source-list"><div><i className="signal"/><span>Qiko Signal</span><strong>76</strong></div><div><i className="website"/><span>Website</span><strong>34</strong></div><div><i className="audit"/><span>Free audit</span><strong>23</strong></div><div><i className="manual"/><span>Manual</span><strong>15</strong></div></div></div></article></section>
             <section className="metrics"><StatsCard label="Total leads" value="148" change="+12 this week" /><StatsCard label="Signal sign-ups" value="76" change="+9 this week" /><StatsCard label="Free scans" value="34" change="+6 this week" /><StatsCard label="Follow-ups due" value="15" change="5 high priority" urgent /></section>
-            <section className="leads-panel"><div className="leads-toolbar"><div><span className="eyebrow">UNIFIED CRM</span><h2>Leads</h2></div><div className="tools"><div className="search"><span>⌕</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search leads" /></div><button className="filter-button">≡ Filter</button></div></div><div className="table-wrap"><table><thead><tr><th>Lead</th><th>Company</th><th>Source</th><th>Last activity</th><th>Status</th><th>Owner</th><th /></tr></thead><tbody>{visibleLeads.map((item) => <tr key={item.id} onClick={() => setSelectedLead(item.id)}><td><div className="person"><span className="lead-avatar">{item.name.split(" ").map((n) => n[0]).join("")}</span><span><strong>{item.name}</strong><small>{item.email}</small></span></div></td><td>{item.company}</td><td>{item.source}</td><td><strong>{item.activity}</strong><small>{item.time}</small></td><td><span className={`status ${item.status.toLowerCase()}`}>{item.status}</span></td><td><span className="owner">E</span></td><td><Button size="small" variant="secondary" aria-label={`Open ${item.name}`} onClick={(event) => { event.stopPropagation(); setSelectedLead(item.id); }}>View</Button></td></tr>)}</tbody></table></div></section>
-            {lead && <LeadDetail lead={lead} taskCreated={actionStatus[lead.id] === "Task created"} onClose={() => setSelectedLead(null)} onCreateTask={createFollowUpTask} />}
+            <section className="leads-panel"><div className="leads-toolbar"><div><span className="eyebrow">UNIFIED CRM</span><h2>Leads</h2></div><div className="tools"><div className="search"><span>⌕</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search leads" /></div><button className="filter-button">≡ Filter</button></div></div><div className="table-wrap"><table><thead><tr><th>Lead</th><th>Company</th><th>Source</th><th>Last activity</th><th>Status</th><th>Owner</th><th /></tr></thead><tbody>{visibleLeads.map((item) => {
+              const owner = demoOwners.find((candidate) => candidate.name === item.owner) ?? demoOwners[0];
+              return <tr key={item.id} onClick={() => setSelectedLead(item.id)}><td><LeadUser name={item.name} email={item.email} /></td><td>{item.company}</td><td>{item.source}</td><td><strong>{item.activity}</strong><small>{item.time}</small></td><td onClick={(event) => event.stopPropagation()}><select className={`status status-select ${item.status.toLowerCase()}`} aria-label={`Change status for ${item.name}`} value={item.status} onChange={(event) => requestLeadFieldChange(item.id, "status", item.status, event.target.value)}>{leadStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></td><td><LeadUser name={owner.name} email={owner.email} options={demoOwners} onSelect={(nextOwner) => requestLeadFieldChange(item.id, "owner", item.owner, nextOwner.name)} /></td><td><Button size="small" variant="secondary" aria-label={`Open ${item.name}`} onClick={(event) => { event.stopPropagation(); setSelectedLead(item.id); }}>View</Button></td></tr>;
+            })}</tbody></table></div></section>
+            {lead && <LeadDetail lead={lead} taskCreated={actionStatus[lead.id] === "Task created"} messages={leadMessages[lead.id] ?? []} onSendMessage={(message) => sendLeadMessage(lead.id, message)} onClose={() => setSelectedLead(null)} onCreateTask={createFollowUpTask} />}
+            {pendingLeadFieldChange && <ConfirmDialog
+              title={`Update lead ${pendingLeadFieldChange.field}?`}
+              description={<>Change {pendingLeadFieldChange.field} from <strong>{pendingLeadFieldChange.previousValue}</strong> to <strong>{pendingLeadFieldChange.nextValue}</strong>?</>}
+              confirmLabel="Yes, confirm"
+              onConfirm={confirmLeadFieldChange}
+              onCancel={cancelLeadFieldChange}
+            />}
           </div>
         )}
       </main>
     </div>
   );
 }
-

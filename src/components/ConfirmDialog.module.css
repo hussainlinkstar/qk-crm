@@ -1,0 +1,52 @@
+.backdrop {
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(24, 21, 31, .56);
+  backdrop-filter: blur(3px);
+}
+
+.dialog {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  padding: 24px;
+  border: 1px solid #e8eaee;
+  border-radius: 14px;
+  background: #fff;
+  color: #101828;
+  box-shadow: 0 18px 44px rgba(12, 15, 22, .16);
+}
+
+.eyebrow {
+  color: #96929d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.dialog h2 {
+  margin: 8px 0;
+  font-size: 19px;
+}
+
+.dialog p {
+  margin: 0;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.dialog p strong {
+  color: #344054;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}

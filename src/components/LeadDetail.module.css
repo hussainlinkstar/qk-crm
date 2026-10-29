@@ -24,11 +24,15 @@
 .timelineHeader { height: 52px; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid #e8eaee; }
 .timelineHeader span { color: #98a2b3; font-size: 10px; letter-spacing: 1px; }
 .timelineHeader h2 { margin: 3px 0 0; font-size: 20px; }
-.centerTabs { height: 46px; display: flex; align-items: flex-end; gap: 24px; border-bottom: 1px solid #e8eaee; }
+.centerTabs { min-height: 46px; display: flex; align-items: flex-end; gap: 18px; border-bottom: 1px solid #e8eaee; overflow-x: auto; }
 .centerTabs button { height: 46px; padding: 0 2px; border: 0; border-bottom: 2px solid transparent; background: none; color: #667085; font-size: 13px; }
 .centerTabs button.active { border-bottom-color: #2563eb; color: #111827; font-weight: 600; }
 .centerTabs button span,.notesPanel .sectionTitle span { min-width: 18px; height: 18px; display: inline-grid; place-items: center; margin-left: 4px; border-radius: 9px; background: #eef2ff; color: #2563eb; font-size: 10px; }
 .sectionTitle { margin: 22px 0 12px; font-size: 16px; font-weight: 700; }
+.notesPanel { display: flex; flex-direction: column; gap: 14px; }
+.notesHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.notesHeader .sectionTitle { margin-bottom: 0; }
+.notesList { display: flex; flex-direction: column; gap: 10px; }
 .noteCard { padding: 16px; border: 1px solid #e8eaee; border-radius: 10px; background: #fff; }
 .noteCard strong { font-size: 13px; }
 .noteCard p { margin: 8px 0; color: #667085; font-size: 12px; line-height: 1.55; }
@@ -62,7 +66,45 @@
 .dealCard div { display: flex; justify-content: space-between; margin-top: 12px; }
 .dealCard b,.dealCard em { font-size: 10px; font-style: normal; }
 .taskCard span { width: fit-content; margin-bottom: 8px; padding: 3px 6px; border-radius: 999px; background: #fff7ed; color: #c4320a; font-size: 9px; }
+.messagesPanel { display: flex; flex-direction: column; min-height: calc(100% - 98px); }
+.messagePanelHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.messagePanelHeader .sectionTitle { margin-bottom: 12px; }
+.demoNotice { margin: 0 0 12px; color: #667085; font-size: 11px; }
+.messageList { display: flex; flex-direction: column; gap: 10px; }
+.emptyMessages { margin: 0; padding: 16px; border: 1px dashed #d0d5dd; border-radius: 9px; color: #667085; font-size: 12px; text-align: center; }
+.sentMessage { padding: 13px; border: 1px solid #eef0f3; border-radius: 10px; background: #fff; }
+.sentMessage > div { display: flex; justify-content: space-between; gap: 12px; }
+.sentMessage strong { color: #344054; font-size: 12px; }
+.sentMessage time,.sentMessage small { color: #98a2b3; font-size: 10px; }
+.sentMessage p { margin: 9px 0; color: #344054; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.composeWindow { position: fixed; right: 320px; bottom: 18px; z-index: 130; display: flex; width: min(440px, calc(100vw - 32px)); max-height: min(620px, calc(100vh - 36px)); flex-direction: column; overflow: auto; border: 1px solid #d0d5dd; border-radius: 12px; background: #fff; box-shadow: 0 16px 48px rgba(16, 24, 40, .24); }
+.composeWindowMinimized { width: min(340px, calc(100vw - 32px)); max-height: 44px; overflow: hidden; }
+.composeWindowMaximized { inset: 20px; width: auto; max-height: none; }
+.composeHeader { position: sticky; top: 0; display: flex; min-height: 42px; align-items: center; justify-content: space-between; padding: 0 14px; border-bottom: 1px solid #e8eaee; background: #f9fafb; color: #344054; font-size: 12px; }
+.composeControls { display: flex; align-items: center; gap: 2px; }
+.composeHeader button { width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #667085; font-size: 17px; cursor: pointer; }
+.composeHeader button:hover { background: #eaecf0; }
+.composeForm { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
+.composeForm label { display: flex; flex-direction: column; gap: 5px; color: #475467; font-size: 11px; font-weight: 600; }
+.composeForm input,.composeForm textarea { width: 100%; padding: 9px 10px; border: 1px solid #d0d5dd; border-radius: 7px; background: #fff; color: #344054; font: inherit; font-size: 12px; }
+.composeForm textarea { resize: vertical; }
+.composeForm input:focus,.composeForm textarea:focus { outline: 2px solid #c7d7fe; border-color: #84adff; }
+.composeForm input[readonly] { background: #f9fafb; }
+.composeActions { display: flex; justify-content: flex-end; padding-top: 2px; }
+.taskForm { display: flex; flex-direction: column; gap: 13px; margin-top: 20px; padding: 18px; border: 1px solid #e8eaee; border-radius: 12px; background: #fcfcfd; }
+.taskFormHeading { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid #e8eaee; }
+.taskFormHeading span { color: #98a2b3; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.taskFormHeading h3 { margin: 4px 0 0; color: #101828; font-size: 16px; }
+.taskFormHeading button { width: 28px; height: 28px; border: 1px solid #e8eaee; border-radius: 7px; background: #fff; color: #667085; font-size: 18px; }
+.taskForm label { display: flex; min-width: 0; flex-direction: column; gap: 6px; color: #475467; font-size: 11px; font-weight: 600; }
+.taskForm input,.taskForm textarea,.taskForm select { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid #d0d5dd; border-radius: 7px; background: #fff; color: #344054; font: inherit; font-size: 12px; }
+.taskForm textarea { resize: vertical; }
+.taskForm input:focus,.taskForm textarea:focus,.taskForm select:focus { outline: 2px solid #c7d7fe; border-color: #84adff; }
+.taskFormRow { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.taskFormActions { display: flex; justify-content: flex-end; gap: 9px; padding-top: 4px; }
 
 @media (max-width: 1100px) { .overlay { grid-template-columns: 230px 1fr 250px; } }
 @media (max-width: 900px) { .overlay { grid-template-columns: 220px 1fr; }.sidePanel { display:none; } }
 @media (max-width: 680px) { .overlay { grid-template-columns:1fr;overflow-y:auto; }.profile { border-right:0; }.timeline { overflow:visible; }.sidePanel { display:none; } }
+@media (max-width: 900px) { .composeWindow { right: 16px; } }
+@media (max-width: 900px) { .composeWindowMaximized { inset: 12px; width: auto; } }
