@@ -7,6 +7,26 @@ type DetailTab = "upcoming" | "history" | "email" | "whatsapp" | "notes";
 type NewTaskDetails = { title: string; detail: string; owner: string; due: string; priority: string };
 type NoteItem = { id: number; title: string; content: string; createdAt: string };
 
+function EmailIcon() {
+  return <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4" width="15" height="12" rx="2" /><path d="m3.5 5.5 6.5 5 6.5-5" /></svg>;
+}
+
+function WhatsAppIcon() {
+  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.8 9.6a6.8 6.8 0 0 1-10 6L3 17l1.3-3.5a6.8 6.8 0 1 1 12.5-3.9Z" /><path d="M7.2 6.8c.2-.4.4-.4.7-.4h.4c.2 0 .3.1.4.4l.6 1.4c.1.2.1.4-.1.6l-.5.6c-.2.2-.1.4 0 .6.5.8 1.1 1.4 1.9 1.8.2.1.4.1.6-.1l.7-.8c.2-.2.4-.2.6-.1l1.3.6c.2.1.3.3.3.5 0 .4-.2 1-.6 1.3-.4.4-1 .6-1.6.5-1-.1-2.2-.7-3.5-1.8-1.1-1-1.9-2.3-2.1-3.2-.2-.7 0-1.4.4-1.9Z" /></svg>;
+}
+
+function UpcomingIcon() {
+  return <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4.5" width="14" height="12" rx="2" /><path d="M6.5 3v3M13.5 3v3M3 8h14M6.5 11h2M6.5 14h2" /></svg>;
+}
+
+function HistoryIcon() {
+  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.2 7A6.5 6.5 0 1 1 3.5 11" /><path d="M3 4.5V8h3.5M10 6.5V10l2.5 1.5" /></svg>;
+}
+
+function NotesIcon() {
+  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2.8h7l3 3v11.4H5z" /><path d="M12 2.8v3.4h3M7.5 10h5M7.5 13h5" /></svg>;
+}
+
 interface LeadDetailProps {
   lead: { id: number; name: string; email: string; company: string; source: string; activity: string; time: string; status: string; owner: string; score: number };
   taskCreated: boolean;
@@ -109,13 +129,13 @@ export default function LeadDetail({ lead, taskCreated, messages, onSendMessage,
       </aside>
 
       <main className={styles.timeline}>
-        <div className={styles.timelineHeader}><div><span>WORKFLOW</span><h2>Activity</h2></div><Button variant="secondary" onClick={() => setShowTaskForm(true)}>+ Create task</Button></div>
+        <div className={styles.timelineHeader}><div><span>WORKFLOW</span><h2>Activity</h2></div><Button variant="primary" onClick={() => setShowTaskForm(true)}>+ Create task</Button></div>
         <nav className={styles.centerTabs} aria-label="Lead activity sections">
-          <button type="button" className={centerTab === "upcoming" ? styles.active : ""} onClick={() => setCenterTab("upcoming")}>Upcoming</button>
-          <button type="button" className={centerTab === "history" ? styles.active : ""} onClick={() => setCenterTab("history")}>History</button>
-          <button type="button" className={centerTab === "email" ? styles.active : ""} onClick={() => setCenterTab("email")}>Email</button>
-          <button type="button" className={centerTab === "whatsapp" ? styles.active : ""} onClick={() => setCenterTab("whatsapp")}>WhatsApp</button>
-          <button type="button" className={centerTab === "notes" ? styles.active : ""} onClick={() => setCenterTab("notes")}>Notes <span>{notes.length}</span></button>
+          <button type="button" className={centerTab === "upcoming" ? styles.active : ""} onClick={() => setCenterTab("upcoming")}><UpcomingIcon />Upcoming</button>
+          <button type="button" className={centerTab === "history" ? styles.active : ""} onClick={() => setCenterTab("history")}><HistoryIcon />History</button>
+          <button type="button" className={centerTab === "email" ? styles.active : ""} onClick={() => setCenterTab("email")}><EmailIcon />Email</button>
+          <button type="button" className={centerTab === "whatsapp" ? styles.active : ""} onClick={() => setCenterTab("whatsapp")}><WhatsAppIcon />WhatsApp</button>
+          <button type="button" className={centerTab === "notes" ? styles.active : ""} onClick={() => setCenterTab("notes")}><NotesIcon />Notes <span>{notes.length}</span></button>
         </nav>
         {showTaskForm && <form className={styles.taskForm} onSubmit={submitTask}>
           <div className={styles.taskFormHeading}><div><span>NEW TASK</span><h3>Create task for {lead.name}</h3></div><button type="button" aria-label="Close task form" onClick={() => setShowTaskForm(false)}>×</button></div>
@@ -126,7 +146,7 @@ export default function LeadDetail({ lead, taskCreated, messages, onSendMessage,
             <label>Priority<select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value)}><option>Low</option><option>Medium</option><option>High</option></select></label>
           </div>
           <label>Due date<input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} required /></label>
-          <div className={styles.taskFormActions}><Button type="button" variant="secondary" onClick={() => setShowTaskForm(false)}>Cancel</Button><Button type="submit">Create task</Button></div>
+          <div className={styles.taskFormActions}><Button type="button" variant="secondary" onClick={() => setShowTaskForm(false)}>Cancel</Button><Button type="submit" variant="primary">Create task</Button></div>
         </form>}
         {!showTaskForm && <>
         {centerTab === "upcoming" && <>
@@ -134,19 +154,19 @@ export default function LeadDetail({ lead, taskCreated, messages, onSendMessage,
           <article className={styles.activityCard}>
             <div className={styles.activityIcon}>☎</div>
             <div className={styles.activityBody}><strong>Pre-demo Qualification</strong><p>Activity created by Jane Cooper</p></div>
-            <div className={styles.activityMeta}><span>Due: <b>Today</b></span><time>9:30 AM</time><button type="button" aria-label="More options">•••</button></div>
+            <div className={styles.activityMeta}><span>Due: <b>Today</b></span><time>9:30 AM</time></div>
             <p className={styles.activityDescription}>Reach out to potential clients via email, phone, or other communication channels. Introduce the product, understand their needs, and briefly explain the benefits.</p>
           </article>
           <article className={styles.activityCard}>
             <div className={styles.calendarIcon}>▣</div>
             <div className={styles.activityBody}><strong>Calendar: Intro meeting with {lead.name}</strong><p>Activity created by Jane Cooper</p></div>
-            <div className={styles.activityMeta}><span>Due: <b>Today</b></span><time>10:30 AM</time><button type="button" aria-label="More options">•••</button></div>
+            <div className={styles.activityMeta}><span>Due: <b>Today</b></span><time>10:30 AM</time></div>
             <p className={styles.activityDescription}>Hi {lead.name.split(" ")[0]}, connect with our team to discuss your requirements.<br /><a href="#zoom-meeting">Zoom meeting link</a></p>
           </article>
           <article className={styles.activityCard}>
             <div className={styles.calendarIcon}>▣</div>
             <div className={styles.activityBody}><strong>Calendar: Product demo for {lead.company}</strong><p>Activity created by Jane Cooper</p></div>
-            <div className={styles.activityMeta}><span>Due: <b>Today</b></span><time>12:00 PM</time><button type="button" aria-label="More options">•••</button></div>
+            <div className={styles.activityMeta}><span>Due: <b>Today</b></span><time>12:00 PM</time></div>
             <p className={styles.activityDescription}>A guided product demo covering {lead.company}&apos;s business goals.<br /><a href="#zoom-meeting">Zoom meeting link</a></p>
           </article>
         </>}
@@ -164,7 +184,7 @@ export default function LeadDetail({ lead, taskCreated, messages, onSendMessage,
         {centerTab === "notes" && <section className={styles.notesPanel}>
           <div className={styles.notesHeader}>
             <div className={styles.sectionTitle}>Notes <span>{notes.length}</span></div>
-            <Button variant="secondary" size="small" onClick={() => openCompose("note")}>Add note</Button>
+            <Button variant="primary" size="small" onClick={() => openCompose("note")}>Add note</Button>
           </div>
           <div className={styles.notesList}>
             {notes.map((note) => <article className={styles.noteCard} key={note.id}><strong>{note.title}</strong><p>{note.content}</p><span>{note.createdAt}</span></article>)}
@@ -173,8 +193,8 @@ export default function LeadDetail({ lead, taskCreated, messages, onSendMessage,
         {(centerTab === "email" || centerTab === "whatsapp") && <section className={styles.messagesPanel}>
           <div className={styles.messagePanelHeader}>
             <div className={styles.sectionTitle}>{centerTab === "email" ? "Email conversation" : "WhatsApp conversation"}</div>
-            <Button variant="secondary" size="small" onClick={() => openCompose(centerTab)}>
-              {centerTab === "email" ? "Compose email" : "New message"}
+            <Button variant="primary" size="small" onClick={() => openCompose(centerTab)}>
+              {centerTab === "email" ? <><EmailIcon />Compose email</> : <><WhatsAppIcon />New message</>}
             </Button>
           </div>
           <p className={styles.demoNotice}>Demo mode: messages are saved in this workspace only and are not delivered.</p>
@@ -202,15 +222,15 @@ export default function LeadDetail({ lead, taskCreated, messages, onSendMessage,
           <label>To<input type="email" value={lead.email} readOnly /></label>
           <label>Subject<input value={emailSubject} onChange={(event) => setEmailSubject(event.target.value)} required /></label>
           <label>Message<textarea value={emailBody} onChange={(event) => setEmailBody(event.target.value)} rows={6} required /></label>
-          <div className={styles.composeActions}><Button type="submit">Send email</Button></div>
+          <div className={styles.composeActions}><Button type="submit" variant="primary"><EmailIcon />Send email</Button></div>
         </form> : composeChannel === "whatsapp" ? <form className={styles.composeForm} onSubmit={sendWhatsApp}>
           <label>WhatsApp number<input type="tel" value={whatsappNumber} onChange={(event) => setWhatsappNumber(event.target.value)} placeholder="+1 555 123 4567" required /></label>
           <label>Message<textarea value={whatsappBody} onChange={(event) => setWhatsappBody(event.target.value)} rows={6} required /></label>
-          <div className={styles.composeActions}><Button type="submit">Send WhatsApp</Button></div>
+          <div className={styles.composeActions}><Button type="submit" variant="primary"><WhatsAppIcon />Send WhatsApp</Button></div>
         </form> : <form className={styles.composeForm} onSubmit={submitNote}>
           <label>Title<input value={newNoteTitle} onChange={(event) => setNewNoteTitle(event.target.value)} placeholder="Call notes" required /></label>
           <label>Note<textarea value={newNoteContent} onChange={(event) => setNewNoteContent(event.target.value)} rows={6} placeholder="Add context about this lead..." required /></label>
-          <div className={styles.composeActions}><Button type="submit">Save note</Button></div>
+          <div className={styles.composeActions}><Button type="submit" variant="primary">Save note</Button></div>
         </form>)}
       </section>}
 

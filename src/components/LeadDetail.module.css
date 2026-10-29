@@ -26,6 +26,8 @@
 .timelineHeader h2 { margin: 3px 0 0; font-size: 20px; }
 .centerTabs { min-height: 46px; display: flex; align-items: flex-end; gap: 18px; border-bottom: 1px solid #e8eaee; overflow-x: auto; }
 .centerTabs button { height: 46px; padding: 0 2px; border: 0; border-bottom: 2px solid transparent; background: none; color: #667085; font-size: 13px; }
+.centerTabs button { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.centerTabs button svg,.messagePanelHeader button svg,.composeActions button svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
 .centerTabs button.active { border-bottom-color: #2563eb; color: #111827; font-weight: 600; }
 .centerTabs button span,.notesPanel .sectionTitle span { min-width: 18px; height: 18px; display: inline-grid; place-items: center; margin-left: 4px; border-radius: 9px; background: #eef2ff; color: #2563eb; font-size: 10px; }
 .sectionTitle { margin: 22px 0 12px; font-size: 16px; font-weight: 700; }
