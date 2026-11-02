@@ -180,7 +180,7 @@ textarea:focus-visible {
 }
 
 .page-head h1 {
-  margin-top: 6px;
+  margin-top: 0;
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -234,10 +234,14 @@ textarea:focus-visible {
 
 .card-head h2,
 .card-title {
-  margin-top: 4px;
+  margin-top: 0;
   font-size: 15px;
   font-weight: 650;
   letter-spacing: -0.01em;
+}
+
+.card-head .kicker + h2 {
+  margin-top: 4px;
 }
 
 .card-sub {
@@ -372,6 +376,20 @@ textarea:focus-visible {
 
 .field-error {
   font-size: 12px;
+  color: var(--danger);
+}
+
+.field > .field-error {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--danger);
+}
+
+.required-mark {
+  color: var(--danger);
+}
+
+.field > span .required-mark {
   color: var(--danger);
 }
 
@@ -655,8 +673,30 @@ textarea:focus-visible {
     padding: 20px 16px 96px;
   }
 
+}
+
+@media (max-width: 767px) {
   .page-head h1 {
-    font-size: 22px;
+    display: none;
+  }
+
+  .page-head .kicker {
+    display: none;
+  }
+
+  .page-actions {
+    flex-wrap: nowrap;
+    width: 100%;
+  }
+
+  .mobile-icon-label {
+    display: none;
+  }
+
+  .page-actions .mobile-icon-button {
+    width: 38px;
+    min-width: 38px;
+    padding: 0;
   }
 }
 

@@ -143,14 +143,13 @@ function PipelineBoard() {
     <div className="page">
       <header className="page-head">
         <div>
-          <p className="kicker">Unified CRM</p>
           <h1>Pipeline</h1>
           <p className="subtitle">The same leads, grouped by stage. Drag a card to update its status — the table view stays unchanged.</p>
         </div>
         <div className="page-actions">
-          <Button variant="secondary" icon="list" onClick={openTable}>Table</Button>
-          <Button variant="secondary" icon="file" onClick={exportCsv} disabled={!filtered.length}>Export CSV</Button>
-          <Button icon="userPlus" onClick={openAddLead}>Add lead</Button>
+          <Button variant="secondary" icon="list" className="mobile-icon-button" aria-label="Table view" onClick={openTable}><span className="mobile-icon-label">Table</span></Button>
+          <Button variant="secondary" icon="file" className="mobile-icon-button" aria-label="Export CSV" onClick={exportCsv} disabled={!filtered.length}><span className="mobile-icon-label">Export CSV</span></Button>
+          <Button icon="userPlus" className="mobile-icon-button" aria-label="Add lead" onClick={openAddLead}><span className="mobile-icon-label">Add lead</span></Button>
         </div>
       </header>
 
@@ -185,7 +184,11 @@ function PipelineBoard() {
       </section>
 
       <p className={styles.resultLine}>
-        Showing <b>{filtered.length}</b> of {workspace.leads.length} leads
+        {filtered.length ? (
+          <>Showing <b>1–{filtered.length}</b> of <b>{filtered.length}</b> {filtered.length === 1 ? "lead" : "leads"}</>
+        ) : (
+          <>Showing <b>0</b> of <b>0</b> leads</>
+        )}
         {source && <> · source <b>{source}</b></>}
       </p>
 

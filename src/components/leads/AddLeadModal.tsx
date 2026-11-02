@@ -63,12 +63,12 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
       <form id="add-lead-form" className="form-grid" onSubmit={submit} noValidate>
         <div className="form-row">
           <label className="field">
-            <span>Full name</span>
+            <span>Full name <b className="required-mark" aria-hidden="true">*</b></span>
             <input className="input" value={form.name} onChange={(event) => set("name", event.target.value)} placeholder="Alex Morgan" aria-invalid={Boolean(errors.name)} autoComplete="off" />
             {errors.name && <span className="field-error">{errors.name}</span>}
           </label>
           <label className="field">
-            <span>Email</span>
+            <span>Email <b className="required-mark" aria-hidden="true">*</b></span>
             <input className="input" type="email" value={form.email} onChange={(event) => set("email", event.target.value)} placeholder="alex@company.com" aria-invalid={Boolean(errors.email || duplicate)} autoComplete="off" />
             {errors.email && <span className="field-error">{errors.email}</span>}
           </label>

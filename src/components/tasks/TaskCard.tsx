@@ -17,7 +17,7 @@ interface TaskCardProps {
 
 export default function TaskCard({ task, leadName, owner, showLead = true }: TaskCardProps) {
   const { openTask, toast } = useWorkspace();
-  const due = dueLabel(task.due);
+  const due = dueLabel(task.due, task.status);
   const done = task.status === "completed";
   const closed = done || task.status === "dismissed";
 

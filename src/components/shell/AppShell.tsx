@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { signOut, useSession } from "@/lib/crm-store";
-import { buildPriorities, isOpen } from "@/lib/insights";
+import { buildPriorities, isOpen, taskCounts } from "@/lib/insights";
 import { initials, todayKey, uid } from "@/lib/format";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { useWorkspaceData } from "@/components/ui/bits";
@@ -46,6 +46,10 @@ const FUTURE: { label: string; icon: IconName; hint: string }[] = [
   { label: "Finance Ops", icon: "wallet", hint: "Revenue, payments and invoices" },
 ];
 
+const subscribePlatform = () => () => {};
+const getMacPlatform = () => /Mac|iPhone|iPad|iPod/i.test(navigator.platform);
+const getServerPlatform = () => false;
+
 interface Toast {
   id: string;
   message: string;
@@ -76,7 +80,7 @@ export function ShellSplash() {
 function Workspace({ session, children }: { session: NonNullable<ReturnType<typeof useSession>>; children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { state, workspace } = useWorkspaceData();
+  const { workspace } = useWorkspaceData();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -87,6 +91,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [menu, setMenu] = useState<"notifications" | "user" | null>(null);
   const [search, setSearch] = useState("");
+  const macPlatform = useSyncExternalStore(subscribePlatform, getMacPlatform, getServerPlatform);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const toast = useCallback((message: string, tone: Toast["tone"] = "success") => {
@@ -107,13 +112,14 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
     [session, toast],
   );
 
-  // Close menus on outside click; Ctrl/Cmd+K opens Ask Qiko.
+  // Close menus on outside click; the platform shortcut opens Ask Qiko.
   useEffect(() => {
+    const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform);
     const onDown = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenu(null);
     };
     const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      if ((isMac ? event.metaKey : event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setCopilot((current) => ({ open: !current.open, nonce: current.nonce + 1 }));
       }
@@ -138,7 +144,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
     ];
   }, [workspace, router]);
 
-  const openTasksCount = state?.tasks.filter(isOpen).length ?? 0;
+  const salesAttentionCount = workspace ? workspace.suggestions.length + taskCounts(workspace.tasks).overdue : 0;
   const currentLabel = pathname === "/" ? "Home" : pathname.startsWith("/sales/pipeline") ? "Pipeline" : pathname.startsWith("/sales/leads") ? "Leads" : pathname.startsWith("/sales/actions") ? "Actions" : pathname.startsWith("/sales") ? "Sales" : pathname.startsWith("/settings") ? "Settings" : "Qiko Core";
 
   const navigate = (href: string) => {
@@ -188,7 +194,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                     <Link href={item.href} className={`${styles.navItem} ${active ? styles.active : ""}`} aria-current={pathname === item.href ? "page" : undefined} onClick={() => setMobileOpen(false)} title={collapsed ? item.label : undefined}>
                       <Icon name={item.icon} size={17} />
                       <span className={styles.hideCollapsed}>{item.label}</span>
-                      {item.label === "Sales" && openTasksCount > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{openTasksCount}</span>}
+                      {item.label === "Sales" && salesAttentionCount > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{salesAttentionCount}</span>}
                     </Link>
                     {item.children && active && !collapsed && (
                       <ul className={styles.subnav}>
@@ -227,7 +233,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                 <button type="button" className={styles.navItem} onClick={() => { setMobileOpen(false); api.askQiko(); }} title={collapsed ? "Ask Qiko" : undefined}>
                   <Icon name="sparkles" size={17} />
                   <span className={styles.hideCollapsed}>Ask Qiko</span>
-                  <kbd className={`${styles.kbd} ${styles.hideCollapsed}`}>Ctrl K</kbd>
+                  <kbd className={`${styles.kbd} ${styles.hideCollapsed}`}>{macPlatform ? "⌘K" : "Ctrl K"}</kbd>
                 </button>
               </li>
             </ul>

@@ -64,15 +64,14 @@
 
 .board {
   display: grid;
+  max-width: 100%;
+  min-width: 0;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: start;
+  contain: paint;
   gap: 14px;
-}
-
-@media (max-width: 1300px) {
-  .board {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
 }
 
 .column {
@@ -353,17 +352,23 @@
   }
 
   .board {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(5, calc((100% - 14px) / 2));
   }
 }
 
 @media (max-width: 560px) {
   .board {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(5, 100%);
   }
 
   .column {
     min-height: 180px;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1300px) {
+  .board {
+    grid-template-columns: repeat(5, calc((100% - 28px) / 3));
   }
 }
 

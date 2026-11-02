@@ -38,8 +38,9 @@ export function addDays(days: number, from = new Date()): string {
   return toDateKey(date);
 }
 
-export function dueLabel(due: string | null): { text: string; tone: "overdue" | "today" | "soon" | "later" | "none" } {
+export function dueLabel(due: string | null, status: TaskStatus): { text: string; tone: "overdue" | "today" | "soon" | "later" | "none" } {
   if (!due) return { text: "No due date", tone: "none" };
+  if (status !== "pending" && status !== "in_progress") return { text: formatDate(due), tone: "later" };
   const today = todayKey();
   if (due < today) return { text: `Overdue · ${formatDate(due)}`, tone: "overdue" };
   if (due === today) return { text: "Due today", tone: "today" };
@@ -70,3 +71,4 @@ export function uid(prefix: string): string {
 export function plural(count: number, one: string, many = `${one}s`): string {
   return `${count} ${count === 1 ? one : many}`;
 }
+import type { TaskStatus } from "./types";

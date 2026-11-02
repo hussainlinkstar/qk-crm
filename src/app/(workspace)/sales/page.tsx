@@ -41,16 +41,15 @@ export default function SalesOverviewPage() {
     <div className="page">
       <header className="page-head">
         <div>
-          <p className="kicker">Sales workspace</p>
           <h1>Sales overview</h1>
           <p className="subtitle">A unified view of sign-ups, scans, enquiries and product activity — and what to do about them.</p>
         </div>
         <div className="page-actions">
-          <Button variant="secondary" icon="sparkles" onClick={() => askQiko("What happened in sales today?")}>
-            Summarise today
+          <Button variant="secondary" icon="sparkles" className="mobile-icon-button" aria-label="Summarise today" onClick={() => askQiko("What happened in sales today?")}>
+            <span className="mobile-icon-label">Summarise today</span>
           </Button>
-          <Button icon="userPlus" onClick={openAddLead}>
-            Add lead
+          <Button icon="userPlus" className="mobile-icon-button" aria-label="Add lead" onClick={openAddLead}>
+            <span className="mobile-icon-label">Add lead</span>
           </Button>
         </div>
       </header>
@@ -69,7 +68,6 @@ export default function SalesOverviewPage() {
       <section className="card">
         <div className="card-head">
           <div>
-            <p className="kicker">Activity trends</p>
             <h2>Last {range} days</h2>
             <p className="card-sub">Daily sign-ups and completed scans. Hover a bar for details.</p>
           </div>
@@ -84,7 +82,6 @@ export default function SalesOverviewPage() {
         <div className={`card-body ${styles.trends}`}>
           {trends.map((trend) => {
             const total = trend.points.reduce((sum, point) => sum + point.value, 0);
-            const lastWeek = trend.points.slice(-7).reduce((sum, point) => sum + point.value, 0);
             return (
               <div key={trend.key} className={styles.trend}>
                 <div className={styles.trendHead}>
@@ -94,7 +91,7 @@ export default function SalesOverviewPage() {
                   </span>
                   <span className={styles.trendTotal}>
                     <b className="tabular">{total}</b>
-                    <small>{lastWeek} in last 7 days</small>
+                    <small>in last {range} days</small>
                   </span>
                 </div>
                 {total === 0 ? <EmptyState title="No data in this range" /> : <TrendChart points={trend.points} color={trend.color} unit={trend.label.toLowerCase()} />}
@@ -108,7 +105,6 @@ export default function SalesOverviewPage() {
         <article className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">Pipeline</p>
               <h2>Leads by status</h2>
             </div>
           </div>
@@ -119,7 +115,6 @@ export default function SalesOverviewPage() {
         <article className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">Attribution</p>
               <h2>Lead sources</h2>
             </div>
           </div>
@@ -133,7 +128,6 @@ export default function SalesOverviewPage() {
         <article className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">AI recommendations</p>
               <h2>Suggested follow-ups</h2>
               <p className="card-sub">Generated from recorded activity, each with its evidence.</p>
             </div>
@@ -152,7 +146,6 @@ export default function SalesOverviewPage() {
         <article className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">Engagement</p>
               <h2>Most engaged prospects</h2>
               <p className="card-sub">Ranked by recent sign-ups, scans, logins and reports.</p>
             </div>

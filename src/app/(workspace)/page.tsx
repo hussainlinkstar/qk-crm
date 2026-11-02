@@ -62,7 +62,6 @@ export default function HomePage() {
     <div className="page">
       <section className={styles.hero}>
         <div>
-          <p className="kicker">Qiko Core · Home</p>
           <h1>
             {greeting(new Date(now))}, {firstName(session.name)}.
           </h1>
@@ -96,7 +95,6 @@ export default function HomePage() {
       <section>
         <div className={styles.sectionHead}>
           <div>
-            <p className="kicker">Your day</p>
             <h2>Your top priorities</h2>
           </div>
           <Link href="/sales/actions" className="link-button">
@@ -143,7 +141,6 @@ export default function HomePage() {
         <article className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">Action dashboard</p>
               <h2>Tasks at a glance</h2>
             </div>
             <Button size="small" variant="secondary" icon="plus" onClick={() => openTaskForm()}>
@@ -165,9 +162,9 @@ export default function HomePage() {
               ))}
             </div>
             <div className={styles.progress} aria-label={`${counts.completed} of ${totalTasks} tasks completed`}>
-              <i className={styles.completed} style={{ width: `${(counts.completed / Math.max(1, totalTasks)) * 100}%` }} />
-              <i className={styles.in_progress} style={{ width: `${(counts.in_progress / Math.max(1, totalTasks)) * 100}%` }} />
               <i className={styles.pending} style={{ width: `${(counts.pending / Math.max(1, totalTasks)) * 100}%` }} />
+              <i className={styles.in_progress} style={{ width: `${(counts.in_progress / Math.max(1, totalTasks)) * 100}%` }} />
+              <i className={styles.completed} style={{ width: `${(counts.completed / Math.max(1, totalTasks)) * 100}%` }} />
             </div>
             <p className={styles.progressNote}>
               {Math.round((counts.completed / Math.max(1, totalTasks)) * 100)}% complete{counts.overdue ? ` · ${counts.overdue} overdue` : ""}
@@ -185,7 +182,6 @@ export default function HomePage() {
         <article className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">Workspaces</p>
               <h2>Jump back in</h2>
             </div>
           </div>
@@ -227,11 +223,10 @@ export default function HomePage() {
         <article className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">Live activity</p>
               <h2>Recent business activity</h2>
             </div>
             <Link href="/sales/leads" className="link-button">
-              All leads <Icon name="arrowRight" size={13} />
+              View all activity <Icon name="arrowRight" size={13} />
             </Link>
           </div>
           <ol className={styles.feed}>
@@ -259,7 +254,6 @@ export default function HomePage() {
         <article className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">Important changes</p>
               <h2>What changed</h2>
             </div>
           </div>

@@ -11,7 +11,7 @@ import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import styles from "./settings.module.css";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const MEMBERS_PER_PAGE = 3;
+const MEMBERS_PER_PAGE = 10;
 
 const SOURCES: { name: string; icon: IconName; scope: string; status: "demo" | "future"; note: string }[] = [
   { name: "Qiko Signal", icon: "scan", scope: "Registrations, free scans, reports, product activity", status: "demo", note: "Sample data · API integration pending validation" },
@@ -71,7 +71,6 @@ export default function SettingsPage() {
     <div className="page">
       <header className="page-head">
         <div>
-          <p className="kicker">Account</p>
           <h1>Settings</h1>
           <p className="subtitle">Manage your profile, your sales team and the data powering this workspace.</p>
         </div>
@@ -81,7 +80,6 @@ export default function SettingsPage() {
         <section className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">Profile</p>
               <h2>Your details</h2>
             </div>
           </div>
@@ -111,7 +109,6 @@ export default function SettingsPage() {
         <section className="card">
           <div className="card-head">
             <div>
-              <p className="kicker">Team</p>
               <h2>Sales team · {state.members.length}</h2>
               <p className="card-sub">Team members can own leads and be assigned tasks.</p>
             </div>
@@ -160,7 +157,6 @@ export default function SettingsPage() {
         <section className={`card ${styles.wide}`}>
           <div className="card-head">
             <div>
-              <p className="kicker">Data sources</p>
               <h2>Where workspace data comes from</h2>
               <p className="card-sub">This V1 runs on clearly labelled demo data behind a replaceable data layer. Nothing here is presented as live production data.</p>
             </div>
@@ -184,7 +180,6 @@ export default function SettingsPage() {
         <section className={`card ${styles.wide}`}>
           <div className="card-head">
             <div>
-              <p className="kicker">Workspace data</p>
               <h2>Reset demo workspace</h2>
               <p className="card-sub">Restore the original sample leads, activity and tasks. Your changes in this browser will be replaced. Demo data last generated {formatDateTime(state.seededAt)}.</p>
             </div>

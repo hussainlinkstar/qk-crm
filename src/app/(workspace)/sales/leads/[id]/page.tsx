@@ -206,7 +206,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
               <section className="card">
                 <div className="card-head">
                   <div>
-                    <p className="kicker">Engagement context</p>
                     <h2>How {lead.name.split(" ")[0]} is engaging</h2>
                   </div>
                 </div>
@@ -225,7 +224,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
               <section className="card">
                 <div className="card-head">
                   <div>
-                    <p className="kicker">Conversation</p>
                     <h2>Email and WhatsApp</h2>
                   </div>
                   <div className={styles.convoActions}>
@@ -252,7 +250,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
               <section className="card">
                 <div className="card-head">
                   <div>
-                    <p className="kicker">Next best action</p>
                     <h2>{suggestions.length ? "Qiko recommends" : openTasks.length ? "Planned follow-ups" : "Next step"}</h2>
                   </div>
                   <Button size="small" variant="secondary" icon="plus" onClick={newTask}>Task</Button>
@@ -267,7 +264,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
               <section className="card">
                 <div className="card-head">
                   <div>
-                    <p className="kicker">Latest</p>
                     <h2>Recent activity</h2>
                   </div>
                   <button type="button" className="link-button" onClick={() => setTab("activity")}>
@@ -285,7 +281,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
             <section className="card">
               <div className="card-head">
                 <div>
-                  <p className="kicker">Activity history</p>
                   <h2>{plural(timeline.length, "event")}</h2>
                 </div>
                 <div className="segmented" role="group" aria-label="Filter activity">
@@ -306,7 +301,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
             <section className="card">
               <div className="card-head">
                 <div>
-                  <p className="kicker">Conversations</p>
                   <h2>{plural(visibleMessages.length, "message")}</h2>
                 </div>
                 <div className={styles.convoActions}>
@@ -360,7 +354,7 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
               ))}
               {reports.length > 0 && (
                 <section className="card">
-                  <div className="card-head"><div><p className="kicker">Report engagement</p><h2>Associated reports</h2></div></div>
+                  <div className="card-head"><div><h2>Associated reports</h2></div></div>
                   <div className="card-body"><Timeline groups={[{ day: "reports", items: reports }]} now={now} hideDay /></div>
                 </section>
               )}
@@ -371,7 +365,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
             <section className="card">
               <div className="card-head">
                 <div>
-                  <p className="kicker">Tasks</p>
                   <h2>{plural(openTasks.length, "open task")}</h2>
                 </div>
                 <Button size="small" icon="plus" onClick={newTask}>New task</Button>
@@ -389,7 +382,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
             <section className="card">
               <div className="card-head">
                 <div>
-                  <p className="kicker">Notes</p>
                   <h2>Team notes</h2>
                 </div>
               </div>
@@ -419,7 +411,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
           <section className="card">
             <div className="card-head">
               <div>
-                <p className="kicker">Customer identity</p>
                 <h2>Details</h2>
               </div>
               {!editing && <Button size="small" variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Button>}
@@ -453,7 +444,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
           <section className="card">
             <div className="card-head">
               <div>
-                <p className="kicker">Source attribution</p>
                 <h2>Where this lead came from</h2>
               </div>
             </div>

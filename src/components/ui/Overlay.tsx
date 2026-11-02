@@ -5,7 +5,7 @@ import Button from "./Button";
 import Icon from "./Icon";
 import styles from "./Overlay.module.css";
 
-function useOverlay(onClose: () => void) {
+function useOverlay(onClose: () => void, focusPanel = false) {
   const panelRef = useRef<HTMLElement>(null);
   const closeRef = useRef(onClose);
   useEffect(() => {
@@ -22,14 +22,14 @@ function useOverlay(onClose: () => void) {
     document.addEventListener("keydown", onKey);
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const focusable = panelRef.current?.querySelector<HTMLElement>("[data-autofocus], input:not([type=hidden]), textarea, select");
+    const focusable = focusPanel ? null : panelRef.current?.querySelector<HTMLElement>("[data-autofocus], input:not([type=hidden]), textarea, select");
     (focusable ?? panelRef.current)?.focus({ preventScroll: true });
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;
       previous?.focus?.({ preventScroll: true });
     };
-  }, []);
+  }, [focusPanel]);
   return panelRef;
 }
 
@@ -72,10 +72,11 @@ interface DrawerProps {
   footer?: ReactNode;
   actions?: ReactNode;
   width?: number;
+  focusPanel?: boolean;
 }
 
-export function Drawer({ title, kicker, onClose, children, footer, actions, width = 520 }: DrawerProps) {
-  const ref = useOverlay(onClose);
+export function Drawer({ title, kicker, onClose, children, footer, actions, width = 520, focusPanel = false }: DrawerProps) {
+  const ref = useOverlay(onClose, focusPanel);
   const titleId = useId();
   return (
     <div className={`${styles.backdrop} ${styles.drawerBackdrop}`} onMouseDown={(event) => event.target === event.currentTarget && onClose()}>

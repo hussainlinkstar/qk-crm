@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState, type DragEvent } from "react";
 import { crm } from "@/lib/crm-store";
 import { dueLabel, todayKey } from "@/lib/format";
-import { isOpen, sortTasks } from "@/lib/insights";
+import { isOpen, sortTasks, taskCounts } from "@/lib/insights";
 import { PRIORITIES, type Priority, type Task, type TaskStatus } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
@@ -76,14 +76,7 @@ function ActionWorkspace() {
   }
 
   const memberById = new Map(state.members.map((member) => [member.id, member]));
-  const today = todayKey();
-  const counts = {
-    pending: state.tasks.filter((task) => task.status === "pending").length,
-    in_progress: state.tasks.filter((task) => task.status === "in_progress").length,
-    completed: state.tasks.filter((task) => task.status === "completed").length,
-    overdue: state.tasks.filter((task) => isOpen(task) && task.due !== null && task.due < today).length,
-    dismissed: state.tasks.filter((task) => task.status === "dismissed").length,
-  };
+  const counts = { ...taskCounts(state.tasks), dismissed: state.tasks.filter((task) => task.status === "dismissed").length };
   const suggestions = workspace.suggestions.filter((item) => !query.trim() || `${item.title} ${workspace.leadById.get(item.leadId)?.name}`.toLowerCase().includes(query.trim().toLowerCase()));
   const visibleSuggestions = showAllSuggestions ? suggestions : suggestions.slice(0, 4);
   const boardStatuses = view === "all" || view === "overdue" ? COLUMNS : COLUMNS.filter((column) => column.status === view);
@@ -112,13 +105,12 @@ function ActionWorkspace() {
     <div className="page">
       <header className="page-head">
         <div>
-          <p className="kicker">Sales · Action workspace</p>
           <h1>Actions</h1>
           <p className="subtitle">Qiko turns sign-ups, scans and enquiries into suggested actions. Accept, edit, dismiss or complete them — every action keeps its evidence and history.</p>
         </div>
         <div className="page-actions">
-          <Button variant="secondary" icon="sparkles" onClick={() => askQiko("What actions are pending?")}>Ask about actions</Button>
-          <Button icon="plus" onClick={() => openTaskForm()}>New task</Button>
+          <Button variant="secondary" icon="sparkles" className="mobile-icon-button" aria-label="Ask about actions" onClick={() => askQiko("What actions are pending?")}><span className="mobile-icon-label">Ask about actions</span></Button>
+          <Button icon="plus" className="mobile-icon-button" aria-label="New task" onClick={() => openTaskForm()}><span className="mobile-icon-label">New task</span></Button>
         </div>
       </header>
 
@@ -221,7 +213,7 @@ function ActionWorkspace() {
                 <tbody>
                   {filtered.map((task: Task) => {
                     const lead = task.leadId ? workspace.leadById.get(task.leadId) : undefined;
-                    const due = dueLabel(task.due);
+                    const due = dueLabel(task.due, task.status);
                     return (
                       <tr key={task.id} className="clickable" onClick={() => openTask(task.id)}>
                         <td className={styles.taskCell}>

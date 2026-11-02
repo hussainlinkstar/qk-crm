@@ -734,6 +734,10 @@
     margin-left: 0;
   }
 
+  .content {
+    padding-bottom: 84px;
+  }
+
   .topbar {
     padding: 0 12px;
   }

@@ -51,7 +51,7 @@ export default function SuggestionCard({ suggestion, lead, showLead = true, defa
             toast("Suggestion accepted — task created");
           }}
         >
-          Accept
+          Create task
         </Button>
         <Button
           size="small"
@@ -78,7 +78,7 @@ export default function SuggestionCard({ suggestion, lead, showLead = true, defa
             toast("Marked as done");
           }}
         >
-          Done
+          Mark done
         </Button>
         <Button
           size="small"

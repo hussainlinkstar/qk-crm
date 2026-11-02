@@ -36,7 +36,7 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
   const lead = task.leadId ? workspace.leadById.get(task.leadId) : undefined;
   const memberName = (id: string) => (id === "me" ? "You" : state.members.find((member) => member.id === id)?.name ?? "Former member");
   const dirty = (Object.keys(draft) as (keyof TaskInput)[]).some((key) => draft[key] !== task[key as keyof Task]);
-  const due = dueLabel(task.due);
+  const due = dueLabel(task.due, task.status);
   const closed = task.status === "completed" || task.status === "dismissed";
 
   const setStatus = (status: TaskStatus, message: string) => {
@@ -58,6 +58,7 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
       kicker={task.origin === "suggestion" ? "Accepted suggestion" : task.origin === "copilot" ? "Created with Ask Qiko" : "Task"}
       title={task.title}
       onClose={onClose}
+      focusPanel
       actions={<Button variant="ghost" size="small" icon="trash" aria-label="Delete task" onClick={() => setConfirmDelete(true)} />}
       footer={
         <>

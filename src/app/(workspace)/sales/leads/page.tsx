@@ -102,6 +102,8 @@ function LeadsView() {
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, pages);
   const visible = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const rangeStart = visible.length ? (current - 1) * PAGE_SIZE + 1 : 0;
+  const rangeEnd = rangeStart ? rangeStart + visible.length - 1 : 0;
   const memberById = new Map(state.members.map((member) => [member.id, member]));
   const statusCount = (value: string) => workspace.leads.filter((lead) => lead.status === value).length;
   const activeFilters = [source, owner, activity, q].filter(Boolean).length + (sort !== "recent" ? 1 : 0);
@@ -123,7 +125,6 @@ function LeadsView() {
     <div className="page">
       <header className="page-head">
         <div>
-          <p className="kicker">Unified CRM</p>
           <h1>Leads</h1>
           <p className="subtitle">Every prospect from Qiko Signal, the website, free audits and manual entry — one record per person.</p>
         </div>
@@ -132,9 +133,9 @@ function LeadsView() {
             const next = new URLSearchParams(params.toString());
             next.delete("status");
             router.push(`/sales/pipeline${next.size ? `?${next}` : ""}`);
-          }}>Board</Button>
-          <Button variant="secondary" icon="file" onClick={exportCsv} disabled={!filtered.length}>Export CSV</Button>
-          <Button icon="userPlus" onClick={openAddLead}>Add lead</Button>
+          }} className="mobile-icon-button" aria-label="Board view"><span className="mobile-icon-label">Board</span></Button>
+          <Button variant="secondary" icon="file" className="mobile-icon-button" aria-label="Export CSV" onClick={exportCsv} disabled={!filtered.length}><span className="mobile-icon-label">Export CSV</span></Button>
+          <Button icon="userPlus" className="mobile-icon-button" aria-label="Add lead" onClick={openAddLead}><span className="mobile-icon-label">Add lead</span></Button>
         </div>
       </header>
 
@@ -184,7 +185,11 @@ function LeadsView() {
         </div>
 
         <p className={styles.resultLine}>
-          Showing <b>{filtered.length}</b> of {workspace.leads.length} leads
+          {filtered.length ? (
+            <>Showing <b>{rangeStart}–{rangeEnd}</b> of <b>{filtered.length}</b> {filtered.length === 1 ? "lead" : "leads"}</>
+          ) : (
+            <>Showing <b>0</b> of <b>0</b> leads</>
+          )}
           {status && <> · status <b>{status}</b></>}
           {source && <> · source <b>{source}</b></>}
         </p>
@@ -197,13 +202,23 @@ function LeadsView() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table className="table">
+            <table className={`table ${styles.table}`}>
+              <colgroup>
+                <col className={styles.leadColumn} />
+                <col className={styles.companyColumn} />
+                <col className={styles.sourceColumn} />
+                <col className={styles.activityColumn} />
+                <col className={styles.statusColumn} />
+                <col className={styles.ownerColumn} />
+                <col className={styles.nextColumn} />
+                <col className={styles.actionsColumn} />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Lead</th>
-                  <th>Company</th>
-                  <th>Source</th>
-                  <th>Activity</th>
+                  <th className={styles.company}>Company</th>
+                  <th className={styles.sourceColumn}>Source</th>
+                  <th className={styles.activityColumn}>Activity</th>
                   <th>Status</th>
                   <th>Owner</th>
                   <th>Next action</th>
@@ -223,9 +238,9 @@ function LeadsView() {
                         {suggestionLeads.has(lead.id) && <span className={styles.flag} title="Qiko suggests an action"><Icon name="sparkles" size={11} /></span>}
                       </span>
                     </td>
-                    <td className={styles.muted}>{lead.company ?? "—"}</td>
-                    <td><span className="tag">{lead.source}</span></td>
-                    <td>
+                    <td className={`${styles.muted} ${styles.company}`}>{lead.company ?? "—"}</td>
+                    <td className={styles.sourceColumn}><span className="tag">{lead.source}</span></td>
+                    <td className={styles.activityColumn}>
                       <span className={styles.activity}>
                         <b>{lead.lastActivity?.title ?? "No activity"}</b>
                         <small>{lead.lastActivity ? timeAgo(lead.lastActivity.occurredAt, now || undefined) : "—"}</small>
@@ -242,7 +257,7 @@ function LeadsView() {
                         {state.members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
                       </select>
                     </td>
-                    <td className={styles.next}>{lead.nextActionLabel}</td>
+                    <td className={`${styles.next} ${styles.nextColumn}`}>{lead.nextActionLabel}</td>
                     <td className={styles.sticky} onClick={(event) => event.stopPropagation()}>
                       <Button size="small" variant="secondary" onClick={() => router.push(`/sales/leads/${lead.id}`)}>View</Button>
                     </td>
