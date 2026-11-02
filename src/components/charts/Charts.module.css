@@ -1,0 +1,177 @@
+.trend {
+  position: relative;
+}
+
+.plot {
+  position: relative;
+  margin-left: 22px;
+}
+
+.grid span {
+  position: absolute;
+  right: 0;
+  left: 0;
+  border-top: 1px dashed #eef2f6;
+}
+
+.grid em {
+  position: absolute;
+  top: -7px;
+  left: -22px;
+  width: 18px;
+  color: var(--subtle);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-style: normal;
+  text-align: right;
+}
+
+.bars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.barSlot {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: crosshair;
+}
+
+.barSlot:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--brand-ring);
+  outline-offset: -2px;
+}
+
+.bar {
+  display: block;
+  width: 100%;
+  max-width: 14px;
+  border-radius: 4px 4px 1px 1px;
+  transform-origin: bottom;
+  animation: grow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: opacity 0.15s ease;
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.tip {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 9px 7px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+  transform: translate(-50%, -10px);
+}
+
+.tip b {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tip span {
+  color: #cbd5e1;
+  font-size: 11px;
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0 0 22px;
+  color: var(--subtle);
+  font-size: 11px;
+}
+
+.barList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barList button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.barList button:disabled {
+  cursor: default;
+}
+
+.barList button:not(:disabled):hover {
+  background: var(--surface-muted);
+}
+
+.barListHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.barListHead b {
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.barListHead small {
+  color: var(--subtle);
+  font-weight: 500;
+}
+
+.barTrack {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--well);
+}
+
+.barTrack i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  animation: widen 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: left;
+}
+
+@keyframes widen {
+  from {
+    transform: scaleX(0);
+  }
+}

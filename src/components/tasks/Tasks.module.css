@@ -1,0 +1,265 @@
+/* — Task card (Pulse kanban card) — */
+.card {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e6eaf0;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  animation: cardIn 0.24s ease-out;
+}
+
+.card:hover {
+  border-color: #d5dbe6;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.cardDone {
+  background: var(--surface-muted);
+}
+
+.cardDone .cardTitle {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--line-strong);
+}
+
+.check {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.check:hover {
+  border-color: var(--success);
+  transform: scale(1.08);
+}
+
+.checked {
+  border-color: #10b981;
+  background: #10b981;
+}
+
+.cardMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cardTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.cardChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.open {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.card:hover .open,
+.cardMain:focus-visible .open {
+  opacity: 1;
+}
+
+.due {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.overdue {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.today {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.soon,
+.later,
+.none {
+  color: var(--muted);
+}
+
+/* — Drawer — */
+.drawerMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.leadCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  color: var(--ink);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.leadCard:hover {
+  border-color: var(--brand-ring);
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+.leadCardText {
+  flex: 1;
+  min-width: 0;
+}
+
+.leadCardText b {
+  display: block;
+  font-size: 13.5px;
+}
+
+.leadCardText small {
+  display: block;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section {
+  margin-top: 22px;
+}
+
+.section > h3 {
+  margin-bottom: 10px;
+}
+
+.askRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px dashed var(--brand-ring);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #f8faff, #f5f3ff);
+  color: var(--brand-strong);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.askRow svg:last-child {
+  margin-left: auto;
+}
+
+.askRow:hover {
+  border-style: solid;
+}
+
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history li {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 14px;
+}
+
+.history li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 0;
+  left: 4px;
+  width: 1px;
+  background: var(--line);
+}
+
+.historyDot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border: 2px solid var(--brand);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.history b {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.history small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.historyNote {
+  color: var(--muted);
+  font-size: 12px;
+}

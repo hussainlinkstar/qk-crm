@@ -1,0 +1,221 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+.confirmBackdrop {
+  z-index: 140;
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: calc(100vh - 40px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  animation: popIn 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  outline: none;
+}
+
+.small {
+  width: min(420px, 100%);
+}
+
+.large {
+  width: min(760px, 100%);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 4px;
+}
+
+.header h2,
+.confirm h2 {
+  margin: 4px 0 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.description {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.body {
+  padding: 16px 24px 4px;
+  overflow-y: auto;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px 20px;
+}
+
+.confirm {
+  padding: 24px;
+  text-align: left;
+}
+
+.confirmIcon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.confirmDanger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.drawerBackdrop {
+  place-items: stretch end;
+  padding: 0;
+}
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.drawerTitle {
+  min-width: 0;
+}
+
+.drawerTitle h2 {
+  margin: 4px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+}
+
+.drawerActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.drawerBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 20px 24px;
+}
+
+.drawerFooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface-muted);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(32px);
+    opacity: 0.4;
+  }
+}
+
+@media (max-width: 640px) {
+  .backdrop:not(.drawerBackdrop) {
+    place-items: end stretch;
+    padding: 0;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    animation-name: sheetIn;
+  }
+
+  .footer,
+  .confirmActions {
+    flex-direction: column-reverse;
+  }
+
+  .footer > *,
+  .confirmActions > * {
+    width: 100%;
+  }
+}
+
+@keyframes sheetIn {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal,
+  .drawer {
+    animation: none;
+  }
+}

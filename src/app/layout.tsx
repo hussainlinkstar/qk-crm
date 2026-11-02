@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,8 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Qiko Core | Business Workspace",
-  description: "AI-powered sales workspace and CRM",
+  title: {
+    default: "Qiko Core | AI-Powered Business Workspace",
+    template: "%s · Qiko Core",
+  },
+  description: "Qiko Core connects customer activity, sales actions and AI recommendations in one workspace.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

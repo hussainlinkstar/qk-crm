@@ -1,0 +1,539 @@
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 24px;
+  padding: 20px;
+}
+
+.identity {
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+}
+
+.identity :global(.avatar-lg) {
+  background: var(--brand-gradient);
+  color: #fff;
+}
+
+.identityText {
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.nameRow h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.role {
+  margin-top: 4px;
+  color: var(--ink-3);
+  font-size: 14px;
+}
+
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.contact a,
+.contact span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.contact a {
+  color: var(--ink-3);
+}
+
+.contact a:hover {
+  color: var(--brand);
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+}
+
+.control span {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  grid-column: 1 / -1;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+  gap: 16px;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.side {
+  position: sticky;
+  top: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
+}
+
+.tabs button {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.tabs button:hover {
+  color: var(--ink);
+}
+
+.tabs button[aria-pressed="true"] {
+  color: var(--brand-strong);
+}
+
+.tabs button[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  bottom: -1px;
+  left: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--brand);
+}
+
+.tabs button span {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--well);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.tabs button[aria-pressed="true"] span {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.subhead {
+  margin-top: 10px;
+}
+
+.convoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.threadMore {
+  margin-top: 12px;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: min(520px, 88%);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.bubbleOut {
+  align-self: flex-end;
+  border-color: var(--brand-ring);
+  background: var(--brand-soft);
+  border-bottom-right-radius: 4px;
+}
+
+.bubbleIn {
+  align-self: flex-start;
+  background: var(--surface-muted);
+  border-bottom-left-radius: 4px;
+}
+
+.bubble b {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.bubble p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.bubble small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 16px;
+  margin: 0;
+}
+
+.stats dt {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.stats dd {
+  margin: 3px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.timeline ol {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  margin: 4px 0 6px;
+  color: var(--subtle);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.timeline li {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.timeline li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 38px;
+  bottom: -6px;
+  left: 14px;
+  width: 1px;
+  background: var(--line);
+}
+
+.timeline b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.timeline p {
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.timeline small {
+  display: block;
+  margin-top: 3px;
+  color: var(--subtle);
+  font-size: 11.5px;
+}
+
+.timelineIcon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 9px;
+  background: var(--well);
+  color: var(--ink-3);
+}
+
+.kind_signup,
+.kind_lead_created {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.kind_scan,
+.kind_report {
+  background: #f0f9ff;
+  color: #0369a1;
+}
+
+.kind_enquiry {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.kind_status_change,
+.kind_task {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.scan {
+  display: flex;
+  gap: 18px;
+  padding: 18px;
+}
+
+.scanScore {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  align-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.scanScore[data-tone="mid"] {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.scanScore[data-tone="low"] {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.scanScore b {
+  font-size: 26px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.scanScore small {
+  font-size: 11px;
+}
+
+.scanBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.scanBody h3 {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.scanBody ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.scanFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.noteForm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.note {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: #fffdf5;
+}
+
+.noteHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.noteHead b {
+  font-size: 13px;
+}
+
+.noteHead small {
+  color: var(--subtle);
+  font-size: 12px;
+}
+
+.noteHead button {
+  margin-left: auto;
+}
+
+.note p {
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+}
+
+.details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.details div:first-child {
+  border-top: 0;
+}
+
+.details dt {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.details dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 550;
+  text-align: right;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.dedupe {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dedupe svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .side {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+  }
+
+  .control {
+    flex: 1 1 140px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scan {
+    flex-direction: column;
+  }
+}
