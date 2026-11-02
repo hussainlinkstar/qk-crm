@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
 import { SUGGESTED_QUESTIONS } from "@/lib/copilot";
 import { crm } from "@/lib/crm-store";
-import { buildPriorities, isOpen, sortTasks, taskCounts, type PriorityGroup } from "@/lib/insights";
+import { buildPriorities, isOpen, salesAttentionCount, sortTasks, taskCounts, type PriorityGroup } from "@/lib/insights";
 import { firstName, greeting, initials, plural, timeAgo, todayKey } from "@/lib/format";
 import Button from "@/components/ui/Button";
 import Icon, { type IconName } from "@/components/ui/Icon";
@@ -40,7 +40,7 @@ export default function HomePage() {
   const group = priorities.find((item) => item.id === openGroup);
   const recent = state.events.slice(0, 8);
   const week = (iso: string) => now - new Date(iso).getTime() <= 7 * 86_400_000;
-  const salesAttention = workspace.suggestions.length + counts.overdue;
+  const salesAttention = salesAttentionCount(workspace);
 
   const changes: { icon: IconName; tone: string; title: string; detail: string; href: string }[] = [];
   const newLeads = state.leads.filter((lead) => week(lead.createdAt));

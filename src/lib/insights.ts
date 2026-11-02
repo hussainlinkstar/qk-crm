@@ -322,3 +322,7 @@ export function taskCounts(tasks: Task[]) {
     overdue: tasks.filter((task) => isOpen(task) && task.due !== null && task.due < today).length,
   };
 }
+
+export function salesAttentionCount(workspace: Workspace): number {
+  return workspace.suggestions.length + taskCounts(workspace.tasks).overdue;
+}

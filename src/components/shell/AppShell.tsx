@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { signOut, useSession } from "@/lib/crm-store";
-import { buildPriorities, isOpen, taskCounts } from "@/lib/insights";
+import { buildPriorities, isOpen, salesAttentionCount } from "@/lib/insights";
 import { initials, todayKey, uid } from "@/lib/format";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { useWorkspaceData } from "@/components/ui/bits";
@@ -144,7 +144,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
     ];
   }, [workspace, router]);
 
-  const salesAttentionCount = workspace ? workspace.suggestions.length + taskCounts(workspace.tasks).overdue : 0;
+  const salesAttention = workspace ? salesAttentionCount(workspace) : 0;
   const currentLabel = pathname === "/" ? "Home" : pathname.startsWith("/sales/pipeline") ? "Pipeline" : pathname.startsWith("/sales/leads") ? "Leads" : pathname.startsWith("/sales/actions") ? "Actions" : pathname.startsWith("/sales") ? "Sales" : pathname.startsWith("/settings") ? "Settings" : "Qiko Core";
 
   const navigate = (href: string) => {
@@ -194,7 +194,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                     <Link href={item.href} className={`${styles.navItem} ${active ? styles.active : ""}`} aria-current={pathname === item.href ? "page" : undefined} onClick={() => setMobileOpen(false)} title={collapsed ? item.label : undefined}>
                       <Icon name={item.icon} size={17} />
                       <span className={styles.hideCollapsed}>{item.label}</span>
-                      {item.label === "Sales" && salesAttentionCount > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{salesAttentionCount}</span>}
+                      {item.label === "Sales" && salesAttention > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{salesAttention}</span>}
                     </Link>
                     {item.children && active && !collapsed && (
                       <ul className={styles.subnav}>
