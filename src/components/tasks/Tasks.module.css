@@ -35,6 +35,7 @@
 }
 
 .check {
+  padding: 0;
   display: grid;
   flex-shrink: 0;
   place-items: center;
