@@ -117,7 +117,26 @@
   gap: 4px;
   overflow-x: auto;
   border-bottom: 1px solid var(--line);
-  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tabs::-webkit-scrollbar-track {
+  border-radius: 999px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.tabs::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
 }
 
 .tabs button {
