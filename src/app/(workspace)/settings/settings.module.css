@@ -1,7 +1,7 @@
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  align-items: start;
+  align-items: stretch;
   gap: 16px;
 }
 
@@ -44,6 +44,10 @@
   list-style: none;
 }
 
+.members {
+  min-height: 168px;
+}
+
 .members li,
 .sources li {
   display: flex;
@@ -55,6 +59,47 @@
 
 .members li:first-child {
   border-top: 0;
+}
+
+.memberPager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.memberPager > div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.memberPageButton {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.memberPageButton:hover {
+  border-color: var(--line-strong);
+}
+
+.memberPageButton[aria-current="page"] {
+  border-color: #6366f1;
+  background: var(--brand-soft);
+  color: var(--brand-strong);
 }
 
 .memberText {

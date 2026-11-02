@@ -11,6 +11,7 @@ import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import styles from "./settings.module.css";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const MEMBERS_PER_PAGE = 3;
 
 const SOURCES: { name: string; icon: IconName; scope: string; status: "demo" | "future"; note: string }[] = [
   { name: "Qiko Signal", icon: "scan", scope: "Registrations, free scans, reports, product activity", status: "demo", note: "Sample data · API integration pending validation" },
@@ -25,6 +26,7 @@ export default function SettingsPage() {
   const { session, toast } = useWorkspace();
   const [name, setName] = useState(session.name);
   const [member, setMember] = useState({ name: "", email: "", role: "" });
+  const [memberPage, setMemberPage] = useState(1);
   const [memberError, setMemberError] = useState("");
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -53,6 +55,7 @@ export default function SettingsPage() {
     if (!EMAIL.test(member.email.trim())) return setMemberError("Enter a valid email address.");
     if (state.members.some((item) => item.email.toLowerCase() === member.email.trim().toLowerCase())) return setMemberError("This person is already on the team.");
     crm.addMember({ name: member.name.trim(), email: member.email.trim().toLowerCase(), role: member.role.trim() || "Team member" });
+    setMemberPage(Math.ceil((state.members.length + 1) / MEMBERS_PER_PAGE));
     setMember({ name: "", email: "", role: "" });
     setMemberError("");
     toast(`${member.name.trim()} added to the team`);
@@ -60,6 +63,9 @@ export default function SettingsPage() {
 
   const removing = state.members.find((item) => item.id === removeId);
   const assignedCount = (id: string) => state.leads.filter((lead) => lead.ownerId === id).length + state.tasks.filter((task) => task.ownerId === id).length;
+  const memberPages = Math.max(1, Math.ceil(state.members.length / MEMBERS_PER_PAGE));
+  const currentMemberPage = Math.min(memberPage, memberPages);
+  const visibleMembers = state.members.slice((currentMemberPage - 1) * MEMBERS_PER_PAGE, currentMemberPage * MEMBERS_PER_PAGE);
 
   return (
     <div className="page">
@@ -112,7 +118,7 @@ export default function SettingsPage() {
           </div>
           <div className="card-body">
             <ul className={styles.members}>
-              {state.members.map((item) => (
+              {visibleMembers.map((item) => (
                 <li key={item.id}>
                   <span className="avatar">{initials(item.name)}</span>
                   <span className={styles.memberText}>
@@ -124,6 +130,20 @@ export default function SettingsPage() {
                 </li>
               ))}
             </ul>
+            {memberPages > 1 && (
+              <nav className={styles.memberPager} aria-label="Sales team pagination">
+                <span>Page {currentMemberPage} of {memberPages}</span>
+                <div>
+                  <Button size="small" variant="secondary" icon="chevronLeft" disabled={currentMemberPage === 1} onClick={() => setMemberPage(currentMemberPage - 1)} aria-label="Previous team page" />
+                  {Array.from({ length: memberPages }, (_, index) => index + 1).map((page) => (
+                    <button type="button" key={page} className={styles.memberPageButton} aria-current={page === currentMemberPage ? "page" : undefined} onClick={() => setMemberPage(page)}>
+                      {page}
+                    </button>
+                  ))}
+                  <Button size="small" variant="secondary" icon="chevronRight" disabled={currentMemberPage === memberPages} onClick={() => setMemberPage(currentMemberPage + 1)} aria-label="Next team page" />
+                </div>
+              </nav>
+            )}
             <form className={styles.addMember} onSubmit={addMember} noValidate>
               <p className="field-label">Add a teammate</p>
               <div className={styles.addRow}>
