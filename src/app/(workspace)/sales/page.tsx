@@ -48,7 +48,7 @@ export default function SalesOverviewPage() {
           <Button variant="secondary" icon="sparkles" className="mobile-icon-button" aria-label="Summarise today" onClick={() => askQiko("What happened in sales today?")}>
             <span className="mobile-icon-label">Summarise today</span>
           </Button>
-          <Button icon="userPlus" className="mobile-icon-button" aria-label="Add lead" onClick={openAddLead}>
+          <Button icon="userPlus" className="mobile-icon-button mobile-main-button" aria-label="Add lead" onClick={openAddLead}>
             <span className="mobile-icon-label">Add lead</span>
           </Button>
         </div>

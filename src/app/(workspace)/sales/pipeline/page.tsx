@@ -149,7 +149,7 @@ function PipelineBoard() {
         <div className="page-actions">
           <Button variant="secondary" icon="list" className="mobile-icon-button" aria-label="Table view" onClick={openTable}><span className="mobile-icon-label">Table</span></Button>
           <Button variant="secondary" icon="file" className="mobile-icon-button" aria-label="Export CSV" onClick={exportCsv} disabled={!filtered.length}><span className="mobile-icon-label">Export CSV</span></Button>
-          <Button icon="userPlus" className="mobile-icon-button" aria-label="Add lead" onClick={openAddLead}><span className="mobile-icon-label">Add lead</span></Button>
+          <Button icon="userPlus" className="mobile-icon-button mobile-main-button" aria-label="Add lead" onClick={openAddLead}><span className="mobile-icon-label">Add lead</span></Button>
         </div>
       </header>
 

@@ -51,6 +51,16 @@ function suggestedTaskNextAction(title: string): string {
   return "Review suggested follow-up";
 }
 
+function stripLeadName(action: string, leadName: string): string {
+  const escapedName = leadName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return action
+    .replace(new RegExp(`\\bwith\\s+${escapedName}\\b`, "gi"), "")
+    .replace(new RegExp(`\\b${escapedName}\\b`, "gi"), "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;!?])/g, "$1")
+    .trim();
+}
+
 export function sortTasks(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
     const due = (a.due ?? "9999") .localeCompare(b.due ?? "9999");
@@ -210,7 +220,8 @@ export function buildWorkspace(state: CrmState, now = Date.now()): Workspace {
     const suggestion = suggestionByLead.get(lead.id);
     const firstTask = openTasks[0];
     const taskAction = firstTask ? firstTask.origin === "suggestion" ? suggestedTaskNextAction(firstTask.title) : firstTask.title : undefined;
-    const nextActionLabel = lead.nextAction ?? taskAction ?? (suggestion ? SUGGESTION_NEXT_ACTIONS[suggestion.rule] : undefined) ?? (lead.status === "Won" ? "Hand over to onboarding" : lead.status === "Lost" ? "No action needed" : "Schedule a follow-up");
+    const rawNextAction = lead.nextAction ?? taskAction ?? (suggestion ? SUGGESTION_NEXT_ACTIONS[suggestion.rule] : undefined) ?? (lead.status === "Won" ? "Hand over to onboarding" : lead.status === "Lost" ? "No action needed" : "Schedule a follow-up");
+    const nextActionLabel = stripLeadName(rawNextAction, lead.name);
     return { ...lead, lastActivity: events[0] ?? null, openTasks, engagementScore: engagementScore(events, now), nextActionLabel, scansCount: scanCount.get(lead.id) ?? 0 };
   });
   leads.sort((a, b) => (b.lastActivity?.occurredAt ?? b.createdAt).localeCompare(a.lastActivity?.occurredAt ?? a.createdAt));

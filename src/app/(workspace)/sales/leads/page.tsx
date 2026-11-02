@@ -135,7 +135,7 @@ function LeadsView() {
             router.push(`/sales/pipeline${next.size ? `?${next}` : ""}`);
           }} className="mobile-icon-button" aria-label="Board view"><span className="mobile-icon-label">Board</span></Button>
           <Button variant="secondary" icon="file" className="mobile-icon-button" aria-label="Export CSV" onClick={exportCsv} disabled={!filtered.length}><span className="mobile-icon-label">Export CSV</span></Button>
-          <Button icon="userPlus" className="mobile-icon-button" aria-label="Add lead" onClick={openAddLead}><span className="mobile-icon-label">Add lead</span></Button>
+          <Button icon="userPlus" className="mobile-icon-button mobile-main-button" aria-label="Add lead" onClick={openAddLead}><span className="mobile-icon-label">Add lead</span></Button>
         </div>
       </header>
 
@@ -216,12 +216,12 @@ function LeadsView() {
               <thead>
                 <tr>
                   <th>Lead</th>
-                  <th className={styles.company}>Company</th>
+                  <th className={`${styles.company} ${styles.companyColumn}`}>Company</th>
                   <th className={styles.sourceColumn}>Source</th>
                   <th className={styles.activityColumn}>Activity</th>
-                  <th>Status</th>
-                  <th>Owner</th>
-                  <th>Next action</th>
+                  <th className={styles.statusColumn}>Status</th>
+                  <th className={styles.ownerColumn}>Owner</th>
+                  <th className={styles.nextColumn}>Next action</th>
                   <th aria-label="Actions" className={styles.sticky} />
                 </tr>
               </thead>
@@ -238,7 +238,7 @@ function LeadsView() {
                         {suggestionLeads.has(lead.id) && <span className={styles.flag} title="Qiko suggests an action"><Icon name="sparkles" size={11} /></span>}
                       </span>
                     </td>
-                    <td className={`${styles.muted} ${styles.company}`}>{lead.company ?? "—"}</td>
+                    <td className={`${styles.muted} ${styles.company} ${styles.companyColumn}`}>{lead.company ?? "—"}</td>
                     <td className={styles.sourceColumn}><span className="tag">{lead.source}</span></td>
                     <td className={styles.activityColumn}>
                       <span className={styles.activity}>
@@ -246,12 +246,12 @@ function LeadsView() {
                         <small>{lead.lastActivity ? timeAgo(lead.lastActivity.occurredAt, now || undefined) : "—"}</small>
                       </span>
                     </td>
-                    <td onClick={(event) => event.stopPropagation()}>
+                    <td className={styles.statusColumn} onClick={(event) => event.stopPropagation()}>
                       <select className={`${styles.inlineSelect} chip-${lead.status.toLowerCase()}`} value={lead.status} aria-label={`Status for ${lead.name}`} onChange={(event) => setPending({ lead, field: "status", value: event.target.value })}>
                         {LEAD_STATUSES.map((item) => <option key={item}>{item}</option>)}
                       </select>
                     </td>
-                    <td onClick={(event) => event.stopPropagation()}>
+                    <td className={styles.ownerColumn} onClick={(event) => event.stopPropagation()}>
                       <select className={styles.ownerSelect} value={lead.ownerId ?? ""} aria-label={`Owner for ${lead.name}`} onChange={(event) => setPending({ lead, field: "owner", value: event.target.value })}>
                         <option value="">Unassigned</option>
                         {state.members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}

@@ -6,6 +6,7 @@ import { SUGGESTED_QUESTIONS } from "@/lib/copilot";
 import { crm } from "@/lib/crm-store";
 import { buildPriorities, isOpen, salesAttentionCount, sortTasks, taskCounts, type PriorityGroup } from "@/lib/insights";
 import { firstName, greeting, initials, plural, timeAgo, todayKey } from "@/lib/format";
+import { LEAD_SOURCES } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { KIND_ICON } from "@/components/ui/kind-icons";
@@ -44,7 +45,17 @@ export default function HomePage() {
 
   const changes: { icon: IconName; tone: string; title: string; detail: string; href: string }[] = [];
   const newLeads = state.leads.filter((lead) => week(lead.createdAt));
-  if (newLeads.length) changes.push({ icon: "userPlus", tone: "brand", title: `${plural(newLeads.length, "new lead")} this week`, detail: `${newLeads.filter((lead) => lead.source === "Qiko Signal").length} from Qiko Signal · ${newLeads.filter((lead) => lead.source === "Website").length} from the website`, href: "/sales/leads?sort=newest" });
+  if (newLeads.length) {
+    const sourceBreakdown = LEAD_SOURCES
+      .map((source) => ({
+        source,
+        count: newLeads.filter((lead) => lead.source === source).length,
+      }))
+      .filter(({ count }) => count > 0)
+      .map(({ source, count }) => `${count} from ${source === "Website" ? "the website" : source}`)
+      .join(" · ");
+    changes.push({ icon: "userPlus", tone: "brand", title: `${plural(newLeads.length, "new lead")} this week`, detail: sourceBreakdown, href: "/sales/leads?sort=newest" });
+  }
   const recentScans = state.scans.filter((scan) => now - new Date(scan.completedAt).getTime() <= 3 * 86_400_000);
   if (recentScans.length) changes.push({ icon: "scan", tone: "sky", title: `${plural(recentScans.length, "free scan")} completed in 72h`, detail: `${recentScans.filter((scan) => scan.score < 60).length} scored below 60/100 — likely opportunities`, href: "/sales/leads?activity=scan" });
   const won = state.events.filter((event) => event.kind === "status_change" && event.title.endsWith("Won") && week(event.occurredAt));

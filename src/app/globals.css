@@ -698,6 +698,16 @@ textarea:focus-visible {
     min-width: 38px;
     padding: 0;
   }
+
+  .page-actions .mobile-icon-button.mobile-main-button {
+    width: auto;
+    min-width: max-content;
+    padding: 0 12px;
+  }
+
+  .page-actions .mobile-main-button .mobile-icon-label {
+    display: inline;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

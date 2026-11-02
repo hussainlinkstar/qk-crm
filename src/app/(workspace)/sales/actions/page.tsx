@@ -110,7 +110,7 @@ function ActionWorkspace() {
         </div>
         <div className="page-actions">
           <Button variant="secondary" icon="sparkles" className="mobile-icon-button" aria-label="Ask about actions" onClick={() => askQiko("What actions are pending?")}><span className="mobile-icon-label">Ask about actions</span></Button>
-          <Button icon="plus" className="mobile-icon-button" aria-label="New task" onClick={() => openTaskForm()}><span className="mobile-icon-label">New task</span></Button>
+          <Button icon="plus" className="mobile-icon-button mobile-main-button" aria-label="New task" onClick={() => openTaskForm()}><span className="mobile-icon-label">New task</span></Button>
         </div>
       </header>
 
