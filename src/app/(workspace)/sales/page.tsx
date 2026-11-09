@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { buildMetrics, buildTrends, sourceBreakdown } from "@/lib/insights";
 import { initials, timeAgo } from "@/lib/format";
-import { LEAD_STATUSES } from "@/lib/types";
+import { LEAD_STATUSES, OPPORTUNITY_STAGES } from "@/lib/types";
+import { commercialBuckets, isOpenLead } from "@/lib/sales-crm";
 import Button from "@/components/ui/Button";
-import Icon from "@/components/ui/Icon";
 import { EmptyState, LeadStatusChip, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import TrendChart, { BarList } from "@/components/charts/TrendChart";
 import SuggestionCard from "@/components/tasks/SuggestionCard";
@@ -25,6 +25,7 @@ export default function SalesOverviewPage() {
 
   const metrics = useMemo(() => (state ? buildMetrics(state, now || undefined) : []), [state, now]);
   const trends = useMemo(() => (state ? buildTrends(state, range) : []), [state, range]);
+  const buckets = state ? commercialBuckets(state) : null;
 
   if (!state || !workspace) {
     return (
@@ -34,15 +35,21 @@ export default function SalesOverviewPage() {
     );
   }
 
-  const hotLeads = workspace.leads.filter((lead) => lead.status !== "Won" && lead.status !== "Lost").sort((a, b) => b.engagementScore - a.engagementScore).slice(0, 6);
-  const pipeline = LEAD_STATUSES.map((status) => ({ label: status, value: state.leads.filter((lead) => lead.status === status).length }));
+  const hotLeads = workspace.leads.filter((lead) => isOpenLead(lead.status)).sort((a, b) => b.engagementScore - a.engagementScore).slice(0, 6);
+  const leadPipeline = LEAD_STATUSES.map((status) => ({ label: status, value: state.leads.filter((lead) => lead.status === status).length }));
+  const oppPipeline = OPPORTUNITY_STAGES.map((stage) => ({
+    label: stage,
+    value: (state.opportunities ?? []).filter((item) => item.stage === stage).length,
+  }));
 
   return (
     <div className="page">
       <header className="page-head">
         <div>
           <h1>Sales overview</h1>
-          <p className="subtitle">A unified view of sign-ups, scans, enquiries and product activity — and what to do about them.</p>
+          <p className="subtitle">
+            B2B consulting & staffing CRM — leads, accounts, contacts and opportunities. Pipeline is not recognised revenue.
+          </p>
         </div>
         <div className="page-actions">
           <Button variant="secondary" icon="sparkles" className="mobile-icon-button" aria-label="Summarise today" onClick={() => askQiko("What happened in sales today?")}>
@@ -53,6 +60,36 @@ export default function SalesOverviewPage() {
           </Button>
         </div>
       </header>
+
+      {buckets && (
+        <section className={styles.kpis} aria-label="Commercial distinctions">
+          <div className={styles.kpi}>
+            <span className={styles.kpiLabel}>Open pipeline</span>
+            <b className="tabular">£{buckets.pipeline.toLocaleString("en-GB")}</b>
+            <small>Face-value opportunities still open</small>
+          </div>
+          <div className={styles.kpi}>
+            <span className={styles.kpiLabel}>Weighted pipeline</span>
+            <b className="tabular">£{buckets.weighted.toLocaleString("en-GB")}</b>
+            <small>Probability-adjusted — still not revenue</small>
+          </div>
+          <div className={styles.kpi}>
+            <span className={styles.kpiLabel}>Agreed contract</span>
+            <b className="tabular">£{buckets.agreed.toLocaleString("en-GB")}</b>
+            <small>Closed won contract value</small>
+          </div>
+          <div className={styles.kpi}>
+            <span className={styles.kpiLabel}>Expected billing</span>
+            <b className="tabular">£{buckets.expectedBilling.toLocaleString("en-GB")}</b>
+            <small>Forecast from won work</small>
+          </div>
+          <div className={styles.kpi}>
+            <span className={styles.kpiLabel}>Recognised revenue</span>
+            <b className="tabular">£{buckets.recognised.toLocaleString("en-GB")}</b>
+            <small>Realised only — not pipeline</small>
+          </div>
+        </section>
+      )}
 
       <section className={styles.kpis} aria-label="Sales metrics">
         {metrics.map((metric, index) => (
@@ -69,7 +106,7 @@ export default function SalesOverviewPage() {
         <div className="card-head">
           <div>
             <h2>Last {range} days</h2>
-            <p className="card-sub">Daily sign-ups and completed scans. Hover a bar for details.</p>
+            <p className="card-sub">Lead intake and engagement activity.</p>
           </div>
           <div className="segmented" role="group" aria-label="Date range">
             {RANGES.map((value) => (
@@ -104,22 +141,23 @@ export default function SalesOverviewPage() {
       <section className={styles.split}>
         <article className="card">
           <div className="card-head">
-            <div>
-              <h2>Leads by status</h2>
-            </div>
+            <h2>Leads by status</h2>
           </div>
           <div className="card-body">
-            <BarList items={pipeline} onSelect={(label) => router.push(`/sales/leads?status=${encodeURIComponent(label)}`)} />
+            <BarList items={leadPipeline} onSelect={(label) => router.push(`/sales/leads?status=${encodeURIComponent(label)}`)} />
           </div>
         </article>
         <article className="card">
           <div className="card-head">
             <div>
-              <h2>Lead sources</h2>
+              <h2>Opportunity stages</h2>
+              <p className="card-sub">
+                <Link href="/sales/pipeline">Open opportunity board</Link>
+              </p>
             </div>
           </div>
           <div className="card-body">
-            <BarList items={sourceBreakdown(state)} color="#3b82f6" onSelect={(label) => router.push(`/sales/leads?source=${encodeURIComponent(label)}`)} />
+            <BarList items={oppPipeline} onSelect={() => router.push("/sales/pipeline")} />
           </div>
         </article>
       </section>
@@ -128,57 +166,81 @@ export default function SalesOverviewPage() {
         <article className="card">
           <div className="card-head">
             <div>
-              <h2>Suggested follow-ups</h2>
-              <p className="card-sub">Generated from recorded activity, each with its evidence.</p>
+              <h2>Lead sources</h2>
             </div>
-            <Link href="/sales/actions" className="link-button">
-              All {workspace.suggestions.length} <Icon name="arrowRight" size={13} />
-            </Link>
           </div>
-          <div className={`card-body ${styles.stack}`}>
-            {workspace.suggestions.length === 0 ? (
-              <EmptyState icon="checkCircle" title="No suggestions right now">Every active lead has a plan.</EmptyState>
-            ) : (
-              workspace.suggestions.slice(0, 3).map((suggestion) => <SuggestionCard key={suggestion.id} suggestion={suggestion} lead={workspace.leadById.get(suggestion.leadId)} />)
-            )}
+          <div className="card-body">
+            <BarList items={sourceBreakdown(state)} onSelect={(label) => router.push(`/sales/leads?source=${encodeURIComponent(label)}`)} />
           </div>
         </article>
         <article className="card">
           <div className="card-head">
             <div>
-              <h2>Most engaged prospects</h2>
-              <p className="card-sub">Ranked by recent sign-ups, scans, logins and reports.</p>
+              <h2>Accounts</h2>
             </div>
+            <Link href="/sales/accounts" className="text-link">
+              Client 360
+            </Link>
           </div>
-          <ul className={styles.hot}>
-            {hotLeads.map((lead) => (
-              <li key={lead.id}>
-                <Link href={`/sales/leads/${lead.id}`}>
-                  <span className="avatar">{initials(lead.name)}</span>
-                  <span className={styles.hotText}>
-                    <b>{lead.name}</b>
-                    <small>
-                      {lead.company ?? lead.email} · {lead.lastActivity ? timeAgo(lead.lastActivity.occurredAt, now || undefined) : "no activity"}
-                    </small>
-                  </span>
-                  <LeadStatusChip status={lead.status} />
-                  <span className={styles.score} title="Engagement score (0–100)">
-                    <span className={styles.scoreTrack}>
-                      <i style={{ width: `${lead.engagementScore}%` }} />
-                    </span>
-                    <b className="tabular">{lead.engagementScore}</b>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="card-body">
+            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {(state.tessiant?.accounts ?? []).slice(0, 4).map((account) => (
+                <li key={account.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--line-soft)" }}>
+                  <Link href={`/sales/accounts/${account.id}`}>{account.name}</Link>
+                  <div className="muted">
+                    {account.sector} · {account.status}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </article>
       </section>
 
-      <p className="demo-banner">
-        <Icon name="database" size={14} />
-        Demo data — metrics are calculated live from the sample workspace, so they update as you work leads and tasks.
-      </p>
+      <section className={styles.split}>
+        <article className="card">
+          <div className="card-head">
+            <div>
+              <h2>Priority suggestions</h2>
+            </div>
+          </div>
+          <div className="card-body stack-gap">
+            {workspace.suggestions.slice(0, 4).map((suggestion) => (
+              <SuggestionCard key={suggestion.id} suggestion={suggestion} />
+            ))}
+            {workspace.suggestions.length === 0 && <EmptyState title="No suggestions right now" />}
+          </div>
+        </article>
+        <article className="card">
+          <div className="card-head">
+            <div>
+              <h2>Active leads</h2>
+            </div>
+          </div>
+          <div className="card-body">
+            {hotLeads.length === 0 ? (
+              <EmptyState title="No open leads" />
+            ) : (
+              <ul className={styles.leadList}>
+                {hotLeads.map((lead) => (
+                  <li key={lead.id}>
+                    <Link href={`/sales/leads/${lead.id}`} className={styles.leadRow}>
+                      <span className="avatar avatar-sm">{initials(lead.name)}</span>
+                      <span>
+                        <b>{lead.name}</b>
+                        <small>
+                          {lead.company ?? "No company"} · {timeAgo(lead.createdAt)}
+                        </small>
+                      </span>
+                      <LeadStatusChip status={lead.status} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </article>
+      </section>
     </div>
   );
 }

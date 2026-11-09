@@ -2,10 +2,22 @@
 // Generated relative to "now" so the workspace always looks current. Replace this module
 // with a real provider (Qiko Signal, website submissions, Admin V2) without touching screens.
 
-import type { ActivityEvent, ConversationMessage, CrmState, Lead, LeadSource, LeadStatus, Member, Scan, Task } from "@/lib/types";
+import type {
+  ActivityEvent,
+  Contact,
+  ConversationMessage,
+  CrmState,
+  Lead,
+  Member,
+  Opportunity,
+  Scan,
+  Task,
+} from "@/lib/types";
+import { adaptLeadRecord, normalizeLeadSource, normalizeLeadStatus } from "@/lib/sales-crm";
 import { addDays, toDateKey } from "@/lib/format";
+import { createTessiantSlice } from "./tessiant-seed";
 
-export const DATA_VERSION = 3;
+export const DATA_VERSION = 12;
 
 export function demoMessages(ago: (hours: number) => string): ConversationMessage[] {
   return [
@@ -54,9 +66,32 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
     events.push({ id: `ev_${++eventId}`, leadId, kind, title, detail, occurredAt: ago(hoursAgo), source, actor });
   };
 
-  const lead = (id: string, data: Omit<Lead, "id" | "nextAction" | "createdAt"> & { createdHoursAgo: number }) => {
-    const { createdHoursAgo, ...rest } = data;
-    leads.push({ id, ...rest, createdAt: ago(createdHoursAgo), nextAction: null });
+  const lead = (
+    id: string,
+    data: Omit<Lead, "id" | "nextAction" | "createdAt" | "status" | "source"> & {
+      createdHoursAgo: number;
+      /** Accepts current or legacy demo statuses/sources; normalised via sales-crm helpers. */
+      status: string;
+      source: string;
+      sector?: string | null;
+      serviceInterest?: string | null;
+      accountId?: string | null;
+    },
+  ) => {
+    const { createdHoursAgo, status, source, ...rest } = data;
+    leads.push(
+      adaptLeadRecord({
+        id,
+        ...rest,
+        status: normalizeLeadStatus(status),
+        source: normalizeLeadSource(source),
+        sector: rest.sector ?? null,
+        serviceInterest: rest.serviceInterest ?? null,
+        accountId: rest.accountId ?? null,
+        createdAt: ago(createdHoursAgo),
+        nextAction: null,
+      }),
+    );
   };
 
   const scan = (leadId: string, website: string, score: number, hoursAgo: number, findings: string[]) => {
@@ -82,9 +117,22 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
     ["l_daniel", "Daniel Okafor", "daniel@orbitfreight.com", "Orbit Freight", "Operations Lead", 31],
   ];
   for (const [id, name, email, company, role, hours] of signalLeads) {
-    lead(id, { name, email, phone: null, company, role, source: "Qiko Signal", status: "New", ownerId: "me", createdHoursAgo: hours });
-    event(id, "signup", "Registered on Qiko Signal", hours, "Qiko Signal", `Signed up with ${email}`);
-    event(id, "login", "Logged in to Qiko Signal", hours - 1, "Qiko Signal");
+    lead(id, {
+      name,
+      email,
+      phone: null,
+      company,
+      role,
+      source: "Website",
+      status: "New",
+      ownerId: "me",
+      createdHoursAgo: hours,
+      sector: "Retail",
+      serviceInterest: "augmentation",
+      accountId: id === "l_amelia" ? "acc_northbridge" : null,
+    });
+    event(id, "enquiry", "Inbound website enquiry", hours, "Website", `Interest registered · ${email}`);
+    event(id, "lead_created", "Lead captured for qualification", hours - 1, "Tessiant CRM");
   }
   event("l_amelia", "product", "Connected website domain", 2, "Qiko Signal", "northstar.com");
   event("l_priya", "product", "Invited a teammate", 5, "Qiko Signal");
@@ -147,16 +195,29 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
   event("l_zara", "enquiry", "Submitted a contact form", 800, "Website");
   event("l_zara", "status_change", "Status changed to Lost", 240, "Qiko Core", "Budget moved to next year", "Ali Khan");
 
-  lead("l_felix", { name: "Felix Brooks", email: "felix@ardenpartners.com", phone: "+44 20 7946 0999", company: "Arden Partners", role: "Partner", source: "Manual entry", status: "Contacted", ownerId: "me", createdHoursAgo: 340 });
-  event("l_felix", "lead_created", "Lead added manually", 340, "Qiko Core", "Met at Retail Tech Summit", "You");
-  event("l_felix", "interaction", "Follow-up email", 100, "Qiko Core", "Email · Promised a case study", "You");
+  lead("l_felix", {
+    name: "Felix Brooks",
+    email: "felix@ardenpartners.com",
+    phone: "+44 20 7946 0999",
+    company: "Crest Consumer Brands",
+    role: "Partner / advisor",
+    source: "Event",
+    status: "Working",
+    ownerId: "me",
+    createdHoursAgo: 340,
+    sector: "Retail",
+    serviceInterest: "advisory",
+    accountId: "acc_crest",
+  });
+  event("l_felix", "lead_created", "Lead added manually", 340, "Tessiant CRM", "Met at Retail Tech Summit", "You");
+  event("l_felix", "interaction", "Follow-up email", 100, "Tessiant CRM", "Email · Promised a case study", "You");
 
   // — Broader pipeline history (older leads) so trends and filters have depth
   const firstNames = ["Olivia", "Arjun", "Sophie", "Thomas", "Kwame", "Hannah", "Mateo", "Isla", "Lucas", "Freya", "Ella", "Samuel", "Oscar", "Ruby", "Yusuf", "Maya", "Henry", "Leah", "Tariq", "Evie", "Joel", "Aisha", "Poppy", "Mei", "Imogen", "Rory", "Nadia", "Callum", "Sienna", "Tolu", "George", "Layla", "Jack", "Anya", "Ben", "Clara"];
   const lastNames = ["Pemberton", "Patel", "Walsh", "Haddon", "Darko", "Lloyd", "Ruiz", "Fraser", "Price", "Holland", "Ward", "Ellis", "Hale", "Ashford", "Osman", "Doyle", "Calder", "Collins", "Hamid", "Hart", "Fleming", "Okafor", "Lane", "Chen", "Palmer", "Quinn", "Karim", "Stewart", "Rowe", "Adeyemi", "Banks", "Rahman", "Ellison", "Novak", "Carter", "Dunn"];
   const companies = ["Brightwater", "Kinfolk Coffee", "Vantage Dental", "Northgate Homes", "Larkspur Studio", "Sable Systems", "Oakridge Clinics", "Harbourline", "Mosaic Travel", "Bluebell Bakery", "Crestview Legal", "Ironbridge Tools", "Solace Spa", "Fable Books", "Quayside Motors", "Elmtree Schools", "Pinnacle Gyms", "Saffron Kitchens"];
-  const sources: LeadSource[] = ["Qiko Signal", "Qiko Signal", "Qiko Signal", "Website", "Website", "Free audit", "Manual entry"];
-  const statuses: LeadStatus[] = ["Contacted", "Contacted", "Qualified", "Qualified", "Won", "Lost", "New"];
+  const sources = ["Website", "Website", "Website", "Website", "Website", "Referral", "Manual entry"] as const;
+  const statuses = ["Working", "Working", "Qualified", "Qualified", "Converted", "Unqualified", "New"] as const;
   const owners = ["me", "m_sarah", "m_ali", "m_maya"];
 
   for (let index = 0; index < firstNames.length; index += 1) {
@@ -168,17 +229,16 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
     const status = pick(statuses);
     const createdHours = 24 * (8 + Math.floor(random() * 80));
     lead(id, { name, email: `${firstNames[index].toLowerCase()}@${domain}`, phone: null, company, role: null, source, status, ownerId: pick(owners), createdHoursAgo: createdHours });
-    if (source === "Qiko Signal") event(id, "signup", "Registered on Qiko Signal", createdHours, "Qiko Signal");
-    else if (source === "Website") event(id, "enquiry", "Submitted a contact form", createdHours, "Website");
-    else if (source === "Free audit") event(id, "enquiry", "Requested a free audit", createdHours, "Website");
-    else event(id, "lead_created", "Lead added manually", createdHours, "Qiko Core", undefined, "You");
+    if (source === "Website") event(id, "enquiry", "Submitted a contact form", createdHours, "Website");
+    else if (source === "Referral") event(id, "lead_created", "Referral lead captured", createdHours, "Tessiant CRM");
+    else event(id, "lead_created", "Lead added manually", createdHours, "Tessiant CRM", undefined, "You");
     if (source !== "Manual entry" && random() > 0.35) {
       scan(id, domain, 40 + Math.floor(random() * 45), createdHours - 24 - Math.floor(random() * 48), ["Limited AI-search visibility", "Missing structured data"]);
     }
     const logins = Math.floor(random() * 4);
     for (let login = 0; login < logins; login += 1) event(id, "login", "Logged in to Qiko Signal", Math.max(80, createdHours - 30 - Math.floor(random() * createdHours * 0.6)), "Qiko Signal");
-    if (status === "Contacted" || status === "Qualified") {
-      event(id, "interaction", pick(["Follow-up call", "Sent case study", "Demo session", "Pricing discussion"]), 24 + Math.floor(random() * 120), "Qiko Core", undefined, "You");
+    if (status === "Working" || status === "Qualified") {
+      event(id, "interaction", pick(["Follow-up call", "Sent case study", "Demo session", "Pricing discussion"]), 24 + Math.floor(random() * 120), "Tessiant CRM", undefined, "You");
     }
   }
 
@@ -194,21 +254,346 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
 
   events.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
 
+  // Tessiant staffing follow-ups linked to requirements (requirementId via description prefix for demo)
+  task({
+    title: "Verify Elena Vos availability for Northbridge",
+    description: "[requirement:req_retail] Confirm start date and day-rate before interview.",
+    status: "pending",
+    priority: "high",
+    due: today,
+    ownerId: "me",
+    leadId: "l_amelia",
+    createdHoursAgo: 6,
+  });
+  task({
+    title: "Obtain updated CV pack for SAP shortlist",
+    description: "[requirement:req_sap] Safe DEMO CV refs only — no real personal documents.",
+    status: "pending",
+    priority: "medium",
+    due: addDays(1),
+    ownerId: "m_sarah",
+    leadId: null,
+    createdHoursAgo: 20,
+  });
+  task({
+    title: "Send Crest SIA intro follow-up",
+    description: "[requirement:req_sia] Potential advisory — do not treat as booked revenue.",
+    status: "pending",
+    priority: "medium",
+    due: addDays(2),
+    ownerId: "me",
+    leadId: "l_felix",
+    createdHoursAgo: 5,
+  });
+
+  const contacts: Contact[] = [
+    {
+      id: "ct_amelia",
+      accountId: "acc_northbridge",
+      name: "Amelia Hart",
+      email: "amelia@northstar.com",
+      phone: null,
+      role: "Head of Growth / hiring manager",
+      ownerId: "me",
+      isPrimary: true,
+      notes: "Primary contact for retail transformation staffing.",
+      createdAt: ago(48),
+      updatedAt: ago(4),
+    },
+    {
+      id: "ct_north_proc",
+      accountId: "acc_northbridge",
+      name: "James Cole",
+      email: "james.cole@northbridge.example",
+      phone: "+44 20 7000 1100",
+      role: "Procurement",
+      ownerId: "m_sarah",
+      isPrimary: false,
+      notes: "Commercial paper and rate cards.",
+      createdAt: ago(40 * 24),
+      updatedAt: ago(10),
+    },
+    {
+      id: "ct_helix_cio",
+      accountId: "acc_helix",
+      name: "Priya Nair",
+      email: "priya.nair@helix.example",
+      phone: null,
+      role: "Programme CIO",
+      ownerId: "m_sarah",
+      isPrimary: true,
+      notes: "SAP S/4 capacity decisions.",
+      createdAt: ago(72),
+      updatedAt: ago(12),
+    },
+    {
+      id: "ct_felix",
+      accountId: "acc_crest",
+      name: "Felix Brooks",
+      email: "felix@ardenpartners.com",
+      phone: "+44 20 7946 0999",
+      role: "Partner / executive sponsor",
+      ownerId: "me",
+      isPrimary: true,
+      notes: "Founder-heavy relationship — add secondary owner.",
+      createdAt: ago(340),
+      updatedAt: ago(24),
+    },
+    {
+      id: "ct_civic",
+      accountId: "acc_civic",
+      name: "Helen Okonkwo",
+      email: "helen.okonkwo@civic.example",
+      phone: null,
+      role: "Change lead",
+      ownerId: "m_sarah",
+      isPrimary: true,
+      notes: "Public-sector expansion prospect (fictional).",
+      createdAt: ago(96),
+      updatedAt: ago(90),
+    },
+    {
+      id: "ct_meridian",
+      accountId: "acc_meridian",
+      name: "Tomás Ribeiro",
+      email: "tomas.ribeiro@meridian-partners.example",
+      phone: "+44 20 7000 4411",
+      role: "Managing partner / hiring manager",
+      ownerId: "m_ali",
+      isPrimary: true,
+      notes: "Professional-services consulting buyer (fictional).",
+      createdAt: ago(10 * 24),
+      updatedAt: ago(2 * 24),
+    },
+  ];
+
+  const opportunities: Opportunity[] = [
+    {
+      id: "opp_northbridge_retail",
+      name: "Northbridge retail transformation PM",
+      accountId: "acc_northbridge",
+      contactId: "ct_amelia",
+      leadId: "l_amelia",
+      type: "augmentation",
+      stage: "Negotiation",
+      amount: 185000,
+      currency: "GBP",
+      probability: 75,
+      expectedCloseDate: addDays(14),
+      ownerId: "me",
+      services: ["Staff augmentation", "Programme leadership"],
+      nextStep: "Agree day-rate band and generate staffing requirement",
+      agreedContractValue: null,
+      expectedBilling: null,
+      recognisedRevenue: null,
+      lostReason: null,
+      createdAt: ago(48),
+      updatedAt: ago(4),
+      closedAt: null,
+    },
+    {
+      id: "opp_helix_sap",
+      name: "Helix SAP S/4 architecture capacity",
+      accountId: "acc_helix",
+      contactId: "ct_helix_cio",
+      leadId: null,
+      type: "augmentation",
+      stage: "Proposal",
+      amount: 210000,
+      currency: "GBP",
+      probability: 50,
+      expectedCloseDate: addDays(28),
+      ownerId: "m_sarah",
+      services: ["SAP architecture"],
+      nextStep: "Send proposal pack with scarce-skill premiums",
+      agreedContractValue: null,
+      expectedBilling: null,
+      recognisedRevenue: null,
+      lostReason: null,
+      createdAt: ago(72),
+      updatedAt: ago(12),
+      closedAt: null,
+    },
+    {
+      id: "opp_crest_sia",
+      name: "Crest SIA board advisory intro",
+      accountId: "acc_crest",
+      contactId: "ct_felix",
+      leadId: "l_felix",
+      type: "advisory",
+      stage: "Discovery",
+      amount: 48000,
+      currency: "GBP",
+      probability: 25,
+      expectedCloseDate: addDays(45),
+      ownerId: "me",
+      services: ["Senior Industry Advisors", "Advisory"],
+      nextStep: "Chemistry meeting — do not treat as booked revenue",
+      agreedContractValue: null,
+      expectedBilling: null,
+      recognisedRevenue: null,
+      lostReason: null,
+      createdAt: ago(24),
+      updatedAt: ago(6),
+      closedAt: null,
+    },
+    {
+      id: "opp_northbridge_pmo_won",
+      name: "Northbridge retail PMO assignment",
+      accountId: "acc_northbridge",
+      contactId: "ct_amelia",
+      leadId: null,
+      type: "augmentation",
+      stage: "Closed Won",
+      amount: 160000,
+      currency: "GBP",
+      probability: 100,
+      expectedCloseDate: addDays(-60),
+      ownerId: "me",
+      services: ["Programme leadership"],
+      nextStep: "Assignment live — track billing vs recognition",
+      agreedContractValue: 160000,
+      expectedBilling: 125000,
+      recognisedRevenue: 45000,
+      lostReason: null,
+      createdAt: ago(90 * 24),
+      updatedAt: ago(10),
+      closedAt: ago(60 * 24),
+    },
+    {
+      id: "opp_civic_prospect",
+      name: "Civic public-sector change team",
+      accountId: "acc_civic",
+      contactId: "ct_civic",
+      leadId: null,
+      type: "project team",
+      stage: "Qualification",
+      amount: 320000,
+      currency: "GBP",
+      probability: 10,
+      expectedCloseDate: addDays(60),
+      ownerId: "m_sarah",
+      services: ["Public sector expansion", "Change & transformation"],
+      nextStep: "Qualify coverage gap vs Tessiant offerings",
+      agreedContractValue: null,
+      expectedBilling: null,
+      recognisedRevenue: null,
+      lostReason: null,
+      createdAt: ago(96),
+      updatedAt: ago(90),
+      closedAt: null,
+    },
+    {
+      id: "opp_greenway_won",
+      name: "Greenway Foods consultancy retainer",
+      accountId: "acc_crest",
+      contactId: null,
+      leadId: "l_noah",
+      type: "consultancy",
+      stage: "Closed Won",
+      amount: 72000,
+      currency: "GBP",
+      probability: 100,
+      expectedCloseDate: addDays(-20),
+      ownerId: "m_sarah",
+      services: ["Consultancy"],
+      nextStep: "Onboarding — commercial value tracked separately from staffing",
+      agreedContractValue: 72000,
+      expectedBilling: 24000,
+      recognisedRevenue: 12000,
+      lostReason: null,
+      createdAt: ago(900),
+      updatedAt: ago(72),
+      closedAt: ago(72),
+    },
+    {
+      id: "opp_meridian_consult",
+      name: "Meridian operating-model consultancy",
+      accountId: "acc_meridian",
+      contactId: "ct_meridian",
+      leadId: null,
+      type: "consultancy",
+      stage: "Proposal",
+      amount: 140000,
+      currency: "GBP",
+      probability: 50,
+      expectedCloseDate: addDays(21),
+      ownerId: "m_ali",
+      services: ["Consultancy", "Staff augmentation"],
+      nextStep: "Proposal walkthrough — staffing requirement already open for shortlist",
+      agreedContractValue: null,
+      expectedBilling: null,
+      recognisedRevenue: null,
+      lostReason: null,
+      createdAt: ago(5 * 24),
+      updatedAt: ago(30),
+      closedAt: null,
+    },
+    {
+      id: "opp_meridian_aug",
+      name: "Meridian surge augmentation bench",
+      accountId: "acc_meridian",
+      contactId: "ct_meridian",
+      leadId: null,
+      type: "augmentation",
+      stage: "Qualification",
+      amount: 96000,
+      currency: "GBP",
+      probability: 10,
+      expectedCloseDate: addDays(50),
+      ownerId: "m_ali",
+      services: ["Staff augmentation"],
+      nextStep: "Qualify surge headcount vs network availability",
+      agreedContractValue: null,
+      expectedBilling: null,
+      recognisedRevenue: null,
+      lostReason: null,
+      createdAt: ago(2 * 24),
+      updatedAt: ago(2 * 24),
+      closedAt: null,
+    },
+  ];
+
+  // Link converted demo leads
+  const noah = leads.find((item) => item.id === "l_noah");
+  if (noah) {
+    noah.status = "Converted";
+    noah.convertedOpportunityId = "opp_greenway_won";
+    noah.serviceInterest = "consultancy";
+  }
+  const amelia = leads.find((item) => item.id === "l_amelia");
+  if (amelia) {
+    amelia.status = "Qualified";
+    amelia.accountId = "acc_northbridge";
+    amelia.serviceInterest = "augmentation";
+  }
+
   return {
     version: DATA_VERSION,
     dataMode: "demo",
     seededAt: new Date(now).toISOString(),
     leads,
+    contacts,
+    opportunities,
     events,
     scans,
     notes: [
-      { id: "note_1", leadId: "l_chloe", body: "Budget approved for Q1. Wants competitor tracking for 8 brands — check the Growth plan limits before the next call.", authorId: "me", createdAt: ago(90) },
-      { id: "note_2", leadId: "l_ethan", body: "Needs pricing for 6 properties. Decision maker is the CFO (Laura).", authorId: "me", createdAt: ago(299) },
-      { id: "note_3", leadId: "l_liam", body: "Prefers email over calls. Very interested in the AI-search findings.", authorId: "m_sarah", createdAt: ago(95) },
+      { id: "note_1", leadId: "l_chloe", body: "Budget approved for Q1. Confirm decision makers before proposal.", authorId: "me", createdAt: ago(90) },
+      { id: "note_2", leadId: "l_ethan", body: "Needs multi-site pricing. Decision maker is the CFO (Laura).", authorId: "me", createdAt: ago(299) },
+      { id: "note_3", leadId: "l_liam", body: "Prefers email. Interested in programme augmentation support.", authorId: "m_sarah", createdAt: ago(95), accountId: null },
+      {
+        id: "note_acc_crest",
+        leadId: "l_felix",
+        accountId: "acc_crest",
+        body: "Founder dependency risk — add secondary relationship owner before scale.",
+        authorId: "me",
+        createdAt: ago(20),
+      },
     ],
     messages: demoMessages(ago),
     tasks,
     members,
     decisions: {},
+    tessiant: createTessiantSlice(now),
   };
 }

@@ -18,7 +18,9 @@ const SOURCES: { name: string; icon: IconName; scope: string; status: "demo" | "
   { name: "Qiko website", icon: "globe", scope: "Contact and assessment enquiries", status: "demo", note: "Sample data · submission flow not yet connected" },
   { name: "Qiko Admin V2", icon: "users", scope: "Users, account records, activity", status: "demo", note: "Sample data · backend services not yet connected" },
   { name: "Qiko Core CRM store", icon: "database", scope: "Lead status, notes, ownership, tasks", status: "demo", note: "Saved in this browser (local storage)" },
-  { name: "Qiko Pulse", icon: "pulse", scope: "AI insights and recommendations", status: "future", note: "Future integration · interface ready" },
+  { name: "Qiko Pulse · Tessiant", icon: "pulse", scope: "Knowledge blocks, insights, accept/reject, value attribution", status: "demo", note: "Rules on shared Tessiant CRM data — no automatic model training" },
+  { name: "Tessiant staffing", icon: "users", scope: "Talent network, requirements, assignments, Pulse events", status: "demo", note: "Sample staffing data in this browser workspace" },
+  { name: "Salesforce / SharePoint", icon: "database", scope: "External CRM and document repositories", status: "future", note: "Not connected" },
 ];
 
 export default function SettingsPage() {
@@ -72,9 +74,18 @@ export default function SettingsPage() {
       <header className="page-head">
         <div>
           <h1>Settings</h1>
-          <p className="subtitle">Manage your profile, your sales team and the data powering this workspace.</p>
+          <p className="subtitle">Profile, team, and discreet workspace diagnostics — including demo data sources.</p>
         </div>
       </header>
+
+      <div className="notice-banner" role="note">
+        <div>
+          <b>Tessiant operating workspace</b>
+          <div>
+            Powered by Qiko Core. Sample data and connector status live here so the main business screens stay focused on work.
+          </div>
+        </div>
+      </div>
 
       <div className={styles.grid}>
         <section className="card">

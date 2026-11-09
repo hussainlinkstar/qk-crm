@@ -106,13 +106,13 @@ function buildSuggestions({ state, byLead, openByLead, now }: SuggestionContext)
   };
 
   for (const lead of state.leads) {
-    if (lead.status === "Won" || lead.status === "Lost") continue;
+    if (lead.status === "Converted" || lead.status === "Unqualified") continue;
     if ((openByLead.get(lead.id) ?? []).length > 0) continue;
     const events = byLead.get(lead.id) ?? [];
     const recentScan = (scansByLead.get(lead.id) ?? []).find((scan) => now - new Date(scan.completedAt).getTime() <= 72 * HOUR);
     const company = lead.company ? ` (${lead.company})` : "";
 
-    if (recentScan && (lead.status === "New" || lead.status === "Contacted")) {
+    if (recentScan && (lead.status === "New" || lead.status === "Working")) {
       const reportViews = events.filter((event) => event.kind === "report" && within(event, 72, now));
       add("scan_review", lead, recentScan.id, {
         title: `Review ${lead.name}'s scan results and follow up`,
@@ -129,13 +129,13 @@ function buildSuggestions({ state, byLead, openByLead, now }: SuggestionContext)
     }
 
     const signup = events.find((event) => event.kind === "signup" && within(event, 7 * 24, now));
-    if (lead.source === "Qiko Signal" && lead.status === "New" && signup) {
+    if (lead.status === "New" && signup) {
       const usage = events.filter((event) => event.kind !== "signup" && within(event, 7 * 24, now));
       add("signal_review", lead, signup.id, {
-        title: "Review new Signal sign-up",
-        reason: `Registered on Qiko Signal ${formatDate(signup.occurredAt)} and has not been contacted yet.${usage.length ? ` ${plural(usage.length, "product action")} since sign-up.` : ""}`,
+        title: "Qualify new inbound lead",
+        reason: `Lead captured ${formatDate(signup.occurredAt)} and has not been contacted yet.${usage.length ? ` ${plural(usage.length, "related activity")} since capture.` : ""}`,
         priority: usage.length > 0 ? "high" : "medium",
-        evidence: [ev(signup), ...usage.slice(0, 3).map((event) => ev(event)), { label: "No owner contact recorded since sign-up", source: "Qiko Core", kind: "fact" }],
+        evidence: [ev(signup), ...usage.slice(0, 3).map((event) => ev(event)), { label: "No owner contact recorded since capture", source: "Tessiant CRM", kind: "fact" }],
         suggestedDue: todayKey(),
       });
       continue;
@@ -165,7 +165,7 @@ function buildSuggestions({ state, byLead, openByLead, now }: SuggestionContext)
       continue;
     }
 
-    if (lead.status === "Contacted" || lead.status === "Qualified") {
+    if (lead.status === "Working" || lead.status === "Qualified") {
       const lastTouch = [
         ...events.filter((event) => TOUCH_KINDS.has(event.kind)).map((event) => event.occurredAt),
         ...state.notes.filter((note) => note.leadId === lead.id).map((note) => note.createdAt),
@@ -220,7 +220,15 @@ export function buildWorkspace(state: CrmState, now = Date.now()): Workspace {
     const suggestion = suggestionByLead.get(lead.id);
     const firstTask = openTasks[0];
     const taskAction = firstTask ? firstTask.origin === "suggestion" ? suggestedTaskNextAction(firstTask.title) : firstTask.title : undefined;
-    const rawNextAction = lead.nextAction ?? taskAction ?? (suggestion ? SUGGESTION_NEXT_ACTIONS[suggestion.rule] : undefined) ?? (lead.status === "Won" ? "Hand over to onboarding" : lead.status === "Lost" ? "No action needed" : "Schedule a follow-up");
+    const rawNextAction =
+      lead.nextAction ??
+      taskAction ??
+      (suggestion ? SUGGESTION_NEXT_ACTIONS[suggestion.rule] : undefined) ??
+      (lead.status === "Converted"
+        ? "Work the linked opportunity"
+        : lead.status === "Unqualified"
+          ? "No action needed"
+          : "Schedule a follow-up");
     const nextActionLabel = stripLeadName(rawNextAction, lead.name);
     return { ...lead, lastActivity: events[0] ?? null, openTasks, engagementScore: engagementScore(events, now), nextActionLabel, scansCount: scanCount.get(lead.id) ?? 0 };
   });
@@ -240,11 +248,11 @@ export interface PriorityGroup {
 }
 
 const GROUP_COPY: Record<SuggestionRule, (count: number) => { title: string; summary: string }> = {
-  signal_review: (count) => ({ title: `Review ${plural(count, "new Signal lead")} awaiting follow-up`, summary: "Recent Qiko Signal registrations nobody has contacted yet." }),
+  signal_review: (count) => ({ title: `Review ${plural(count, "new inbound lead")} awaiting follow-up`, summary: "Recent website/inbound leads nobody has contacted yet." }),
   scan_review: (count) => ({ title: `Check ${plural(count, "completed free scan")} for sales opportunities`, summary: "Scans finished in the last 72 hours with room for improvement." }),
   engagement: (count) => ({ title: `Follow up with ${plural(count, "prospect")} showing strong engagement`, summary: "Repeated logins, report exports and pricing views this week." }),
   enquiry_contact: (count) => ({ title: `Reply to ${plural(count, "new website enquiry", "new website enquiries")}`, summary: "Contact-form submissions waiting for a first response." }),
-  stale: (count) => ({ title: `Re-engage ${plural(count, "lead")} with no recent follow-up`, summary: "Contacted or qualified leads untouched for 7+ days." }),
+  stale: (count) => ({ title: `Re-engage ${plural(count, "lead")} with no recent follow-up`, summary: "Working or qualified leads untouched for 7+ days." }),
 };
 
 export function buildPriorities(workspace: Workspace): PriorityGroup[] {
@@ -286,11 +294,11 @@ export function buildMetrics(state: CrmState, now = Date.now()): MetricCard[] {
   const overdue = followUps.filter((task) => (task.due as string) < today).length;
   return [
     { key: "leads", label: "Total leads", value: state.leads.length, description: "Unique prospects across all sources · all time", delta: `+${state.leads.filter((lead) => week(lead.createdAt)).length} this week`, tone: "positive", href: "/sales/leads" },
-    { key: "signups", label: "Signal sign-ups", value: signups.length, description: "Users registered on Qiko Signal · all time", delta: `+${signups.filter((event) => week(event.occurredAt)).length} this week`, tone: "positive", href: "/sales/leads?source=Qiko%20Signal" },
+    { key: "signups", label: "Inbound leads", value: signups.length, description: "Lead intake events · all time", delta: `+${signups.filter((event) => week(event.occurredAt)).length} this week`, tone: "positive", href: "/sales/leads?status=New" },
     { key: "scans", label: "Free scans", value: state.scans.length, description: "Completed free audits · all time", delta: `+${state.scans.filter((scan) => week(scan.completedAt)).length} this week`, tone: "positive", href: "/sales/leads?activity=scan" },
     { key: "active", label: "Active users", value: active.size, description: "Product activity in the last 30 days", delta: `${Math.round((active.size / Math.max(1, state.leads.length)) * 100)}% of leads`, href: "/sales/leads?activity=active" },
     { key: "enquiries", label: "Enquiries · 7 days", value: enquiries.filter((event) => week(event.occurredAt)).length, description: "Website and contact-form submissions", delta: `${enquiries.length} all time`, href: "/sales/leads?source=Website" },
-    { key: "followups", label: "Follow-ups due", value: followUps.length, description: "Open tasks due today or overdue", delta: overdue ? `${overdue} overdue` : "None overdue", tone: overdue ? "warning" : undefined, href: "/sales/actions" },
+    { key: "followups", label: "Follow-ups due", value: followUps.length, description: "Open tasks due today or overdue", delta: overdue ? `${overdue} overdue` : "None overdue", tone: overdue ? "warning" : undefined, href: "/tasks" },
   ];
 }
 

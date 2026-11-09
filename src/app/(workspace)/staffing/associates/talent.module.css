@@ -1,0 +1,231 @@
+.views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.viewChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.viewChip[data-active="true"] {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+.toolbarCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.toolbar .grow {
+  flex: 1 1 auto;
+  min-width: 180px;
+  min-height: 40px;
+  height: 40px;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.filterGrid .input {
+  min-height: 40px;
+  height: 40px;
+}
+
+.demoNote {
+  margin: -12px 0 0;
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.clickRow {
+  cursor: pointer;
+}
+
+.clickRow:focus-visible {
+  outline: 2px solid var(--brand-ring);
+  outline-offset: -2px;
+}
+
+.statStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.statStrip > div {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.statStrip span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.statStrip b {
+  display: block;
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 4px;
+}
+
+.pagerControls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.compactTable td {
+  vertical-align: middle;
+}
+
+.compactTable th:first-child,
+.compactTable td:first-child {
+  padding-left: 16px;
+}
+
+.compactTable th:last-child,
+.compactTable td:last-child {
+  padding-right: 16px;
+}
+
+.person {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.personMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.personMeta .muted {
+  margin-top: 0;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+.tab {
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab[data-active="true"] {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+.sideStack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rateGate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--well);
+}
+
+.docRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.docRow:last-child {
+  border-bottom: 0;
+}
+
+.heroChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .filterGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .statStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .person {
+    align-items: flex-start;
+  }
+}

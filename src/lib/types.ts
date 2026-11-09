@@ -1,7 +1,13 @@
-// Shared CRM data contracts. The UI only talks to these types, so the demo data
-// provider can later be swapped for real Qiko services without touching screens.
+// Shared CRM data contracts. Sales is modelled on conventional Salesforce-style
+// B2B consulting/staffing patterns (Leads → Accounts/Contacts/Opportunities).
+// Not a claim of Tessiant's exact Salesforce org — standard CRM starting point.
 
-export const LEAD_STATUSES = ["New", "Contacted", "Qualified", "Won", "Lost"] as const;
+import type { TessiantStateSlice } from "./tessiant-types";
+
+export type { TessiantStateSlice } from "./tessiant-types";
+
+/** Pre-opportunity lead qualification statuses (Salesforce-style). Closed outcomes live on Opportunities. */
+export const LEAD_STATUSES = ["New", "Working", "Qualified", "Unqualified", "Converted"] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
 export const TASK_STATUSES = ["pending", "in_progress", "completed", "dismissed"] as const;
@@ -10,8 +16,32 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 export const PRIORITIES = ["high", "medium", "low"] as const;
 export type Priority = (typeof PRIORITIES)[number];
 
-export const LEAD_SOURCES = ["Qiko Signal", "Website", "Free audit", "Manual entry"] as const;
+export const LEAD_SOURCES = [
+  "Referral",
+  "Website",
+  "Event",
+  "Partner",
+  "Outbound",
+  "Manual entry",
+  "Existing client",
+] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
+
+export const OPPORTUNITY_STAGES = [
+  "Qualification",
+  "Discovery",
+  "Proposal",
+  "Negotiation",
+  "Closed Won",
+  "Closed Lost",
+] as const;
+export type OpportunityStage = (typeof OPPORTUNITY_STAGES)[number];
+
+export const OPPORTUNITY_TYPES = ["augmentation", "project team", "advisory", "consultancy", "mixed"] as const;
+export type OpportunityType = (typeof OPPORTUNITY_TYPES)[number];
+
+export const ACTIVITY_TYPES = ["call", "meeting", "email", "introduction", "note", "follow_up", "other"] as const;
+export type SalesActivityType = (typeof ACTIVITY_TYPES)[number];
 
 export interface Member {
   id: string;
@@ -33,6 +63,61 @@ export interface Lead {
   createdAt: string;
   /** Free-text override for the next action; otherwise derived from tasks and suggestions. */
   nextAction: string | null;
+  /** Industry / sector of the prospect company. */
+  sector?: string | null;
+  /** Staffing / consultancy service interest. */
+  serviceInterest?: string | null;
+  /** Linked Tessiant/client account when known. */
+  accountId?: string | null;
+  convertedOpportunityId?: string | null;
+  convertedContactId?: string | null;
+}
+
+/** Client stakeholder — belongs to an account. */
+export interface Contact {
+  id: string;
+  accountId: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string | null;
+  ownerId: string | null;
+  isPrimary: boolean;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Commercial opportunity. Pipeline amount ≠ agreed contract ≠ expected billing ≠ recognised revenue.
+ */
+export interface Opportunity {
+  id: string;
+  name: string;
+  accountId: string;
+  contactId: string | null;
+  leadId: string | null;
+  type: OpportunityType;
+  stage: OpportunityStage;
+  /** Estimated pipeline / opportunity value (not recognised revenue). */
+  amount: number;
+  currency: "GBP" | "EUR" | "USD";
+  /** Win likelihood 0–100. */
+  probability: number;
+  expectedCloseDate: string;
+  ownerId: string | null;
+  services: string[];
+  nextStep: string | null;
+  /** Agreed contract value after Closed Won — still not automatically recognised revenue. */
+  agreedContractValue: number | null;
+  /** Expected billing from assignments / SOWs (forecast). */
+  expectedBilling: number | null;
+  /** Recognised / realised revenue when engagements complete. */
+  recognisedRevenue: number | null;
+  lostReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  closedAt: string | null;
 }
 
 export type ActivityKind =
@@ -47,7 +132,9 @@ export type ActivityKind =
   | "owner_change"
   | "note"
   | "interaction"
-  | "task";
+  | "task"
+  | "opportunity"
+  | "conversion";
 
 export interface ActivityEvent {
   id: string;
@@ -58,6 +145,10 @@ export interface ActivityEvent {
   occurredAt: string;
   source: string;
   actor?: string;
+  accountId?: string | null;
+  opportunityId?: string | null;
+  contactId?: string | null;
+  activityType?: SalesActivityType;
 }
 
 export interface Scan {
@@ -77,6 +168,9 @@ export interface Note {
   body: string;
   authorId: string;
   createdAt: string;
+  accountId?: string | null;
+  opportunityId?: string | null;
+  contactId?: string | null;
 }
 
 export type ConversationChannel = "email" | "whatsapp";
@@ -113,9 +207,12 @@ export interface Task {
   description: string;
   status: TaskStatus;
   priority: Priority;
-  due: string | null; // YYYY-MM-DD
+  due: string | null;
   ownerId: string | null;
   leadId: string | null;
+  accountId?: string | null;
+  opportunityId?: string | null;
+  contactId?: string | null;
   origin: "manual" | "suggestion" | "copilot";
   evidence: Evidence[];
   history: TaskHistoryEntry[];
@@ -148,6 +245,8 @@ export interface CrmState {
   dataMode: "demo";
   seededAt: string;
   leads: Lead[];
+  contacts: Contact[];
+  opportunities: Opportunity[];
   events: ActivityEvent[];
   scans: Scan[];
   notes: Note[];
@@ -155,6 +254,8 @@ export interface CrmState {
   tasks: Task[];
   members: Member[];
   decisions: Record<string, SuggestionDecision>;
+  /** Tessiant staff-augmentation demo slice (optional on legacy stored state). */
+  tessiant?: TessiantStateSlice;
 }
 
 export interface Session {

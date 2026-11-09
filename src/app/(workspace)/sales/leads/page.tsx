@@ -126,7 +126,7 @@ function LeadsView() {
       <header className="page-head">
         <div>
           <h1>Leads</h1>
-          <p className="subtitle">Every prospect from Qiko Signal, the website, free audits and manual entry — one record per person.</p>
+          <p className="subtitle">Pre-opportunity prospects — intake, qualification, source tracking and follow-up before conversion to an opportunity.</p>
         </div>
         <div className="page-actions">
           <Button variant="secondary" icon="board" onClick={() => {

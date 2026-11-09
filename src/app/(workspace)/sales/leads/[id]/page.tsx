@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { crm } from "@/lib/crm-store";
 import { addDays, formatDate, formatDateTime, initials, plural, timeAgo, toDateKey } from "@/lib/format";
@@ -25,7 +25,7 @@ const ACTIVITY_GROUPS: { key: string; label: string; kinds: ActivityKind[] }[] =
   { key: "product", label: "Product", kinds: ["signup", "login", "product", "report"] },
   { key: "scans", label: "Scans", kinds: ["scan"] },
   { key: "enquiries", label: "Enquiries", kinds: ["enquiry"] },
-  { key: "crm", label: "CRM", kinds: ["lead_created", "status_change", "owner_change", "interaction", "task", "note"] },
+  { key: "crm", label: "CRM", kinds: ["lead_created", "status_change", "owner_change", "interaction", "task", "note", "opportunity", "conversion"] },
 ];
 
 export default function LeadProfilePage() {
@@ -52,6 +52,7 @@ export default function LeadProfilePage() {
 }
 
 function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
+  const router = useRouter();
   const { workspace } = useWorkspaceData();
   const { openTaskForm, askQiko, toast } = useWorkspace();
   const now = useNow();
@@ -186,6 +187,34 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
           <Button variant="secondary" icon="phone" onClick={() => setLogOpen(true)}>Log interaction</Button>
           <Button variant="secondary" icon="mail" onClick={() => setCompose("email")}>Email</Button>
           <Button variant="secondary" icon="whatsapp" onClick={() => setCompose("whatsapp")}>WhatsApp</Button>
+          {lead.status !== "Converted" && (state.tessiant?.accounts.length ?? 0) > 0 && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const accountId = lead.accountId ?? state.tessiant!.accounts[0].id;
+                const result = crm.convertLead(lead.id, {
+                  accountId,
+                  opportunityName: `${lead.company ?? lead.name} · ${lead.serviceInterest ?? "engagement"}`,
+                  opportunityType: (lead.serviceInterest as "augmentation" | "advisory" | "consultancy" | "project team" | "mixed") || "augmentation",
+                  amount: 120000,
+                  services: lead.serviceInterest ? [lead.serviceInterest] : ["Staff augmentation"],
+                });
+                if (!result.ok) {
+                  toast(result.error, "error");
+                  return;
+                }
+                toast("Lead converted to contact + opportunity", "success");
+                router.push(`/sales/accounts/${accountId}`);
+              }}
+            >
+              Convert to opportunity
+            </Button>
+          )}
+          {lead.convertedOpportunityId && (
+            <Link href="/sales/pipeline">
+              <Button variant="ghost">Open opportunities</Button>
+            </Link>
+          )}
           <Button variant="soft" icon="sparkles" onClick={() => askQiko(`Show me everything we know about ${lead.name}`, lead.id)}>Ask Qiko about {lead.name.split(" ")[0]}</Button>
         </div>
       </section>

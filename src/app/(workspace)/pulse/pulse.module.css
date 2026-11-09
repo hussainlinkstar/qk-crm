@@ -1,0 +1,193 @@
+.context {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.kpi span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.kpi b {
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+
+.kpi small {
+  color: var(--subtle);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 14px;
+}
+
+.three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.insight {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.insight + .insight {
+  margin-top: 10px;
+}
+
+.insightHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.evidence {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+
+.evidence a {
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 40px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+}
+
+.barTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--well);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--brand);
+  border-radius: 999px;
+}
+
+.note {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--well);
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.chatList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chatBtn {
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.chatBtn:hover {
+  border-color: var(--brand-ring);
+}
+
+.valueGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.valueCard {
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.valueCard[data-kind="realised"] {
+  border-color: var(--success-line);
+  background: var(--success-soft);
+}
+
+.valueCard[data-kind="pipeline"] {
+  border-color: var(--warning-line);
+  background: var(--warning-soft);
+}
+
+.valueCard h3 {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.valueCard b {
+  font-size: 22px;
+}
+
+@media (max-width: 1100px) {
+  .kpis,
+  .three,
+  .valueGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .kpis,
+  .three,
+  .valueGrid {
+    grid-template-columns: 1fr;
+  }
+}

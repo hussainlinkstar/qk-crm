@@ -242,7 +242,7 @@
   height: 22px;
   transform: translateY(-50%);
   border-radius: 0 2px 2px 0;
-  background: #6366f1;
+  background: var(--brand);
 }
 
 .collapsed .navItem {

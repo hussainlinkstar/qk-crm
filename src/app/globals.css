@@ -1,34 +1,39 @@
-/* Qiko Core design system — Qiko brand (qiko.ai) on the Qiko Pulse dashboard language. */
+/* Qiko Core design system — structure preserved; Tessiant green is the workspace brand. */
 
 :root {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Surfaces */
-  --canvas: #f8fafc;
+  /* Surfaces — clean neutrals for a premium consultancy platform */
+  --canvas: #f4f6f5;
   --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --well: #f1f5f9;
-  --line: #e2e8f0;
-  --line-soft: #f1f5f9;
-  --line-strong: #cbd5e1;
+  --surface-muted: #f7f9f8;
+  --well: #eef2f0;
+  --line: #dde5e1;
+  --line-soft: #eef2f0;
+  --line-strong: #c5d0cb;
 
-  /* Ink */
-  --ink: #0f172a;
-  --ink-2: #334155;
-  --ink-3: #475569;
-  --muted: #64748b;
-  --subtle: #94a3b8;
+  /* Ink — dark, readable */
+  --ink: #0f1714;
+  --ink-2: #2a3732;
+  --ink-3: #3f4f48;
+  --muted: #5c6b64;
+  --subtle: #8a9891;
 
-  /* Brand — from the Qiko logo (blue → violet) and Pulse indigo */
-  --brand: #4f46e5;
-  --brand-strong: #4338ca;
-  --brand-ink: #3730a3;
-  --brand-soft: #eef2ff;
-  --brand-ring: #c7d2fe;
-  --brand-blue: #3b82f6;
-  --brand-violet: #8b5cf6;
-  --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #6366f1 52%, #8b5cf6 100%);
+  /*
+   * Brand — Tessiant-inspired green (not claimed as an official Tessiant hex).
+   * Qiko product naming (Core, Pulse, Ask Qiko) remains; --qiko-accent for intelligence accents.
+   */
+  --brand: #2f6f5e;
+  --brand-strong: #24574a;
+  --brand-ink: #1c453b;
+  --brand-soft: #e8f3ef;
+  --brand-ring: #b7d7cd;
+  --brand-blue: #3d7a6a;
+  --brand-violet: #4a8f7c;
+  --brand-gradient: linear-gradient(135deg, #3d7a6a 0%, #2f6f5e 52%, #24574a 100%);
+  --qiko-accent: #4f46e5;
+  --qiko-accent-soft: #eef2ff;
 
   /* Semantic */
   --success: #047857;
@@ -47,14 +52,26 @@
   --radius-lg: 12px;
   --radius-xl: 16px;
 
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 8px 24px -12px rgba(15, 23, 42, 0.18);
-  --shadow-lg: 0 24px 64px -24px rgba(15, 23, 42, 0.35);
+  --shadow-xs: 0 1px 2px rgba(15, 23, 20, 0.04);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 20, 0.05), 0 1px 3px rgba(15, 23, 20, 0.04);
+  --shadow-md: 0 8px 24px -12px rgba(15, 23, 20, 0.16);
+  --shadow-lg: 0 24px 64px -24px rgba(15, 23, 20, 0.32);
   --focus-ring: 0 0 0 3px var(--brand-ring);
 
-  --sidebar-width: 232px;
+  --sidebar-width: 248px;
   --sidebar-collapsed: 72px;
+}
+
+/* Explicit tenant mark (tokens already Tessiant-first). */
+[data-tenant="tessiant"] {
+  --brand: #2f6f5e;
+  --brand-strong: #24574a;
+  --brand-ink: #1c453b;
+  --brand-soft: #e8f3ef;
+  --brand-ring: #b7d7cd;
+  --brand-blue: #3d7a6a;
+  --brand-violet: #4a8f7c;
+  --brand-gradient: linear-gradient(135deg, #3d7a6a 0%, #2f6f5e 52%, #24574a 100%);
 }
 
 * {
@@ -107,7 +124,7 @@ p {
 }
 
 ::selection {
-  background: #c7d2fe;
+  background: #b7d7cd;
 }
 
 a:focus-visible,
@@ -156,11 +173,11 @@ textarea:focus-visible {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   width: 100%;
   min-width: 0;
   margin: 0;
-  padding: 28px 24px 56px;
+  padding: 32px 28px 64px;
   animation: pageIn 0.32s ease-out;
 }
 
@@ -174,7 +191,7 @@ textarea:focus-visible {
 .page-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px 24px;
 }
@@ -255,6 +272,20 @@ textarea:focus-visible {
   padding: 0 18px 18px;
 }
 
+.card > .card-body:first-child {
+  padding-top: 16px;
+}
+
+.stack-gap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stack-gap > * {
+  margin: 0;
+}
+
 .link-button {
   display: inline-flex;
   align-items: center;
@@ -298,9 +329,12 @@ textarea:focus-visible {
 }
 
 .chip-new { background: #f0f9ff; color: #0369a1; box-shadow: inset 0 0 0 1px #bae6fd; }
+.chip-working,
 .chip-contacted { background: var(--brand-soft); color: var(--brand-ink); box-shadow: inset 0 0 0 1px var(--brand-ring); }
 .chip-qualified { background: #f5f3ff; color: #6d28d9; box-shadow: inset 0 0 0 1px #ddd6fe; }
+.chip-converted,
 .chip-won { background: var(--success-soft); color: var(--success); box-shadow: inset 0 0 0 1px var(--success-line); }
+.chip-unqualified,
 .chip-lost { background: var(--well); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
 .chip-pending { background: var(--warning-soft); color: var(--warning); box-shadow: inset 0 0 0 1px var(--warning-line); }
 .chip-in_progress { background: var(--brand-soft); color: var(--brand-ink); box-shadow: inset 0 0 0 1px var(--brand-ring); }
@@ -438,7 +472,7 @@ textarea:focus-visible {
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: #818cf8;
+  border-color: var(--brand);
   box-shadow: var(--focus-ring);
 }
 
@@ -653,12 +687,30 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--warning-line);
+  padding: 10px 14px;
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--warning-soft);
-  color: var(--warning);
-  font-size: 12.5px;
+  background: var(--surface-muted);
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+.notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: var(--shadow-xs);
+}
+
+.notice-banner b {
+  color: var(--ink);
 }
 
 .divider {

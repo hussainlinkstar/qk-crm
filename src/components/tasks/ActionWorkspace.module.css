@@ -1,0 +1,296 @@
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tile:hover {
+  border-color: var(--line-strong);
+}
+
+.tileActive,
+.tileActive:hover {
+  border-color: #a5b4fc;
+  background: var(--brand-soft);
+  box-shadow: 0 0 0 1px #a5b4fc inset;
+}
+
+.tileLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.tileLabel i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.pending {
+  background: #f59e0b;
+}
+
+.progress {
+  background: #6366f1;
+}
+
+.done {
+  background: #10b981;
+}
+
+.overdue {
+  background: #ef4444;
+}
+
+.tile b {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.suggestions :global(.kicker) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #7c3aed;
+}
+
+.suggestionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.suggestionGrid > :global(.empty-state) {
+  grid-column: 1 / -1;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.search {
+  display: flex;
+  flex: 1 1 240px;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--subtle);
+}
+
+.search:focus-within {
+  border-color: #818cf8;
+  box-shadow: var(--focus-ring);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--ink);
+  outline: none;
+}
+
+.filter {
+  width: auto;
+  min-width: 140px;
+  min-height: 38px;
+  font-size: 13px;
+}
+
+.dismissedToggle {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.board {
+  display: grid;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 300px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: #f3f6fa;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.columnOver {
+  border-color: #a5b4fc;
+  border-style: dashed;
+  background: var(--brand-soft);
+}
+
+.columnHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 0;
+}
+
+.columnTitle {
+  color: var(--ink-3);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.columnHint {
+  margin-top: 2px;
+  color: var(--subtle);
+  font-size: 12px;
+}
+
+.columnCount {
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.columnBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.draggable {
+  cursor: grab;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+.columnEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 120px;
+  padding: 16px;
+  border: 1px dashed #d5dbe6;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.columnEmpty b {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.columnEmpty span {
+  color: var(--subtle);
+  font-size: 12px;
+}
+
+.taskCell {
+  min-width: 240px;
+}
+
+.taskCell b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.taskCell small {
+  display: block;
+  margin-top: 2px;
+  color: #7c3aed;
+  font-size: 11.5px;
+}
+
+.ownerCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.overdueText {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+  .suggestionGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .board {
+    grid-template-columns: 1fr !important;
+  }
+
+  .column {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter {
+    flex: 1 1 140px;
+  }
+}

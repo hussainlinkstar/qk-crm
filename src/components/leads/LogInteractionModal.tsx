@@ -48,7 +48,7 @@ export default function LogInteractionModal({ leadId, leadName, onClose }: { lea
     <Modal
       kicker="Activity"
       title={`Log interaction with ${leadName}`}
-      description="Recorded on the lead's timeline. New leads move to Contacted automatically."
+      description="Recorded on the lead's timeline. New leads move to Working automatically."
       onClose={() => { voice.stop(); onClose(); }}
       size="small"
       footer={

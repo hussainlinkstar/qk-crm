@@ -14,4 +14,6 @@ export const KIND_ICON: Record<ActivityKind, IconName> = {
   note: "note",
   interaction: "phone",
   task: "tasks",
+  opportunity: "sales",
+  conversion: "checkCircle",
 };

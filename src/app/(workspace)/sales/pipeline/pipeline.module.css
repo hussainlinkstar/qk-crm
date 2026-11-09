@@ -66,7 +66,7 @@
   display: grid;
   max-width: 100%;
   min-width: 0;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(220px, 1fr));
   align-items: start;
   contain: paint;
   gap: 14px;
@@ -372,6 +372,80 @@
   }
 }
 
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.metrics > div {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--well);
+}
+
+.metrics b {
+  display: block;
+  font-size: 18px;
+}
+
+.metrics span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cardTitle {
+  color: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.cardMeta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cardHint {
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.35);
+  padding: 16px;
+}
+
+.confirmCard {
+  width: min(420px, 100%);
+  padding: 18px;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.confirmCard h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card,
   .column {
@@ -380,5 +454,11 @@
 
   .card:hover {
     transform: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

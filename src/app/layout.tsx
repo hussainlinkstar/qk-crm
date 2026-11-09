@@ -14,14 +14,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Qiko Core | AI-Powered Business Workspace",
-    template: "%s · Qiko Core",
+    default: "Tessiant · Operating workspace",
+    template: "%s · Tessiant",
   },
-  description: "Qiko Core connects customer activity, sales actions and AI recommendations in one workspace.",
+  description: "Tessiant consulting and staffing operations on Qiko Core — sales, talent, assignments and intelligence in one workspace.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#2f6f5e",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -58,9 +58,9 @@ export default function HomePage() {
   }
   const recentScans = state.scans.filter((scan) => now - new Date(scan.completedAt).getTime() <= 3 * 86_400_000);
   if (recentScans.length) changes.push({ icon: "scan", tone: "sky", title: `${plural(recentScans.length, "free scan")} completed in 72h`, detail: `${recentScans.filter((scan) => scan.score < 60).length} scored below 60/100 — likely opportunities`, href: "/sales/leads?activity=scan" });
-  const won = state.events.filter((event) => event.kind === "status_change" && event.title.endsWith("Won") && week(event.occurredAt));
-  if (won.length) changes.push({ icon: "flag", tone: "green", title: `${plural(won.length, "deal")} won this week`, detail: won.map((event) => workspace.leadById.get(event.leadId)?.company ?? "").filter(Boolean).join(", "), href: "/sales/leads?status=Won" });
-  if (counts.overdue) changes.push({ icon: "clock", tone: "red", title: `${plural(counts.overdue, "task")} overdue`, detail: "Clear these first to keep follow-ups on track", href: "/sales/actions?view=overdue" });
+  const won = state.events.filter((event) => event.kind === "status_change" && event.title.includes("Closed Won") && week(event.occurredAt));
+  if (won.length) changes.push({ icon: "flag", tone: "green", title: `${plural(won.length, "opportunity")} closed won this week`, detail: won.map((event) => event.detail ?? "").filter(Boolean).join(", "), href: "/sales/pipeline" });
+  if (counts.overdue) changes.push({ icon: "clock", tone: "red", title: `${plural(counts.overdue, "task")} overdue`, detail: "Clear these first to keep follow-ups on track", href: "/tasks?view=overdue" });
 
   const ask = (event: FormEvent) => {
     event.preventDefault();
@@ -108,7 +108,7 @@ export default function HomePage() {
           <div>
             <h2>Your top priorities</h2>
           </div>
-          <Link href="/sales/actions" className="link-button">
+          <Link href="/tasks" className="link-button">
             Open action workspace <Icon name="arrowRight" size={13} />
           </Link>
         </div>
@@ -165,7 +165,7 @@ export default function HomePage() {
                 ["in_progress", "In progress", counts.in_progress],
                 ["completed", "Completed", counts.completed],
               ] as const).map(([key, label, value]) => (
-                <Link key={key} href={`/sales/actions?view=${key}`} className={styles.statusTile}>
+                <Link key={key} href={`/tasks?view=${key}`} className={styles.statusTile}>
                   <span className={`${styles.statusDot} ${styles[key]}`} />
                   <span>{label}</span>
                   <b className="tabular">{value}</b>
@@ -210,10 +210,35 @@ export default function HomePage() {
               <span className="chip chip-completed">Active</span>
               <Icon name="chevronRight" size={16} />
             </Link>
+            <Link href="/staffing" className={`${styles.workspace} ${styles.workspaceActive}`}>
+              <span className={styles.workspaceIcon}>
+                <Icon name="users" size={18} />
+              </span>
+              <span className={styles.workspaceText}>
+                <b>Staffing</b>
+                <small>
+                  {state.tessiant
+                    ? `${state.tessiant.requirements.filter((r) => !r.archived && r.outcome === "active" && r.stage !== "Placed").length} open client requirements`
+                    : "Talent network, requirements and assignments"}
+                </small>
+              </span>
+              <span className="chip chip-completed">Active</span>
+              <Icon name="chevronRight" size={16} />
+            </Link>
+            <Link href="/pulse" className={`${styles.workspace} ${styles.workspaceActive}`}>
+              <span className={styles.workspaceIcon}>
+                <Icon name="pulse" size={18} />
+              </span>
+              <span className={styles.workspaceText}>
+                <b>Qiko Pulse</b>
+                <small>Insights, recommended actions and value signals</small>
+              </span>
+              <span className="chip chip-completed">Active</span>
+              <Icon name="chevronRight" size={16} />
+            </Link>
             {([
               ["Marketing", "megaphone", "Campaigns, acquisition channels and engagement"],
               ["Finance Ops", "wallet", "Revenue, payments and invoices"],
-              ["Qiko Pulse", "pulse", "Proactive insights and recommendations"],
             ] as const).map(([label, icon, detail]) => (
               <div key={label} className={`${styles.workspace} ${styles.workspaceSoon}`} aria-disabled="true">
                 <span className={styles.workspaceIcon}>

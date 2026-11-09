@@ -55,9 +55,9 @@ export function answerQuestion(state: CrmState, question: string, contextLeadId?
     const suggestion = workspace.suggestions.find((item) => item.leadId === lead.id);
     const executions: Execution[] = [{ type: "open", label: "Open lead profile", href: `/sales/leads/${lead.id}` }];
     if (suggestion) executions.unshift({ type: "create_task", label: "Create follow-up task", task: { title: suggestion.title, description: suggestion.reason, leadId: lead.id, priority: suggestion.priority, due: suggestion.suggestedDue } });
-    else if (!lead.openTasks.length && lead.status !== "Won" && lead.status !== "Lost") executions.unshift({ type: "create_task", label: "Create follow-up task", task: { title: `Follow up with ${lead.name}`, description: "", leadId: lead.id, priority: "medium", due: addDays(1) } });
-    if (lead.status === "New") executions.push({ type: "update_status", label: "Mark as Contacted", leadId: lead.id, status: "Contacted" });
-    if (lead.status === "Contacted" && lead.engagementScore >= 50) executions.push({ type: "update_status", label: "Mark as Qualified", leadId: lead.id, status: "Qualified" });
+    else if (!lead.openTasks.length && lead.status !== "Converted" && lead.status !== "Unqualified") executions.unshift({ type: "create_task", label: "Create follow-up task", task: { title: `Follow up with ${lead.name}`, description: "", leadId: lead.id, priority: "medium", due: addDays(1) } });
+    if (lead.status === "New") executions.push({ type: "update_status", label: "Mark as Working", leadId: lead.id, status: "Working" });
+    if (lead.status === "Working" && lead.engagementScore >= 50) executions.push({ type: "update_status", label: "Mark as Qualified", leadId: lead.id, status: "Qualified" });
     return answer(question, {
       answer: `${lead.name}${lead.role ? `, ${lead.role}` : ""}${lead.company ? ` at ${lead.company}` : ""} is a ${lead.status.toLowerCase()} lead from ${lead.source}, owned by ${memberName(lead.ownerId)}. We have ${plural(events.length, "recorded activity", "recorded activities")}, ${plural(scans.length, "scan")} and ${plural(notes.length, "note")}${lead.openTasks.length ? `, plus ${plural(lead.openTasks.length, "open task")}` : ""}.`,
       evidence: [
@@ -65,7 +65,7 @@ export function answerQuestion(state: CrmState, question: string, contextLeadId?
         ...scans.slice(0, 1).map((scan): Evidence => ({ label: `Scan of ${scan.website}: ${scan.score}/100`, detail: scan.findings.join("; "), at: scan.completedAt, source: "Qiko Signal", kind: "fact" })),
         ...notes.slice(0, 1).map((note): Evidence => ({ label: "Latest note", detail: note.body, at: note.createdAt, source: "Qiko Core", kind: "fact" })),
       ],
-      recommendation: suggestion ? `${suggestion.title}. ${suggestion.reason}` : lead.openTasks[0] ? `Finish the open task "${lead.openTasks[0].title}".` : lead.status === "Won" || lead.status === "Lost" ? "No sales action needed." : "Schedule a follow-up to keep momentum.",
+      recommendation: suggestion ? `${suggestion.title}. ${suggestion.reason}` : lead.openTasks[0] ? `Finish the open task "${lead.openTasks[0].title}".` : lead.status === "Converted" || lead.status === "Unqualified" ? "No lead action needed — use opportunities for commercial progress." : "Schedule a follow-up to keep momentum.",
       executions,
     });
   }
@@ -111,7 +111,7 @@ export function answerQuestion(state: CrmState, question: string, contextLeadId?
       recommendation: uncontacted.length ? `Review ${uncontacted.map((person) => person.name.split(" ")[0]).slice(0, 3).join(", ")}${uncontacted.length > 3 ? " and others" : ""} today while interest is fresh.` : null,
       executions: [
         ...(uncontacted[0] ? [{ type: "create_task", label: `Create review task for ${uncontacted[0].name}`, task: { title: `Review new Signal lead ${uncontacted[0].name}`, description: "New Qiko Signal registration awaiting first contact.", leadId: uncontacted[0].id, priority: "high", due: todayKey() } } as Execution] : []),
-        { type: "open", label: "View Signal leads", href: "/sales/leads?source=Qiko%20Signal" },
+        { type: "open", label: "View new leads", href: "/sales/leads?status=New" },
       ],
     });
   }
@@ -169,7 +169,7 @@ export function answerQuestion(state: CrmState, question: string, contextLeadId?
     const byStatus = (status: string) => leads.filter((item) => item.status === status);
     const qualified = byStatus("Qualified");
     return answer(question, {
-      answer: `The pipeline has ${plural(qualified.length, "qualified opportunity", "qualified opportunities")}, ${byStatus("Contacted").length} contacted and ${byStatus("New").length} new leads. ${byStatus("Won").length} won and ${byStatus("Lost").length} lost to date.`,
+      answer: `Lead desk: ${plural(qualified.length, "qualified lead")}, ${byStatus("Working").length} working, ${byStatus("New").length} new. Opportunity closes live on the Opportunities board — pipeline is not recognised revenue.`,
       evidence: qualified.slice(0, 6).map((item) => leadFact(item)),
       recommendation: qualified[0] ? `Keep qualified deals moving — ${qualified.filter((item) => !item.openTasks.length).length} have no open task.` : null,
       executions: [{ type: "open", label: "View qualified leads", href: "/sales/leads?status=Qualified" }],
