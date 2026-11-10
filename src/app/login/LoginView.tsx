@@ -9,6 +9,7 @@ import styles from "./login.module.css";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+
 type View = "signin" | "forgot" | "sent";
 
 function nextPath() {
