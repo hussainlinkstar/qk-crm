@@ -278,16 +278,21 @@ export default function AssociateDetailPage() {
         </aside>
 
         <div>
-          <div className={talent.tabs} role="tablist" aria-label="Talent profile sections">
+          <div className="segmented" role="tablist" aria-label="Talent profile sections" style={{ marginBottom: 14 }}>
             {TABS.map((item) => (
-              <button key={item.key} type="button" className={talent.tab} data-active={tab === item.key} onClick={() => setTab(item.key)}>
+              <button
+                key={item.key}
+                type="button"
+                aria-pressed={tab === item.key}
+                onClick={() => setTab(item.key)}
+              >
                 {item.label}
               </button>
             ))}
           </div>
 
           {tab === "overview" && (
-            <section className="card">
+            <section className="card tab-panel">
               <div className="card-head">
                 <h2>Professional overview</h2>
               </div>

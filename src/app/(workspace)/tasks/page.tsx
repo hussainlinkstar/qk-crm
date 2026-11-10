@@ -15,7 +15,7 @@ export default function MyTasksPage() {
     >
       <ActionWorkspace
         title="My Tasks"
-        subtitle="Your follow-ups, meetings and ownership — clear overdue items first, then work the board."
+        subtitle="Board-first task management."
         askPrompt="What tasks need my attention?"
         defaultOwnerMine
       />

@@ -45,10 +45,10 @@ export function homeBusinessSnapshot(state: CrmState) {
   const deployedAssociates = new Set(deployments.map((item) => item.associateId)).size;
   const ending = assignmentsEndingSoon(state).length;
   return [
-    { key: "opps", label: "Open Sales Opportunities", value: openOpps, href: "/sales/pipeline" },
-    { key: "reqs", label: "Open Staffing Requirements", value: openReqs, href: "/staffing/requirements?view=open" },
-    { key: "deployed", label: "Currently Deployed Associates", value: deployedAssociates, href: "/staffing/placements?view=active" },
-    { key: "ending", label: "Assignments Ending Soon", value: ending, href: "/staffing/placements?view=ending30" },
+    { key: "opps", label: "Open sales opportunities", value: openOpps, href: "/sales/pipeline" },
+    { key: "reqs", label: "Open staffing requirements", value: openReqs, href: "/staffing/requirements?view=open&layout=board" },
+    { key: "deployed", label: "Deployed associates", value: deployedAssociates, href: "/staffing/placements?view=active" },
+    { key: "ending", label: "Assignments ending soon", value: ending, href: "/staffing/placements?view=ending30" },
   ];
 }
 
@@ -60,7 +60,7 @@ export function buildTessiantHomePriorities(state: CrmState, workspace: Workspac
   const seenEntities = new Set<string>();
 
   const push = (card: HomePriorityCard, entityKey?: string) => {
-    if (seenIds.has(card.id) || cards.length >= 4) return;
+    if (seenIds.has(card.id) || cards.length >= 3) return;
     if (entityKey && seenEntities.has(entityKey)) return;
     seenIds.add(card.id);
     if (entityKey) seenEntities.add(entityKey);
@@ -73,23 +73,41 @@ export function buildTessiantHomePriorities(state: CrmState, workspace: Workspac
   if (overdue.length) {
     push({
       id: "overdue-tasks",
-      title: `${overdue.length} overdue task${overdue.length === 1 ? "" : "s"}`,
-      summary: overdue[0]?.title ?? "Clear overdue work first",
+      title: overdue.length === 1 ? overdue[0].title : `${overdue.length} overdue tasks`,
+      summary: overdue.length === 1 ? "Past due — clear this first." : `Next up: ${overdue[0]?.title ?? "Clear overdue work"}`,
       priority: "high",
       href: "/tasks?view=overdue",
       source: "operational",
-      actionLabel: "Open tasks",
+      actionLabel: "Clear overdue",
     });
   }
 
   if (t) {
+    const thin = t.requirements.find(
+      (req) => !req.archived && req.outcome === "active" && req.stage !== "Placed" && verifiedAvailableMatchCount(state, req.id) === 0,
+    );
+    if (thin) {
+      push(
+        {
+          id: `no-match-${thin.id}`,
+          title: thin.title,
+          summary: "No verified available matches.",
+          priority: "high",
+          href: `/staffing/requirements/${thin.id}`,
+          source: "operational",
+          actionLabel: "Review sourcing",
+        },
+        `requirement:${thin.id}`,
+      );
+    }
+
     const urgent = t.requirements.filter((req) => isUrgentRequirement(state, req, today));
     if (urgent[0]) {
       push(
         {
           id: `urgent-req-${urgent[0].id}`,
-          title: `High-priority requirement: ${urgent[0].title}`,
-          summary: `${mapRequirementToOpsStage(urgent[0])} · start ${urgent[0].startDate}`,
+          title: urgent[0].title,
+          summary: `${mapRequirementToOpsStage(urgent[0])} · starts ${urgent[0].startDate}`,
           priority: "high",
           href: `/staffing/requirements/${urgent[0].id}`,
           source: "operational",
@@ -99,48 +117,31 @@ export function buildTessiantHomePriorities(state: CrmState, workspace: Workspac
       );
     }
 
-    const thin = t.requirements.find(
-      (req) => !req.archived && req.outcome === "active" && req.stage !== "Placed" && verifiedAvailableMatchCount(state, req.id) === 0,
-    );
-    if (thin) {
-      push(
-        {
-          id: `no-match-${thin.id}`,
-          title: `No available matches for ${thin.title}`,
-          summary: "Open Find Matches or widen the brief",
-          priority: "high",
-          href: `/staffing/requirements/${thin.id}`,
-          source: "operational",
-          actionLabel: "Find matches",
-        },
-        `requirement:${thin.id}`,
-      );
-    }
-
     const interview = t.candidates.find((item) => item.shortlistStatus === "interview");
     if (interview) {
       const req = t.requirements.find((item) => item.id === interview.requirementId);
       push(
         {
           id: `interview-${interview.id}`,
-          title: `Interview pending${req ? ` · ${req.title}` : ""}`,
-          summary: "Record feedback or progress the candidate",
+          title: req?.title ?? "Interview pending",
+          summary: "Interview scheduled — record feedback next.",
           priority: "medium",
           href: `/staffing/requirements/${interview.requirementId}`,
           source: "operational",
-          actionLabel: "Open pipeline",
+          actionLabel: "Update pipeline",
         },
-        `requirement:${interview.requirementId}:interview`,
+        `requirement:${interview.requirementId}`,
       );
     }
 
     const renewal = pendingRenewals(state, today)[0] ?? assignmentsEndingSoon(state, today)[0];
     if (renewal) {
+      const associate = t.associates.find((item) => item.id === renewal.associateId);
       push(
         {
           id: `renewal-${renewal.id}`,
-          title: "Assignment requiring renewal",
-          summary: `Ends ${renewal.terms.endDate ?? "soon"} · plan extension or redeployment`,
+          title: associate ? `${associate.name} assignment` : "Assignment renewal",
+          summary: `Ends ${renewal.terms.endDate ?? "soon"} — plan extension or redeploy.`,
           priority: "medium",
           href: `/staffing/placements/${renewal.id}`,
           source: "operational",
@@ -156,12 +157,12 @@ export function buildTessiantHomePriorities(state: CrmState, workspace: Workspac
     push(
       {
         id: `opp-${staleOpp.id}`,
-        title: `Sales opportunity needs follow-up: ${staleOpp.name}`,
-        summary: `${staleOpp.stage} · £${staleOpp.amount.toLocaleString("en-GB")}`,
+        title: staleOpp.name,
+        summary: `${staleOpp.stage} · £${staleOpp.amount.toLocaleString("en-GB")} — needs follow-up.`,
         priority: "medium",
         href: "/sales/pipeline",
         source: "operational",
-        actionLabel: "Open pipeline",
+        actionLabel: "Advance deal",
       },
       `opportunity:${staleOpp.id}`,
     );
@@ -182,13 +183,13 @@ export function buildTessiantHomePriorities(state: CrmState, workspace: Workspac
         priority: relationshipRisk.priority === "high" ? "high" : "medium",
         href: accountEvidence?.entityId ? `/sales/accounts/${accountEvidence.entityId}` : "/pulse/insights",
         source: "pulse",
-        actionLabel: "Review in Pulse",
+        actionLabel: "Review account",
       },
       accountEvidence?.entityId ? `account:${accountEvidence.entityId}` : `pulse:${relationshipRisk.id}`,
     );
   }
 
-  return cards.slice(0, 4);
+  return cards.slice(0, 3);
 }
 
 export function buildTessiantHomeActivity(state: CrmState): HomeActivityItem[] {

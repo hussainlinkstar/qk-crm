@@ -32,6 +32,8 @@ const SECTIONS = [
   { id: "activity", label: "Activity" },
 ] as const;
 
+type SectionId = (typeof SECTIONS)[number]["id"];
+
 export default function RequirementDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -39,11 +41,13 @@ export default function RequirementDetailPage() {
   const { toast, openTaskForm } = useWorkspace();
   const tessiant = state?.tessiant;
   const requirement = tessiant?.requirements.find((item) => item.id === id);
+  const [tab, setTab] = useState<SectionId>("overview");
   const [quoteAmount, setQuoteAmount] = useState<Record<string, number>>({});
   const [overrideReason, setOverrideReason] = useState("");
   const [outcomeReason, setOutcomeReason] = useState("");
   const [externalAssociateId, setExternalAssociateId] = useState("");
   const [actionNotes, setActionNotes] = useState<Record<string, string>>({});
+  const [expandedCandidate, setExpandedCandidate] = useState<string | null>(null);
   const [externalForm, setExternalForm] = useState({
     name: "",
     headline: "",
@@ -299,26 +303,35 @@ export default function RequirementDetailPage() {
     setActionNotes((prev) => ({ ...prev, [candidateId]: "" }));
   };
 
-  const renderCard = (candidate: (typeof candidates)[number], compact = false) => {
+  const renderCard = (candidate: (typeof candidates)[number], forceCompact = true) => {
     const associate = tessiant.associates.find((item) => item.id === candidate.associateId);
     if (!associate) return null;
     const presentation = presentationFor(candidate);
+    const compact = forceCompact && expandedCandidate !== candidate.id;
     return (
-      <MatchCandidateCard
-        key={candidate.id}
-        associateId={associate.id}
-        associateName={associate.name}
-        headline={associate.headline}
-        candidate={candidate}
-        presentation={presentation}
-        actions={actionsForCandidate(candidate.shortlistStatus)}
-        onAction={(action) => runAction(candidate.id, action)}
-        quoteAmount={quoteAmount[candidate.id]}
-        onQuoteChange={(amount) => setQuoteAmount({ ...quoteAmount, [candidate.id]: amount })}
-        noteValue={actionNotes[candidate.id] ?? ""}
-        onNoteChange={(value) => setActionNotes({ ...actionNotes, [candidate.id]: value })}
-        compact={compact}
-      />
+      <div key={candidate.id} className={styles.candidateWrap}>
+        <MatchCandidateCard
+          associateId={associate.id}
+          associateName={associate.name}
+          headline={associate.headline}
+          candidate={candidate}
+          presentation={presentation}
+          actions={actionsForCandidate(candidate.shortlistStatus)}
+          onAction={(action) => runAction(candidate.id, action)}
+          quoteAmount={quoteAmount[candidate.id]}
+          onQuoteChange={(amount) => setQuoteAmount({ ...quoteAmount, [candidate.id]: amount })}
+          noteValue={actionNotes[candidate.id] ?? ""}
+          onNoteChange={(value) => setActionNotes({ ...actionNotes, [candidate.id]: value })}
+          compact={compact}
+        />
+        <button
+          type="button"
+          className={styles.expandCandidate}
+          onClick={() => setExpandedCandidate(expandedCandidate === candidate.id ? null : candidate.id)}
+        >
+          {compact ? "Show match detail" : "Hide match detail"}
+        </button>
+      </div>
     );
   };
 
@@ -386,15 +399,23 @@ export default function RequirementDetailPage() {
         </div>
       )}
 
-      <nav className={styles.sectionNav} aria-label="Requirement sections">
+      <nav className="pill-tabs" aria-label="Requirement sections">
         {SECTIONS.map((section) => (
-          <a key={section.id} href={`#${section.id}`}>
+          <button
+            key={section.id}
+            type="button"
+            className="pill-tab"
+            aria-pressed={tab === section.id}
+            onClick={() => setTab(section.id)}
+          >
             {section.label}
-          </a>
+            {section.id === "candidates" && matchingCandidates.length > 0 ? ` · ${matchingCandidates.length}` : ""}
+            {section.id === "interviews" && interviewCandidates.length > 0 ? ` · ${interviewCandidates.length}` : ""}
+          </button>
         ))}
       </nav>
 
-      <section className="card">
+      <section className={`card tab-panel`}>
         <div className="card-body">
           <div className={styles.stageRail} aria-label="Requirement stages">
             {REQUIREMENT_STAGES.map((stage, index) => (
@@ -453,7 +474,7 @@ export default function RequirementDetailPage() {
         </div>
       </section>
 
-      <section id="overview" className={`${styles.split} ${styles.sectionAnchor}`}>
+      {tab === "overview" && <section className={`${styles.split} ${styles.sectionAnchor}`}>
         <article className="card">
           <div className="card-head">
             <h2>Overview</h2>
@@ -485,8 +506,14 @@ export default function RequirementDetailPage() {
             <p className="muted">Owner: {owner?.name ?? "Unassigned"}</p>
             {opportunity && (
               <p className="muted">
-                Linked opportunity: <Link href={`/sales/accounts/${opportunity.accountId}`}>{opportunity.name}</Link> · {opportunity.stage} · £
+                Linked opportunity:{" "}
+                <Link href={`/sales/accounts/${opportunity.accountId}`}>{opportunity.name}</Link> · {opportunity.stage} · £
                 {opportunity.amount.toLocaleString("en-GB")}
+              </p>
+            )}
+            {account && (
+              <p className="muted">
+                Client 360: <Link href={`/sales/accounts/${account.id}`}>{account.name}</Link>
               </p>
             )}
             {requirement.notes ? <p className="muted">{requirement.notes}</p> : null}
@@ -511,9 +538,9 @@ export default function RequirementDetailPage() {
             </ul>
           </div>
         </article>
-      </section>
+      </section>}
 
-      <section id="candidates" className={`card ${styles.sectionAnchor}`}>
+      {tab === "candidates" && <section className={`card ${styles.sectionAnchor}`}>
         <div className="card-head">
           <div>
             <h2>Candidates</h2>
@@ -699,22 +726,24 @@ export default function RequirementDetailPage() {
             )}
           </div>
         </div>
-      </section>
+      </section>}
 
-      <section id="interviews" className={`card ${styles.sectionAnchor}`}>
-        <div className="card-head">
-          <h2>Interviews</h2>
-        </div>
-        <div className="card-body">
-          {interviewCandidates.length === 0 ? (
-            <EmptyState title="No interviews yet" icon="users" />
-          ) : (
-            <div className={styles.stack}>{interviewCandidates.map((candidate) => renderCard(candidate, true))}</div>
-          )}
-        </div>
-      </section>
+      {tab === "interviews" && (
+        <section className={`card ${styles.sectionAnchor}`}>
+          <div className="card-head">
+            <h2>Interviews</h2>
+          </div>
+          <div className="card-body">
+            {interviewCandidates.length === 0 ? (
+              <EmptyState title="No interviews yet" icon="users" />
+            ) : (
+              <div className={styles.stack}>{interviewCandidates.map((candidate) => renderCard(candidate))}</div>
+            )}
+          </div>
+        </section>
+      )}
 
-      <section id="commercials" className={`${styles.split} ${styles.sectionAnchor}`}>
+      {tab === "commercials" && <section className={`${styles.split} ${styles.sectionAnchor}`}>
         <article className="card">
           <div className="card-head">
             <h2>Commercials</h2>
@@ -805,15 +834,16 @@ export default function RequirementDetailPage() {
             )}
           </div>
         </article>
-      </section>
+      </section>}
 
-      <section id="activity" className={`card ${styles.sectionAnchor}`}>
+      {tab === "activity" && <section className={`card ${styles.sectionAnchor}`}>
         <div className="card-head">
           <h2>Activity</h2>
         </div>
         <div className="card-body">
           <p>
-            Client: <Link href="/staffing/clients">{account?.name ?? "—"}</Link>
+            Client:{" "}
+            {account ? <Link href={`/sales/accounts/${account.id}`}>{account.name}</Link> : "—"}
           </p>
           {tasks.length > 0 && (
             <ul className={styles.timeline} style={{ marginBottom: 16 }}>
@@ -843,7 +873,7 @@ export default function RequirementDetailPage() {
             </ul>
           )}
         </div>
-      </section>
+      </section>}
     </div>
   );
 }

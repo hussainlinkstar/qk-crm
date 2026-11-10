@@ -4,13 +4,22 @@ import Link from "next/link";
 import { useMemo, useState, type DragEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
-import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
+import { EmptyState, MemberAvatar, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
+import OpportunityQuickPanel from "@/components/sales/OpportunityQuickPanel";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
-import { formatDate } from "@/lib/format";
-import { commercialBuckets, OPPORTUNITY_STAGE_HINTS, weightedPipelineValue } from "@/lib/sales-crm";
+import { addDays, formatDate, todayKey } from "@/lib/format";
+import { commercialBuckets } from "@/lib/sales-crm";
 import { OPPORTUNITY_STAGES, type Opportunity, type OpportunityStage } from "@/lib/types";
 import styles from "./pipeline.module.css";
+
+function riskFor(opportunity: Opportunity) {
+  const soon = opportunity.expectedCloseDate <= addDays(14);
+  const stalled = ["Proposal", "Negotiation"].includes(opportunity.stage) && !opportunity.nextStep;
+  if (soon && opportunity.stage !== "Closed Won" && opportunity.stage !== "Closed Lost") return "Closing soon";
+  if (stalled) return "Needs next step";
+  return null;
+}
 
 export default function OpportunitiesPipelinePage() {
   const { state } = useWorkspaceData();
@@ -18,8 +27,12 @@ export default function OpportunitiesPipelinePage() {
   const router = useRouter();
   const params = useSearchParams();
   const accountFilter = params.get("account");
+  const [layout, setLayout] = useState<"board" | "list">("board");
   const [dragOver, setDragOver] = useState<OpportunityStage | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
   const [pending, setPending] = useState<{ opportunity: Opportunity; stage: OpportunityStage } | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [createRequirement, setCreateRequirement] = useState(true);
 
   const opportunities = useMemo(() => {
     if (!state) return [];
@@ -30,7 +43,6 @@ export default function OpportunitiesPipelinePage() {
     () =>
       OPPORTUNITY_STAGES.map((stage) => ({
         stage,
-        hint: OPPORTUNITY_STAGE_HINTS[stage],
         items: opportunities.filter((item) => item.stage === stage),
       })),
     [opportunities],
@@ -46,13 +58,18 @@ export default function OpportunitiesPipelinePage() {
     );
   }
 
+  const accountName = (accountId: string) => state.tessiant?.accounts.find((item) => item.id === accountId)?.name ?? "Account";
+  const ownerOf = (ownerId: string | null) => state.members.find((item) => item.id === ownerId) ?? null;
+
   const onDrop = (event: DragEvent, stage: OpportunityStage) => {
     event.preventDefault();
     const id = event.dataTransfer.getData("text/opportunity-id");
     const opportunity = opportunities.find((item) => item.id === id);
     setDragOver(null);
+    setDraggingId(null);
     if (!opportunity || opportunity.stage === stage) return;
     if (stage === "Closed Won" || stage === "Closed Lost") {
+      setCreateRequirement(true);
       setPending({ opportunity, stage });
       return;
     }
@@ -60,14 +77,42 @@ export default function OpportunitiesPipelinePage() {
     toast(`Opportunity → ${stage}`, "success");
   };
 
+  const confirmPending = () => {
+    if (!pending) return;
+    if (pending.stage === "Closed Won") {
+      crm.setOpportunityStage(pending.opportunity.id, "Closed Won", {
+        agreedContractValue: pending.opportunity.agreedContractValue ?? pending.opportunity.amount,
+        expectedBilling: pending.opportunity.expectedBilling ?? Math.round(pending.opportunity.amount * 0.6),
+        recognisedRevenue: pending.opportunity.recognisedRevenue ?? 0,
+        nextStep: "Hand to delivery / staffing",
+      });
+      toast("Opportunity → Closed Won", "success");
+      if (createRequirement) {
+        const result = crm.createRequirementFromOpportunity(pending.opportunity.id);
+        if (result.ok) {
+          toast("Staffing requirement created", "success");
+          setPending(null);
+          router.push(`/staffing/requirements/${result.requirementId}`);
+          return;
+        }
+        toast(result.error, "error");
+      }
+    } else {
+      crm.setOpportunityStage(pending.opportunity.id, "Closed Lost", {
+        lostReason: "Closed from pipeline",
+        nextStep: null,
+      });
+      toast("Opportunity → Closed Lost", "success");
+    }
+    setPending(null);
+  };
+
   return (
     <div className="page">
       <header className="page-head">
         <div>
-          <h1>Opportunity pipeline</h1>
-          <p className="subtitle">
-            Salesforce-style stages for consultancy, augmentation and advisory deals. Pipeline value is not recognised revenue.
-          </p>
+          <h1>Opportunities</h1>
+          <p className="subtitle">Consultancy pipeline by stage.</p>
         </div>
         <div className="page-actions">
           {accountFilter && (
@@ -75,6 +120,14 @@ export default function OpportunitiesPipelinePage() {
               Clear account filter
             </Button>
           )}
+          <div className="segmented" role="group" aria-label="Layout">
+            <button type="button" aria-pressed={layout === "board"} onClick={() => setLayout("board")}>
+              Board
+            </button>
+            <button type="button" aria-pressed={layout === "list"} onClick={() => setLayout("list")}>
+              List
+            </button>
+          </div>
           <Link href="/sales/accounts">
             <Button variant="secondary">Accounts</Button>
           </Link>
@@ -82,108 +135,137 @@ export default function OpportunitiesPipelinePage() {
       </header>
 
       {buckets && (
-        <div className={styles.metrics} aria-label="Commercial value distinctions">
+        <div className={styles.metrics} aria-label="Pipeline health">
           <div>
-            <b className="tabular">£{buckets.pipeline.toLocaleString("en-GB")}</b>
-            <span>Open pipeline (face value)</span>
+            <b className="tabular kpi-value">£{buckets.pipeline.toLocaleString("en-GB")}</b>
+            <span>Open pipeline</span>
           </div>
           <div>
-            <b className="tabular">£{buckets.weighted.toLocaleString("en-GB")}</b>
+            <b className="tabular kpi-value">£{buckets.weighted.toLocaleString("en-GB")}</b>
             <span>Weighted pipeline</span>
           </div>
           <div>
-            <b className="tabular">£{buckets.agreed.toLocaleString("en-GB")}</b>
-            <span>Agreed contract (won)</span>
-          </div>
-          <div>
-            <b className="tabular">£{buckets.expectedBilling.toLocaleString("en-GB")}</b>
-            <span>Expected billing</span>
-          </div>
-          <div>
-            <b className="tabular">£{buckets.recognised.toLocaleString("en-GB")}</b>
-            <span>Recognised revenue</span>
+            <b className="tabular kpi-value">{opportunities.filter((item) => item.expectedCloseDate <= addDays(21) && item.stage !== "Closed Won" && item.stage !== "Closed Lost").length}</b>
+            <span>Closing in 21 days</span>
           </div>
         </div>
       )}
 
-      <section className={styles.board} aria-label="Opportunity stages">
-        {columns.map((column) => (
-          <div
-            key={column.stage}
-            className={`${styles.column} ${dragOver === column.stage ? styles.columnOver : ""}`}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setDragOver(column.stage);
-            }}
-            onDragLeave={() => setDragOver((current) => (current === column.stage ? null : current))}
-            onDrop={(event) => onDrop(event, column.stage)}
-          >
-            <div className={styles.columnHead}>
-              <div>
+      {layout === "board" ? (
+        <section className={`kanban-board ${styles.board}`} aria-label="Opportunity stages">
+          {columns.map((column) => (
+            <div
+              key={column.stage}
+              className={`kanban-column ${styles.column} ${dragOver === column.stage ? styles.columnOver : ""}`}
+              data-over={dragOver === column.stage ? "true" : undefined}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragOver(column.stage);
+              }}
+              onDragLeave={() => setDragOver((current) => (current === column.stage ? null : current))}
+              onDrop={(event) => onDrop(event, column.stage)}
+            >
+              <div className={styles.columnHead}>
                 <span className={styles.columnTitle}>{column.stage}</span>
-                <div className={styles.columnHint}>{column.hint}</div>
+                <span className={styles.columnCount}>{column.items.length}</span>
               </div>
-              <span className={styles.columnCount}>{column.items.length}</span>
+              <div className={styles.columnBody}>
+                {column.items.length === 0 ? (
+                  <div className={styles.columnEmpty}>Drop here</div>
+                ) : (
+                  column.items.map((opportunity) => {
+                    const owner = ownerOf(opportunity.ownerId);
+                    const risk = riskFor(opportunity);
+                    return (
+                      <article
+                        key={opportunity.id}
+                        className={`kanban-card ${styles.oppCard} ${draggingId === opportunity.id ? styles.oppCardDragging : ""}`}
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData("text/opportunity-id", opportunity.id);
+                          event.dataTransfer.effectAllowed = "move";
+                          setDraggingId(opportunity.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggingId(null);
+                          setDragOver(null);
+                        }}
+                        onClick={() => setPreviewId(opportunity.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setPreviewId(opportunity.id);
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className={styles.oppTop}>
+                          <b className={styles.oppTitle}>{opportunity.name}</b>
+                          <span className="tabular">£{opportunity.amount.toLocaleString("en-GB")}</span>
+                        </div>
+                        <div className={styles.oppAccount}>{accountName(opportunity.accountId)}</div>
+                        <div className={styles.oppFoot}>
+                          <span className={styles.oppOwner}>
+                            <MemberAvatar member={owner} />
+                            <span>{owner?.name ?? "Unassigned"}</span>
+                          </span>
+                          <span className={styles.oppClose}>{formatDate(opportunity.expectedCloseDate)}</span>
+                        </div>
+                        {risk ? <span className={styles.risk}>{risk}</span> : null}
+                      </article>
+                    );
+                  })
+                )}
+              </div>
             </div>
-            <div className={styles.columnBody}>
-              {column.items.length === 0 ? (
-                <div className={styles.columnEmpty}>Drop opportunities here</div>
-              ) : (
-                column.items.map((opportunity) => {
-                  const account = state.tessiant?.accounts.find((item) => item.id === opportunity.accountId);
-                  const owner = state.members.find((item) => item.id === opportunity.ownerId);
-                  return (
-                    <article
-                      key={opportunity.id}
-                      className={styles.card}
-                      draggable
-                      onDragStart={(event) => {
-                        event.dataTransfer.setData("text/opportunity-id", opportunity.id);
-                        event.dataTransfer.effectAllowed = "move";
-                      }}
-                    >
-                      <Link href={`/sales/accounts/${opportunity.accountId}`} className={styles.cardTitle}>
-                        {opportunity.name}
-                      </Link>
-                      <div className={styles.cardMeta}>
-                        {account?.name ?? "Account"} · {opportunity.type}
-                      </div>
-                      <div className={styles.cardMeta}>
-                        £{opportunity.amount.toLocaleString("en-GB")} · weighted £
-                        {weightedPipelineValue(opportunity).toLocaleString("en-GB")} · {opportunity.probability}%
-                      </div>
-                      <div className={styles.cardMeta}>
-                        Close {formatDate(opportunity.expectedCloseDate)} · {owner?.name ?? "Unassigned"}
-                      </div>
-                      {opportunity.nextStep && <div className={styles.cardHint}>{opportunity.nextStep}</div>}
-                      <div className={styles.cardActions}>
-                        {(opportunity.stage === "Closed Won" ||
-                          opportunity.stage === "Negotiation" ||
-                          opportunity.stage === "Proposal") && (
-                          <Button
-                            size="small"
-                            onClick={() => {
-                              const result = crm.createRequirementFromOpportunity(opportunity.id);
-                              if (!result.ok) {
-                                toast(result.error, "error");
-                                return;
-                              }
-                              toast("Staffing requirement created from opportunity", "success");
-                              router.push(`/staffing/requirements/${result.requirementId}`);
-                            }}
-                          >
-                            Generate requirement
-                          </Button>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </div>
+          ))}
+        </section>
+      ) : (
+        <section className="card">
+          <div className="card-body" style={{ padding: 0 }}>
+            {opportunities.length === 0 ? (
+              <EmptyState title="No opportunities yet" icon="sales" />
+            ) : (
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Opportunity</th>
+                      <th>Account</th>
+                      <th>Stage</th>
+                      <th>Value</th>
+                      <th>Close</th>
+                      <th>Owner</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {opportunities.map((opportunity) => {
+                      const owner = ownerOf(opportunity.ownerId);
+                      return (
+                        <tr key={opportunity.id} className="clickable" onClick={() => setPreviewId(opportunity.id)}>
+                          <td>
+                            <b>{opportunity.name}</b>
+                          </td>
+                          <td>{accountName(opportunity.accountId)}</td>
+                          <td>
+                            <span className="chip chip-dot">{opportunity.stage}</span>
+                          </td>
+                          <td className="tabular">£{opportunity.amount.toLocaleString("en-GB")}</td>
+                          <td className={opportunity.expectedCloseDate < todayKey() && opportunity.stage !== "Closed Won" && opportunity.stage !== "Closed Lost" ? styles.overdueText : undefined}>
+                            {formatDate(opportunity.expectedCloseDate)}
+                          </td>
+                          <td>{owner?.name ?? "Unassigned"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        ))}
-      </section>
+        </section>
+      )}
 
       {pending && (
         <div className={styles.confirm} role="dialog" aria-modal="true">
@@ -191,31 +273,17 @@ export default function OpportunitiesPipelinePage() {
             <h2>Move to {pending.stage}?</h2>
             <p className="muted">
               {pending.stage === "Closed Won"
-                ? "Agreed contract value is separate from expected billing and recognised revenue."
-                : "Capture why the opportunity was lost."}
+                ? "Confirm the win. You can create a staffing requirement from this deal."
+                : "This marks the opportunity as lost."}
             </p>
+            {pending.stage === "Closed Won" && (
+              <label className={styles.confirmCheck}>
+                <input type="checkbox" checked={createRequirement} onChange={(event) => setCreateRequirement(event.target.checked)} />
+                Create staffing requirement
+              </label>
+            )}
             <div className={styles.cardActions}>
-              <Button
-                onClick={() => {
-                  if (pending.stage === "Closed Won") {
-                    crm.setOpportunityStage(pending.opportunity.id, "Closed Won", {
-                      agreedContractValue: pending.opportunity.agreedContractValue ?? pending.opportunity.amount,
-                      expectedBilling: pending.opportunity.expectedBilling ?? Math.round(pending.opportunity.amount * 0.6),
-                      recognisedRevenue: pending.opportunity.recognisedRevenue ?? 0,
-                      nextStep: "Hand to delivery / staffing",
-                    });
-                  } else {
-                    crm.setOpportunityStage(pending.opportunity.id, "Closed Lost", {
-                      lostReason: "DEMO — closed lost from pipeline",
-                      nextStep: null,
-                    });
-                  }
-                  toast(`Opportunity → ${pending.stage}`, "success");
-                  setPending(null);
-                }}
-              >
-                Confirm
-              </Button>
+              <Button onClick={confirmPending}>Confirm</Button>
               <Button variant="ghost" onClick={() => setPending(null)}>
                 Cancel
               </Button>
@@ -224,7 +292,7 @@ export default function OpportunitiesPipelinePage() {
         </div>
       )}
 
-      {opportunities.length === 0 && <EmptyState title="No opportunities yet" icon="sales" />}
+      {previewId && <OpportunityQuickPanel opportunityId={previewId} onClose={() => setPreviewId(null)} />}
     </div>
   );
 }

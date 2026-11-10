@@ -181,6 +181,7 @@ export function formatCandidatePipelineSummary(counts: {
   interviewed: number;
   offered: number;
   filled: number;
+  suggested?: number;
 }) {
   const parts: string[] = [];
   if (counts.shortlisted) parts.push(`${counts.shortlisted} shortlisted`);
@@ -188,6 +189,22 @@ export function formatCandidatePipelineSummary(counts: {
   if (counts.offered) parts.push(`${counts.offered} offer`);
   if (counts.filled) parts.push(`${counts.filled} placed`);
   return parts.length ? parts.join(" · ") : "No candidates yet";
+}
+
+/** Single progress chip for Kanban cards — most advanced stage only. */
+export function formatCandidateProgress(counts: {
+  shortlisted: number;
+  interviewed: number;
+  offered: number;
+  filled: number;
+  suggested?: number;
+}) {
+  if (counts.filled) return `${counts.filled} placed`;
+  if (counts.offered) return `${counts.offered} offer`;
+  if (counts.interviewed) return `${counts.interviewed} interview`;
+  if (counts.shortlisted) return `${counts.shortlisted} shortlisted`;
+  if (counts.suggested) return `${counts.suggested} suggested`;
+  return "No candidates";
 }
 
 /** @deprecated Prefer staffingCommandKpis for the operations desk. */

@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { crm } from "@/lib/crm-store";
 import { addDays, formatDate, initials, timeAgo } from "@/lib/format";
-import type { ConversationChannel } from "@/lib/types";
+import type { ConversationChannel, LeadStatus } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import { Drawer } from "@/components/ui/Overlay";
@@ -16,9 +18,12 @@ import LogInteractionModal from "./LogInteractionModal";
 import ComposeMessageModal from "./ComposeMessageModal";
 import styles from "./Leads.module.css";
 
+const JOURNEY: LeadStatus[] = ["New", "Working", "Qualified", "Converted"];
+
 export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; onClose: () => void }) {
+  const router = useRouter();
   const { state, workspace } = useWorkspaceData();
-  const { openTaskForm, askQiko } = useWorkspace();
+  const { openTaskForm, askQiko, toast } = useWorkspace();
   const [logOpen, setLogOpen] = useState(false);
   const [compose, setCompose] = useState<ConversationChannel | null>(null);
   if (!state || !workspace) return null;
@@ -28,8 +33,37 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
   const owner = state.members.find((member) => member.id === lead.ownerId);
   const events = (workspace.byLead.get(lead.id) ?? []).slice(0, 5);
   const suggestion = workspace.suggestions.find((item) => item.leadId === lead.id);
-  const scans = state.scans.filter((scan) => scan.leadId === lead.id);
   const messages = (state.messages ?? []).filter((message) => message.leadId === lead.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 4);
+  const journeyIndex = JOURNEY.indexOf(lead.status === "Unqualified" ? "New" : lead.status);
+  const accounts = state.tessiant?.accounts ?? [];
+
+  const advanceStatus = (status: LeadStatus) => {
+    if (lead.status === status) return;
+    crm.updateLead(lead.id, { status });
+    toast(`Status → ${status}`);
+  };
+
+  const convert = () => {
+    const accountId = lead.accountId ?? accounts[0]?.id;
+    if (!accountId) {
+      toast("Create an account before converting", "error");
+      return;
+    }
+    const result = crm.convertLead(lead.id, {
+      accountId,
+      opportunityName: `${lead.company ?? lead.name} · ${lead.serviceInterest ?? "engagement"}`,
+      opportunityType: (lead.serviceInterest as "augmentation" | "advisory" | "consultancy" | "project team" | "mixed") || "augmentation",
+      amount: 120000,
+      services: lead.serviceInterest ? [lead.serviceInterest] : ["Staff augmentation"],
+    });
+    if (!result.ok) {
+      toast(result.error, "error");
+      return;
+    }
+    toast("Lead converted to contact + opportunity", "success");
+    onClose();
+    router.push(`/sales/accounts/${accountId}`);
+  };
 
   return (
     <Drawer
@@ -54,9 +88,74 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
       <div className={styles.panelMeta}>
         <LeadStatusChip status={lead.status} />
         <span className="tag">{lead.source}</span>
-        <span className="tag">Owner · {owner?.name ?? "Unassigned"}</span>
-        <span className="tag">Engagement {lead.engagementScore}/100</span>
+        <label className="tag" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          Owner
+          <select
+            className="input"
+            style={{ height: 28, minHeight: 28, padding: "0 8px", fontSize: 12 }}
+            value={lead.ownerId ?? ""}
+            aria-label="Update lead owner"
+            onChange={(event) => {
+              const ownerId = event.target.value || null;
+              crm.updateLead(lead.id, { ownerId });
+              toast(ownerId ? `Owner → ${state.members.find((member) => member.id === ownerId)?.name ?? "Assigned"}` : "Owner cleared");
+            }}
+          >
+            <option value="">Unassigned</option>
+            {state.members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.id === "me" ? "Me" : member.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
+
+      <section className={styles.journey} aria-label="Qualification journey">
+        <div className={styles.journeyTrack}>
+          {JOURNEY.map((step, index) => {
+            const done = journeyIndex >= 0 && index <= journeyIndex;
+            const current = lead.status === step;
+            return (
+              <button
+                key={step}
+                type="button"
+                className={`${styles.journeyStep} ${done ? styles.journeyDone : ""} ${current ? styles.journeyCurrent : ""}`}
+                disabled={lead.status === "Converted" || step === "Converted"}
+                onClick={() => advanceStatus(step)}
+              >
+                <span className={styles.journeyDot} />
+                {step}
+              </button>
+            );
+          })}
+        </div>
+        {lead.status !== "Converted" && lead.status !== "Unqualified" && (
+          <div className={styles.journeyActions}>
+            {lead.status !== "Qualified" && (
+              <Button size="small" variant="secondary" onClick={() => advanceStatus("Qualified")}>
+                Mark qualified
+              </Button>
+            )}
+            {lead.status === "Qualified" && accounts.length > 0 && (
+              <Button size="small" icon="arrowRight" onClick={convert}>
+                Convert to opportunity
+              </Button>
+            )}
+            <Button size="small" variant="ghost" onClick={() => advanceStatus("Unqualified")}>
+              Mark unqualified
+            </Button>
+          </div>
+        )}
+        {lead.status === "Converted" && lead.convertedOpportunityId && (
+          <p className={styles.journeyDoneNote}>
+            Converted.{" "}
+            <Link href="/sales/pipeline" onClick={onClose}>
+              Open opportunities
+            </Link>
+          </p>
+        )}
+      </section>
 
       <div className={styles.quickActions}>
         <Button size="small" icon="plus" onClick={() => openTaskForm({ initial: { title: `Follow up with ${lead.name}`, leadId: lead.id, ownerId: lead.ownerId ?? "me", due: addDays(1) } })}>Task</Button>
@@ -70,7 +169,7 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
         <div><dt>Email</dt><dd>{lead.email}</dd></div>
         <div><dt>Phone</dt><dd>{lead.phone ?? "—"}</dd></div>
         <div><dt>Added</dt><dd>{formatDate(lead.createdAt, true)}</dd></div>
-        <div><dt>Scans</dt><dd>{scans.length ? `${scans.length} · latest ${scans[0].score}/100` : "None"}</dd></div>
+        <div><dt>Next</dt><dd>{lead.nextActionLabel}</dd></div>
       </dl>
 
       <h3 className={`kicker ${styles.panelSection}`}>Conversation</h3>

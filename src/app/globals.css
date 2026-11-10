@@ -54,9 +54,17 @@
 
   --shadow-xs: 0 1px 2px rgba(15, 23, 20, 0.04);
   --shadow-sm: 0 1px 2px rgba(15, 23, 20, 0.05), 0 1px 3px rgba(15, 23, 20, 0.04);
-  --shadow-md: 0 8px 24px -12px rgba(15, 23, 20, 0.16);
-  --shadow-lg: 0 24px 64px -24px rgba(15, 23, 20, 0.32);
+  --shadow-md: 0 8px 22px -14px rgba(15, 23, 20, 0.14);
+  --shadow-lg: 0 22px 56px -28px rgba(15, 23, 20, 0.28);
+  --shadow-hover: 0 10px 24px -16px rgba(47, 111, 94, 0.28);
   --focus-ring: 0 0 0 3px var(--brand-ring);
+
+  /* Motion — purposeful, short, consistent */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration: 200ms;
+  --duration-slow: 250ms;
 
   --sidebar-width: 248px;
   --sidebar-collapsed: 72px;
@@ -187,18 +195,18 @@ textarea:focus-visible {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   width: 100%;
   min-width: 0;
   margin: 0;
-  padding: 32px 28px 64px;
-  animation: pageIn 0.32s ease-out;
+  padding: 28px 28px 64px;
+  animation: pageIn var(--duration-slow) var(--ease-out);
 }
 
 @keyframes pageIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
 }
 
@@ -219,11 +227,11 @@ textarea:focus-visible {
 }
 
 .page-head .subtitle {
-  margin-top: 6px;
-  max-width: 62ch;
+  margin-top: 4px;
+  max-width: 48ch;
   color: var(--muted);
-  font-size: 13.5px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .page-actions {
@@ -253,6 +261,262 @@ textarea:focus-visible {
   border-radius: var(--radius-xl);
   background: var(--surface);
   box-shadow: var(--shadow-xs);
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.interactive,
+.lift {
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+
+.interactive:hover,
+.lift:hover {
+  border-color: var(--brand-ring);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+.interactive:active,
+.lift:active {
+  transform: translateY(0);
+}
+
+/* Tab / filter content swap — short, one-shot */
+.tab-panel,
+.filter-results {
+  animation: contentIn var(--duration) var(--ease-out);
+}
+
+@keyframes contentIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* — Shared workspace primitives (Home / Sales / Staffing) — */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.metric-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric-grid-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.metric-card:hover {
+  border-color: var(--brand-ring);
+  box-shadow: var(--shadow-hover);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.metric-label {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-card > b {
+  display: block;
+  width: 100%;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.metric-delta {
+  display: block;
+  min-height: 1.2em;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.metric-delta.positive {
+  color: var(--success);
+}
+
+.metric-delta.warning {
+  color: var(--warning);
+}
+
+.pill-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.pill-tab {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.pill-tab:hover {
+  border-color: var(--brand-ring);
+}
+
+.pill-tab[aria-pressed="true"],
+.pill-tab[data-active="true"] {
+  border-color: var(--brand-ring);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  box-shadow: inset 0 0 0 1px var(--brand-ring);
+  transform: translateY(-1px);
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  margin-bottom: 12px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--subtle);
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.search-field:focus-within {
+  border-color: var(--brand-ring);
+  box-shadow: var(--focus-ring);
+}
+
+.search-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  color: var(--ink);
+  font-size: 13.5px;
+}
+
+.kanban-board {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x proximity;
+}
+
+.kanban-column {
+  display: flex;
+  flex: 0 0 260px;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+  min-height: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--well);
+  scroll-snap-align: start;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.kanban-column[data-over="true"] {
+  border-color: var(--brand-ring);
+  border-style: dashed;
+  background: var(--brand-soft);
+  box-shadow: inset 0 0 0 1px var(--brand-ring);
+  transform: scale(1.008);
+}
+
+.kanban-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  color: inherit;
+  text-decoration: none;
+  cursor: grab;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.kanban-card:hover {
+  border-color: var(--brand-ring);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+  transform: scale(1.02) rotate(0.35deg);
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 1100px) {
+  .metric-grid,
+  .metric-grid-5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .metric-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .metric-grid,
+  .metric-grid-4,
+  .metric-grid-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .card-head {
@@ -276,10 +540,10 @@ textarea:focus-visible {
 }
 
 .card-sub {
-  margin-top: 3px;
+  margin-top: 2px;
   color: var(--muted);
-  font-size: 12.5px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .card-body {
@@ -332,6 +596,8 @@ textarea:focus-visible {
   background: var(--well);
   color: var(--ink-3);
   box-shadow: inset 0 0 0 1px var(--line);
+  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .chip-dot::before {
@@ -357,7 +623,19 @@ textarea:focus-visible {
 .chip-high { background: var(--danger-soft); color: var(--danger); box-shadow: inset 0 0 0 1px #fecaca; }
 .chip-medium { background: var(--warning-soft); color: var(--warning); box-shadow: inset 0 0 0 1px var(--warning-line); }
 .chip-low { background: var(--well); color: var(--ink-3); }
-.chip-ai { background: linear-gradient(135deg, #eff6ff, #f5f3ff); color: #5b21b6; box-shadow: inset 0 0 0 1px #ddd6fe; }
+.chip-ai { background: var(--qiko-accent-soft); color: var(--qiko-accent); box-shadow: inset 0 0 0 1px #c7d2fe; }
+
+.kpi-value {
+  display: inline-block;
+  animation: kpiIn var(--duration) var(--ease-out);
+}
+
+@keyframes kpiIn {
+  from {
+    opacity: 0.35;
+    transform: translateY(3px);
+  }
+}
 .chip-fact { background: var(--success-soft); color: var(--success); box-shadow: inset 0 0 0 1px var(--success-line); }
 .chip-demo { background: var(--warning-soft); color: var(--warning); box-shadow: inset 0 0 0 1px var(--warning-line); }
 
@@ -527,6 +805,7 @@ textarea:focus-visible {
 }
 
 .segmented button {
+  position: relative;
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
@@ -540,7 +819,8 @@ textarea:focus-visible {
   font-size: 12.5px;
   font-weight: 550;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
 .segmented button:hover {
@@ -551,6 +831,16 @@ textarea:focus-visible {
   background: var(--surface);
   color: var(--ink);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  animation: tabActivate var(--duration-fast) var(--ease-out);
+}
+
+@keyframes tabActivate {
+  from {
+    transform: scale(0.98);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 .segmented .count {
@@ -623,7 +913,7 @@ textarea:focus-visible {
 }
 
 .table tbody tr {
-  transition: background 0.12s ease;
+  transition: background var(--duration-fast) var(--ease-out);
 }
 
 .table tbody tr.clickable {
@@ -631,7 +921,7 @@ textarea:focus-visible {
 }
 
 .table tbody tr:hover {
-  background: #fafbff;
+  background: var(--brand-soft);
 }
 
 .table tbody tr:last-child td {
@@ -650,6 +940,7 @@ textarea:focus-visible {
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.5);
   text-align: center;
+  animation: contentIn var(--duration-slow) var(--ease-out);
 }
 
 .empty-state .empty-icon {
@@ -661,6 +952,18 @@ textarea:focus-visible {
   border-radius: 12px;
   background: var(--brand-soft);
   color: var(--brand);
+  animation: emptyIconIn var(--duration-slow) var(--ease-spring);
+}
+
+@keyframes emptyIconIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .empty-state b {
@@ -681,11 +984,15 @@ textarea:focus-visible {
   margin-top: 10px;
 }
 
+.skeleton-stack {
+  min-height: 80px;
+}
+
 .skeleton {
   border-radius: var(--radius-md);
-  background: linear-gradient(90deg, #eef2f6 0%, #f8fafc 50%, #eef2f6 100%);
+  background: linear-gradient(90deg, var(--well) 0%, var(--surface-muted) 45%, var(--well) 100%);
   background-size: 200% 100%;
-  animation: shimmer 1.3s ease-in-out infinite;
+  animation: shimmer 1.4s var(--ease-out) infinite;
 }
 
 @keyframes shimmer {
@@ -695,6 +1002,13 @@ textarea:focus-visible {
   to {
     background-position: -200% 0;
   }
+}
+
+/* Soft filter/search feedback without layout jump */
+.input,
+select.input,
+.select {
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .demo-banner {
@@ -781,7 +1095,14 @@ textarea:focus-visible {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .interactive:hover,
+  .lift:hover {
+    transform: none;
   }
 }
 

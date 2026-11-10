@@ -19,7 +19,7 @@
 }
 
 .search:focus-within {
-  border-color: #818cf8;
+  border-color: var(--brand-ring);
   box-shadow: var(--focus-ring);
 }
 
@@ -66,12 +66,13 @@
   display: grid;
   max-width: 100%;
   min-width: 0;
-  grid-template-columns: repeat(6, minmax(220px, 1fr));
+  grid-template-columns: repeat(6, minmax(240px, 260px));
   align-items: start;
   contain: paint;
-  gap: 14px;
+  gap: 12px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
+  padding-bottom: 6px;
 }
 
 .column {
@@ -83,14 +84,17 @@
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
-  background: #f3f6fa;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  background: var(--well);
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
 .columnOver {
-  border-color: #a5b4fc;
+  border-color: var(--brand-ring);
   border-style: dashed;
   background: var(--brand-soft);
+  box-shadow: inset 0 0 0 1px var(--brand-ring);
+  transform: scale(1.008);
 }
 
 .columnHead {
@@ -330,7 +334,7 @@
   padding: 14px 16px;
   border: 1px dashed var(--brand-ring);
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, #f8faff, #faf5ff);
+  background: var(--brand-soft);
   color: var(--brand-strong);
   font-size: 13.5px;
   font-weight: 600;
@@ -352,31 +356,80 @@
   }
 
   .board {
-    grid-template-columns: repeat(5, calc((100% - 14px) / 2));
-  }
-}
-
-@media (max-width: 560px) {
-  .board {
-    grid-template-columns: repeat(5, 100%);
-  }
-
-  .column {
-    min-height: 180px;
-  }
-}
-
-@media (min-width: 721px) and (max-width: 1300px) {
-  .board {
-    grid-template-columns: repeat(5, calc((100% - 28px) / 3));
+    grid-template-columns: repeat(6, minmax(220px, 240px));
   }
 }
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.actionStrip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.actionStrip h2 {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.actionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.actionChip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  max-width: 240px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.actionChip:hover {
+  border-color: var(--brand-ring);
+  transform: translateY(-1px);
+}
+
+.actionChip b {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.actionChip span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .metrics > div {
@@ -396,6 +449,133 @@
   margin-top: 4px;
   color: var(--muted);
   font-size: 12px;
+}
+
+.oppCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  cursor: grab;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out);
+  animation: oppIn var(--duration) var(--ease-out);
+}
+
+.oppCard:hover {
+  border-color: var(--brand-ring);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+.oppCard:active,
+.oppCardDragging {
+  cursor: grabbing;
+}
+
+.oppCardDragging {
+  opacity: 0.72;
+  transform: scale(1.02) rotate(0.35deg);
+  box-shadow: var(--shadow-md);
+  z-index: 2;
+}
+
+@keyframes oppIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.oppTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.oppTitle {
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 650;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oppTop span {
+  flex-shrink: 0;
+  color: var(--brand-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.oppAccount {
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oppFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.oppOwner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.oppOwner span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oppClose {
+  flex-shrink: 0;
+  color: var(--ink-3);
+  font-size: 11.5px;
+  font-weight: 550;
+}
+
+.risk {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+.confirmCheck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 4px;
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+
+.overdueText {
+  color: var(--danger);
+  font-weight: 650;
 }
 
 .cardTitle {
@@ -447,12 +627,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card,
-  .column {
-    transition: none;
+  .oppCard,
+  .column,
+  .columnOver,
+  .oppCardDragging {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 
-  .card:hover {
+  .oppCard:hover {
     transform: none;
   }
 }

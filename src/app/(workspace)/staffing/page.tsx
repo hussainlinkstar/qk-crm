@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
-import { BarList } from "@/components/charts/TrendChart";
 import { EmptyState, PriorityChip, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import {
   assignmentsEndingSoon,
@@ -30,7 +28,6 @@ const ACTION_LABEL: Record<string, string> = {
 };
 
 export default function StaffingOverviewPage() {
-  const router = useRouter();
   const { state } = useWorkspaceData();
   const now = useNow();
   const tessiant = state?.tessiant;
@@ -62,20 +59,22 @@ export default function StaffingOverviewPage() {
     });
   }, [state, tessiant]);
   const actions = useMemo(() => (state ? upcomingStaffingActions(state) : []), [state]);
-  const openRows = openReqs.length ? openReqs : allOpen.slice(0, 8).map((req) => {
-    const account = tessiant?.accounts.find((item) => item.id === req.accountId);
-    return {
-      id: req.id,
-      title: req.title,
-      client: account?.name ?? "—",
-      priority: requirementPriority(req),
-      stage: mapRequirementToOpsStage(req),
-      startDate: req.startDate,
-      href: `/staffing/requirements/${req.id}`,
-      matches: 0,
-      reasons: [] as string[],
-    };
-  });
+  const openRows = openReqs.length
+    ? openReqs
+    : allOpen.slice(0, 6).map((req) => {
+        const account = tessiant?.accounts.find((item) => item.id === req.accountId);
+        return {
+          id: req.id,
+          title: req.title,
+          client: account?.name ?? "—",
+          priority: requirementPriority(req),
+          stage: mapRequirementToOpsStage(req),
+          startDate: req.startDate,
+          href: `/staffing/requirements/${req.id}`,
+          matches: 0,
+          reasons: [] as string[],
+        };
+      });
 
   if (!state || !tessiant) {
     return (
@@ -85,14 +84,14 @@ export default function StaffingOverviewPage() {
     );
   }
 
-  const pipelineBars = pipeline.map((item) => ({ label: item.stage, value: item.count }));
+  const pipelineTotal = pipeline.reduce((sum, item) => sum + item.count, 0) || 1;
 
   return (
     <div className={`page ${styles.density}`}>
       <header className="page-head">
         <div>
           <h1>Staffing Overview</h1>
-          <p className="subtitle">Manage your talent network, client requirements and active assignments.</p>
+          <p className="subtitle">Demand, talent and deployments.</p>
         </div>
         <div className="page-actions">
           <Link href="/staffing/associates?new=1" className="button-link">
@@ -100,80 +99,82 @@ export default function StaffingOverviewPage() {
               Add associate
             </Button>
           </Link>
-          <Link href="/staffing/requirements?new=1" className="button-link">
+          <Link href="/staffing/requirements?new=1&layout=board" className="button-link">
             <Button icon="plus">New requirement</Button>
           </Link>
         </div>
       </header>
 
-      <section className={styles.kpiRow} aria-label="Staffing KPIs">
+      <section className="metric-grid" aria-label="Staffing KPIs">
         {kpis.map((metric) => (
-          <Link key={metric.key} href={metric.href} className={styles.kpi}>
-            <span className={styles.kpiLabel}>{metric.label}</span>
-            <b className="tabular">{metric.value}</b>
+          <Link key={metric.key} href={metric.href} className="metric-card">
+            <span className="metric-label">{metric.label}</span>
+            <b className="tabular kpi-value">{metric.value}</b>
             {metric.delta ? (
-              <span className={`${styles.kpiDelta} ${metric.tone ? styles[metric.tone] : ""}`}>{metric.delta}</span>
+              <span className={`metric-delta${metric.tone ? ` ${metric.tone}` : ""}`}>{metric.delta}</span>
             ) : null}
           </Link>
         ))}
       </section>
 
-      <section className={styles.opsGrid}>
+      <section className={styles.opsSummary} aria-label="Recruitment pipeline">
+        <div className={styles.opsSummaryHead}>
+          <div>
+            <h2>Recruitment pipeline</h2>
+          </div>
+          <Link href="/staffing/requirements?layout=board" className="text-link">
+            Open board
+          </Link>
+        </div>
+        <div className={styles.flowTrack}>
+          {pipeline.map((item) => (
+            <Link
+              key={item.stage}
+              href={`/staffing/requirements?layout=board&opsStage=${encodeURIComponent(item.stage)}`}
+              className={styles.flowSeg}
+              style={{ flexGrow: Math.max(item.count, 0.35) }}
+            >
+              <span className={styles.flowBar} style={{ width: `${Math.max(12, (item.count / pipelineTotal) * 100)}%` }} />
+              <b className="tabular">{item.count}</b>
+              <small>{item.stage}</small>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.opsGridThree}>
         <article className="card">
           <div className="card-head">
             <div>
               <h2>Open requirements</h2>
             </div>
-            <Link href="/staffing/requirements?view=open" className="text-link">
-              View all
+            <Link href="/staffing/requirements?view=open&layout=board" className="text-link">
+              Board
             </Link>
           </div>
           <div className="card-body">
             {openRows.length === 0 ? (
               <EmptyState title="No open requirements" icon="flag" />
             ) : (
-              <div className="table-wrap">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Requirement</th>
-                      <th>Client</th>
-                      <th>Priority</th>
-                      <th>Stage</th>
-                      <th>Open positions</th>
-                      <th>Days open</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {openRows.slice(0, 8).map((item) => {
-                      const req = tessiant.requirements.find((r) => r.id === item.id);
-                      return (
-                        <tr key={item.id}>
-                          <td>
-                            <Link href={item.href} className={styles.rowLink}>
-                              {item.title}
-                            </Link>
-                          </td>
-                          <td className="nowrap">{item.client}</td>
-                          <td className="nowrap">
-                            <PriorityChip priority={item.priority} />
-                          </td>
-                          <td className="nowrap">
-                            <span className="chip chip-dot">{item.stage}</span>
-                          </td>
-                          <td className="tabular nowrap">{req?.headcount ?? "—"}</td>
-                          <td className="tabular nowrap">{req ? daysOpen(req) : "—"}</td>
-                          <td className="nowrap">
-                            <Link href={item.href} className="text-link">
-                              Open
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className={styles.reqCards}>
+                {openRows.slice(0, 5).map((item) => {
+                  const req = tessiant.requirements.find((r) => r.id === item.id);
+                  return (
+                    <Link key={item.id} href={item.href} className={styles.reqCard}>
+                      <span className={styles.reqCardTop}>
+                        <b>{item.title}</b>
+                        <PriorityChip priority={item.priority} />
+                      </span>
+                      <span className="muted">
+                        {item.client} · {item.stage}
+                      </span>
+                      <span className={styles.reqCardFoot}>
+                        <span className="chip tabular">{req?.headcount ?? "—"} pos</span>
+                        <span className="muted tabular">{req ? `${daysOpen(req)}d open` : ""}</span>
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -193,7 +194,7 @@ export default function StaffingOverviewPage() {
               <EmptyState title="No upcoming actions" icon="tasks" />
             ) : (
               <ul className={styles.actionList}>
-                {actions.slice(0, 8).map((action) => (
+                {actions.slice(0, 6).map((action) => (
                   <li key={action.id}>
                     <Link href={action.href} className={styles.actionItem}>
                       <span className={styles.actionIcon}>
@@ -225,74 +226,35 @@ export default function StaffingOverviewPage() {
             )}
           </div>
         </article>
-      </section>
 
-      <section className={styles.opsGrid}>
         <article className="card">
           <div className="card-head">
             <div>
-              <h2>Assignments ending soon</h2>
+              <h2>Ending soon</h2>
             </div>
             <Link href="/staffing/placements?view=ending30" className="text-link">
-              View all
+              Assignments
             </Link>
           </div>
           <div className="card-body">
             {endingSoon.length === 0 ? (
               <EmptyState title="No assignments ending soon" icon="checkCircle" />
             ) : (
-              <div className="table-wrap">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Associate</th>
-                      <th>Client</th>
-                      <th>End date</th>
-                      <th>Renewal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {endingSoon.slice(0, 6).map((row) => (
-                      <tr key={row.id}>
-                        <td>
-                          <Link href={row.href} className={styles.rowLink}>
-                            {row.associateName}
-                          </Link>
-                        </td>
-                        <td>{row.client}</td>
-                        <td className="tabular">{row.endDate ? formatDate(row.endDate) : "—"}</td>
-                        <td>
-                          <span className={`chip ${row.renewal === "renewal_due" || row.renewal === "ending" ? "chip-high" : ""}`}>
-                            {String(row.renewal).replace("_", " ")}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className={styles.endingList}>
+                {endingSoon.slice(0, 6).map((row) => (
+                  <Link key={row.id} href={row.href} className={styles.endingItem}>
+                    <span>
+                      <b>{row.associateName}</b>
+                      <small>
+                        {row.client} · {row.endDate ? formatDate(row.endDate) : "—"}
+                      </small>
+                    </span>
+                    <span className={`chip ${row.renewal === "renewal_due" || row.renewal === "ending" ? "chip-high" : ""}`}>
+                      {String(row.renewal).replace("_", " ")}
+                    </span>
+                  </Link>
+                ))}
               </div>
-            )}
-          </div>
-        </article>
-
-        <article className="card">
-          <div className="card-head">
-            <div>
-              <h2>Recruitment pipeline</h2>
-            </div>
-            <Link href="/staffing/requirements" className="text-link">
-              Requirements
-            </Link>
-          </div>
-          <div className="card-body">
-            {pipelineBars.every((item) => item.value === 0) ? (
-              <EmptyState title="No pipeline activity" />
-            ) : (
-              <BarList
-                items={pipelineBars}
-                color="var(--brand)"
-                onSelect={(label) => router.push(`/staffing/requirements?opsStage=${encodeURIComponent(label)}`)}
-              />
             )}
           </div>
         </article>

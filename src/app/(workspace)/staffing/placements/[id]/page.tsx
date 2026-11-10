@@ -17,7 +17,6 @@ import {
 import { addDays, formatDate, todayKey } from "@/lib/format";
 import { assignmentRenewalStatus, formatRate, marginForCandidate } from "@/lib/tessiant-insights";
 import styles from "../../staffing.module.css";
-import talent from "../../associates/talent.module.css";
 
 type TabKey = "overview" | "commercials" | "documents" | "activity";
 
@@ -114,7 +113,7 @@ export default function AssignmentDetailPage() {
         )}
         <span>/</span>
         {opportunity ? (
-          <Link href={`/sales/pipeline`} className={styles.rowLink}>
+          <Link href={`/sales/accounts/${opportunity.accountId}`} className={styles.rowLink}>
             {opportunity.name}
           </Link>
         ) : (
@@ -128,15 +127,14 @@ export default function AssignmentDetailPage() {
         <b>{assignmentStatusLabel(status)}</b>
       </div>
 
-      <div className={talent.tabs} role="tablist" aria-label="Assignment sections">
+      <div className="segmented" role="tablist" aria-label="Assignment sections">
         {TABS.map((item) => (
           <button
             key={item.key}
             type="button"
             role="tab"
             aria-selected={tab === item.key}
-            className={talent.tab}
-            data-active={tab === item.key}
+            aria-pressed={tab === item.key}
             onClick={() => setTab(item.key)}
           >
             {item.label}
@@ -145,7 +143,7 @@ export default function AssignmentDetailPage() {
       </div>
 
       {tab === "overview" && (
-        <section className={styles.split}>
+        <section className={`tab-panel ${styles.split}`}>
           <article className="card">
             <div className="card-head">
               <h2>Overview</h2>

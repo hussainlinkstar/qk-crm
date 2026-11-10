@@ -78,32 +78,28 @@ export type CandidateAction =
   | { type: "place"; label: string }
   | { type: "reject"; label: string; next: ShortlistStatus; needsReason: true };
 
-/** Only actions relevant to the candidate's current state. */
+/** Primary next step + reject only — keeps recruitment UI contextual. */
 export function actionsForCandidate(status: string): CandidateAction[] {
   const current = normalizeCandidateStatus(status);
   switch (current) {
     case "suggested":
       return [
         { type: "shortlist", label: "Shortlist", next: "shortlisted" },
-        { type: "request_availability", label: "Request availability", needsNote: true },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
     case "contacted":
       return [
-        { type: "shortlist", label: "Shortlist", next: "shortlisted" },
         { type: "confirm_availability", label: "Confirm availability", next: "availability_confirmed" },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
     case "availability_confirmed":
       return [
         { type: "submit_client", label: "Submit to client", next: "submitted_to_client" },
-        { type: "shortlist", label: "Shortlist", next: "shortlisted" },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
     case "shortlisted":
       return [
         { type: "submit_client", label: "Submit to client", next: "submitted_to_client" },
-        { type: "confirm_availability", label: "Confirm availability", next: "availability_confirmed" },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
     case "submitted_to_client":
@@ -113,7 +109,6 @@ export function actionsForCandidate(status: string): CandidateAction[] {
       ];
     case "interview":
       return [
-        { type: "interview", label: "Log feedback", next: "interview", needsNote: true },
         { type: "offer", label: "Move to offer", next: "offer" },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];

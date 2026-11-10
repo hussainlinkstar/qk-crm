@@ -1,31 +1,46 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { buildMetrics, buildTrends, sourceBreakdown } from "@/lib/insights";
-import { initials, timeAgo } from "@/lib/format";
-import { LEAD_STATUSES, OPPORTUNITY_STAGES } from "@/lib/types";
+import { addDays, todayKey } from "@/lib/format";
 import { commercialBuckets, isOpenLead } from "@/lib/sales-crm";
+import { OPPORTUNITY_STAGES, type Opportunity } from "@/lib/types";
+import { isOpen, sortTasks } from "@/lib/insights";
 import Button from "@/components/ui/Button";
-import { EmptyState, LeadStatusChip, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
-import TrendChart, { BarList } from "@/components/charts/TrendChart";
-import SuggestionCard from "@/components/tasks/SuggestionCard";
+import EntityCard from "@/components/ui/EntityCard";
+import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
+import OpportunityQuickPanel from "@/components/sales/OpportunityQuickPanel";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import styles from "./sales.module.css";
 
-const RANGES = [7, 14, 30] as const;
-
 export default function SalesOverviewPage() {
-  const router = useRouter();
   const { state, workspace } = useWorkspaceData();
-  const { openAddLead, askQiko } = useWorkspace();
-  const [range, setRange] = useState<(typeof RANGES)[number]>(30);
-  const now = useNow();
+  const { openAddLead, askQiko, openTask } = useWorkspace();
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
-  const metrics = useMemo(() => (state ? buildMetrics(state, now || undefined) : []), [state, now]);
-  const trends = useMemo(() => (state ? buildTrends(state, range) : []), [state, range]);
   const buckets = state ? commercialBuckets(state) : null;
+
+  const openOpps = useMemo(() => {
+    if (!state) return [];
+    return (state.opportunities ?? []).filter((item) => item.stage !== "Closed Won" && item.stage !== "Closed Lost");
+  }, [state]);
+
+  const closingSoon = useMemo(() => {
+    const horizon = addDays(21);
+    return [...openOpps]
+      .filter((item) => item.expectedCloseDate <= horizon)
+      .sort((a, b) => a.expectedCloseDate.localeCompare(b.expectedCloseDate));
+  }, [openOpps]);
+
+  const priorityOpps = useMemo(() => {
+    const score = (item: Opportunity) => {
+      const soon = item.expectedCloseDate <= addDays(14) ? 2 : 0;
+      const late = ["Proposal", "Negotiation"].includes(item.stage) ? 2 : 0;
+      const value = item.amount >= 100000 ? 1 : 0;
+      return soon + late + value + item.probability / 100;
+    };
+    return [...openOpps].sort((a, b) => score(b) - score(a) || b.amount - a.amount).slice(0, 5);
+  }, [openOpps]);
 
   if (!state || !workspace) {
     return (
@@ -35,21 +50,32 @@ export default function SalesOverviewPage() {
     );
   }
 
-  const hotLeads = workspace.leads.filter((lead) => isOpenLead(lead.status)).sort((a, b) => b.engagementScore - a.engagementScore).slice(0, 6);
-  const leadPipeline = LEAD_STATUSES.map((status) => ({ label: status, value: state.leads.filter((lead) => lead.status === status).length }));
-  const oppPipeline = OPPORTUNITY_STAGES.map((stage) => ({
-    label: stage,
-    value: (state.opportunities ?? []).filter((item) => item.stage === stage).length,
+  const followUps = sortTasks(
+    state.tasks.filter(
+      (task) => isOpen(task) && (task.leadId || task.accountId || task.opportunityId || task.contactId),
+    ),
+  ).slice(0, 5);
+
+  const attentionLeads = workspace.leads
+    .filter((lead) => isOpenLead(lead.status) && (lead.openTasks.length > 0 || workspace.suggestions.some((item) => item.leadId === lead.id)))
+    .slice(0, 3);
+
+  const stageCounts = OPPORTUNITY_STAGES.map((stage) => ({
+    stage,
+    count: (state.opportunities ?? []).filter((item) => item.stage === stage).length,
+    value: (state.opportunities ?? [])
+      .filter((item) => item.stage === stage)
+      .reduce((sum, item) => sum + item.amount, 0),
   }));
+  const maxStageValue = Math.max(1, ...stageCounts.map((item) => item.value));
+  const accountName = (accountId: string) => state.tessiant?.accounts.find((item) => item.id === accountId)?.name ?? "Account";
 
   return (
     <div className="page">
       <header className="page-head">
         <div>
           <h1>Sales overview</h1>
-          <p className="subtitle">
-            B2B consulting & staffing CRM — leads, accounts, contacts and opportunities. Pipeline is not recognised revenue.
-          </p>
+          <p className="subtitle">Pipeline health and next actions.</p>
         </div>
         <div className="page-actions">
           <Button variant="secondary" icon="sparkles" className="mobile-icon-button" aria-label="Summarise today" onClick={() => askQiko("What happened in sales today?")}>
@@ -62,200 +88,121 @@ export default function SalesOverviewPage() {
       </header>
 
       {buckets && (
-        <section className={`${styles.kpis} ${styles.kpisCommercial}`} aria-label="Commercial distinctions">
-          <div className={styles.kpi}>
-            <span className={styles.kpiLabel}>Open pipeline</span>
-            <b className="tabular">£{buckets.pipeline.toLocaleString("en-GB")}</b>
-            <span className={styles.kpiDelta} aria-hidden="true">
-              &nbsp;
-            </span>
-            <small>Face-value opportunities still open</small>
-          </div>
-          <div className={styles.kpi}>
-            <span className={styles.kpiLabel}>Weighted pipeline</span>
-            <b className="tabular">£{buckets.weighted.toLocaleString("en-GB")}</b>
-            <span className={styles.kpiDelta} aria-hidden="true">
-              &nbsp;
-            </span>
-            <small>Probability-adjusted — still not revenue</small>
-          </div>
-          <div className={styles.kpi}>
-            <span className={styles.kpiLabel}>Agreed contract</span>
-            <b className="tabular">£{buckets.agreed.toLocaleString("en-GB")}</b>
-            <span className={styles.kpiDelta} aria-hidden="true">
-              &nbsp;
-            </span>
-            <small>Closed won contract value</small>
-          </div>
-          <div className={styles.kpi}>
-            <span className={styles.kpiLabel}>Expected billing</span>
-            <b className="tabular">£{buckets.expectedBilling.toLocaleString("en-GB")}</b>
-            <span className={styles.kpiDelta} aria-hidden="true">
-              &nbsp;
-            </span>
-            <small>Forecast from won work</small>
-          </div>
-          <div className={styles.kpi}>
-            <span className={styles.kpiLabel}>Recognised revenue</span>
-            <b className="tabular">£{buckets.recognised.toLocaleString("en-GB")}</b>
-            <span className={styles.kpiDelta} aria-hidden="true">
-              &nbsp;
-            </span>
-            <small>Realised only — not pipeline</small>
-          </div>
+        <section className="metric-grid metric-grid-4" aria-label="Pipeline health">
+          <Link href="/sales/pipeline" className="metric-card">
+            <span className="metric-label">Open pipeline</span>
+            <b className="tabular kpi-value">£{buckets.pipeline.toLocaleString("en-GB")}</b>
+          </Link>
+          <Link href="/sales/pipeline" className="metric-card">
+            <span className="metric-label">Weighted pipeline</span>
+            <b className="tabular kpi-value">£{buckets.weighted.toLocaleString("en-GB")}</b>
+          </Link>
+          <Link href="/sales/pipeline" className="metric-card">
+            <span className="metric-label">Closing soon</span>
+            <b className="tabular kpi-value">{closingSoon.length}</b>
+          </Link>
+          <Link href="/sales/actions" className="metric-card">
+            <span className="metric-label">Follow-ups</span>
+            <b className="tabular kpi-value">{followUps.length + attentionLeads.length}</b>
+          </Link>
         </section>
       )}
-
-      <section className={styles.kpis} aria-label="Sales metrics">
-        {metrics.map((metric, index) => (
-          <Link key={metric.key} href={metric.href} className={styles.kpi} style={{ animationDelay: `${index * 40}ms` }}>
-            <span className={styles.kpiLabel}>{metric.label}</span>
-            <b className="tabular">{metric.value}</b>
-            <span className={`${styles.kpiDelta} ${metric.tone ? styles[metric.tone] : ""}`}>{metric.delta || "\u00a0"}</span>
-            <small>{metric.description}</small>
-          </Link>
-        ))}
-      </section>
 
       <section className="card">
         <div className="card-head">
           <div>
-            <h2>Last {range} days</h2>
-            <p className="card-sub">Lead intake and engagement activity.</p>
+            <h2>Pipeline by stage</h2>
           </div>
-          <div className="segmented" role="group" aria-label="Date range">
-            {RANGES.map((value) => (
-              <button type="button" key={value} aria-pressed={range === value} onClick={() => setRange(value)}>
-                {value}d
-              </button>
-            ))}
-          </div>
+          <Link href="/sales/pipeline" className="text-link">
+            Open board
+          </Link>
         </div>
-        <div className={`card-body ${styles.trends}`}>
-          {trends.map((trend) => {
-            const total = trend.points.reduce((sum, point) => sum + point.value, 0);
-            return (
-              <div key={trend.key} className={styles.trend}>
-                <div className={styles.trendHead}>
-                  <span>
-                    <i style={{ background: trend.color }} />
-                    {trend.label}
-                  </span>
-                  <span className={styles.trendTotal}>
-                    <b className="tabular">{total}</b>
-                    <small>in last {range} days</small>
-                  </span>
-                </div>
-                {total === 0 ? <EmptyState title="No data in this range" /> : <TrendChart points={trend.points} color={trend.color} unit={trend.label.toLowerCase()} />}
-              </div>
-            );
-          })}
+        <div className={`card-body ${styles.pipelineViz}`}>
+          {stageCounts.map((item) => (
+            <Link key={item.stage} href="/sales/pipeline" className={styles.pipelineRow}>
+              <span className={styles.pipelineLabel}>{item.stage}</span>
+              <span className={styles.pipelineTrack}>
+                <i style={{ width: `${Math.max(item.value ? 8 : 0, (item.value / maxStageValue) * 100)}%` }} />
+              </span>
+              <span className={styles.pipelineMeta}>
+                <b className="tabular">{item.count}</b>
+                <small className="tabular">£{item.value.toLocaleString("en-GB")}</small>
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
 
       <section className={styles.split}>
         <article className="card">
           <div className="card-head">
-            <h2>Leads by status</h2>
-          </div>
-          <div className="card-body">
-            <BarList items={leadPipeline} onSelect={(label) => router.push(`/sales/leads?status=${encodeURIComponent(label)}`)} />
-          </div>
-        </article>
-        <article className="card">
-          <div className="card-head">
-            <div>
-              <h2>Opportunity stages</h2>
-              <p className="card-sub">
-                <Link href="/sales/pipeline">Open opportunity board</Link>
-              </p>
-            </div>
-          </div>
-          <div className="card-body">
-            <BarList items={oppPipeline} onSelect={() => router.push("/sales/pipeline")} />
-          </div>
-        </article>
-      </section>
-
-      <section className={styles.split}>
-        <article className="card">
-          <div className="card-head">
-            <div>
-              <h2>Lead sources</h2>
-            </div>
-          </div>
-          <div className="card-body">
-            <BarList items={sourceBreakdown(state)} onSelect={(label) => router.push(`/sales/leads?source=${encodeURIComponent(label)}`)} />
-          </div>
-        </article>
-        <article className="card">
-          <div className="card-head">
-            <div>
-              <h2>Accounts</h2>
-            </div>
-            <Link href="/sales/accounts" className="text-link">
-              Client 360
+            <h2>Priority opportunities</h2>
+            <Link href="/sales/pipeline" className="text-link">
+              All
             </Link>
           </div>
-          <div className="card-body">
-            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {(state.tessiant?.accounts ?? []).slice(0, 4).map((account) => (
-                <li key={account.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--line-soft)" }}>
-                  <Link href={`/sales/accounts/${account.id}`}>{account.name}</Link>
-                  <div className="muted">
-                    {account.sector} · {account.status}
-                  </div>
-                </li>
-              ))}
-            </ul>
+          <div className="card-body" style={{ paddingTop: 4, paddingBottom: 8 }}>
+            {priorityOpps.length === 0 ? (
+              <EmptyState title="No open opportunities" icon="sales" />
+            ) : (
+              priorityOpps.map((opportunity) => (
+                <EntityCard
+                  key={opportunity.id}
+                  variant="list"
+                  title={opportunity.name}
+                  subtitle={accountName(opportunity.accountId)}
+                  metric={`£${opportunity.amount.toLocaleString("en-GB")}`}
+                  hint={`Close ${opportunity.expectedCloseDate}`}
+                  meta={<span className="chip chip-dot">{opportunity.stage}</span>}
+                  onOpen={() => setPreviewId(opportunity.id)}
+                />
+              ))
+            )}
           </div>
         </article>
-      </section>
 
-      <section className={styles.split}>
         <article className="card">
           <div className="card-head">
-            <div>
-              <h2>Priority suggestions</h2>
-            </div>
+            <h2>Upcoming actions</h2>
+            <Link href="/sales/actions" className="text-link">
+              Activities
+            </Link>
           </div>
           <div className="card-body stack-gap">
-            {workspace.suggestions.slice(0, 4).map((suggestion) => (
-              <SuggestionCard key={suggestion.id} suggestion={suggestion} />
-            ))}
-            {workspace.suggestions.length === 0 && <EmptyState title="No suggestions right now" />}
-          </div>
-        </article>
-        <article className="card">
-          <div className="card-head">
-            <div>
-              <h2>Active leads</h2>
-            </div>
-          </div>
-          <div className="card-body">
-            {hotLeads.length === 0 ? (
-              <EmptyState title="No open leads" />
+            {followUps.length === 0 && attentionLeads.length === 0 ? (
+              <EmptyState title="No follow-ups due" icon="checkCircle" />
             ) : (
-              <ul className={styles.leadList}>
-                {hotLeads.map((lead) => (
-                  <li key={lead.id}>
-                    <Link href={`/sales/leads/${lead.id}`} className={styles.leadRow}>
-                      <span className="avatar avatar-sm">{initials(lead.name)}</span>
-                      <span>
-                        <b>{lead.name}</b>
-                        <small>
-                          {lead.company ?? "No company"} · {timeAgo(lead.createdAt)}
-                        </small>
-                      </span>
-                      <LeadStatusChip status={lead.status} />
-                    </Link>
-                  </li>
+              <>
+                {followUps.map((task) => (
+                  <button key={task.id} type="button" className={styles.nextAction} onClick={() => openTask(task.id)}>
+                    <span className={styles.actionDot} data-priority={task.priority} />
+                    <span>
+                      <b>{task.title}</b>
+                      <small>
+                        {task.due ? (task.due < todayKey() ? `Overdue · ${task.due}` : `Due ${task.due}`) : "No due date"}
+                      </small>
+                    </span>
+                  </button>
                 ))}
-              </ul>
+                {attentionLeads.map((lead) => (
+                  <Link key={lead.id} href={`/sales/leads/${lead.id}`} className={styles.nextAction}>
+                    <span className={styles.actionDot} data-priority="medium" />
+                    <span>
+                      <b>{lead.nextActionLabel}</b>
+                      <small>
+                        {lead.name}
+                        {lead.company ? ` · ${lead.company}` : ""}
+                      </small>
+                    </span>
+                  </Link>
+                ))}
+              </>
             )}
           </div>
         </article>
       </section>
+
+      {previewId && <OpportunityQuickPanel opportunityId={previewId} onClose={() => setPreviewId(null)} />}
     </div>
   );
 }

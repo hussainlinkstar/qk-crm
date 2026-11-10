@@ -18,6 +18,73 @@
   gap: 6px;
 }
 
+.journey {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--well);
+}
+
+.journeyTrack {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.journeyStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.journeyStep:disabled {
+  cursor: default;
+}
+
+.journeyDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--line-strong, var(--line));
+  box-shadow: 0 0 0 3px transparent;
+}
+
+.journeyDone {
+  color: var(--brand-ink);
+}
+
+.journeyDone .journeyDot {
+  background: var(--brand);
+}
+
+.journeyCurrent .journeyDot {
+  box-shadow: 0 0 0 3px var(--brand-ring);
+}
+
+.journeyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.journeyDoneNote {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
 .quickActions {
   display: flex;
   flex-wrap: wrap;

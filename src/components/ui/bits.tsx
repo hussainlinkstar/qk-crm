@@ -98,9 +98,9 @@ export function EvidenceList({ items, compact = false }: { items: Evidence[]; co
 
 export function SkeletonRows({ rows = 4, height = 48 }: { rows?: number; height?: number }) {
   return (
-    <div style={{ display: "grid", gap: 10 }} aria-busy="true" aria-label="Loading">
+    <div className="skeleton-stack" style={{ display: "grid", gap: 10 }} aria-busy="true" aria-label="Loading">
       {Array.from({ length: rows }, (_, index) => (
-        <div key={index} className="skeleton" style={{ height }} />
+        <div key={index} className="skeleton" style={{ height, animationDelay: `${index * 60}ms` }} />
       ))}
     </div>
   );

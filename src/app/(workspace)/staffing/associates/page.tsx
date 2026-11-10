@@ -4,18 +4,16 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
+import Icon from "@/components/ui/Icon";
 import AddAssociateModal from "@/components/staffing/AddAssociateModal";
 import AssociateQuickPanel from "@/components/staffing/AssociateQuickPanel";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
-import { associateCommittedCapacity } from "@/lib/assignments";
-import { formatRate } from "@/lib/tessiant-insights";
-import { formatDate, initials } from "@/lib/format";
+import { initials } from "@/lib/format";
 import {
   TALENT_PAGE_SIZE,
   TALENT_SAVED_VIEWS,
   currentAssignmentLabel,
   filterTalentNetwork,
-  latestCv,
   paginateTalent,
   roleLabel,
   type TalentSavedView,
@@ -23,8 +21,6 @@ import {
 import type { AssociateRoleType, AvailabilityStatus, SeniorityLevel } from "@/lib/tessiant-types";
 import styles from "../staffing.module.css";
 import talent from "./talent.module.css";
-
-const RATE_KEY = "tessiant-show-rates";
 
 export default function AssociatesPage() {
   const router = useRouter();
@@ -42,19 +38,9 @@ export default function AssociatesPage() {
     (params.get("availability") as AvailabilityStatus | null) ?? "",
   );
   const [page, setPage] = useState(Number(params.get("page") || 1));
-  const [showRates, setShowRates] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [quickId, setQuickId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(params.get("new") === "1");
-
-  useEffect(() => {
-    try {
-      const stored = window.sessionStorage.getItem(RATE_KEY);
-      if (stored != null) setShowRates(stored === "1");
-    } catch {
-      // ignore
-    }
-  }, []);
 
   useEffect(() => {
     if (params.get("verified") === "1") setView("available_now");
@@ -111,23 +97,9 @@ export default function AssociatesPage() {
       <header className="page-head">
         <div>
           <h1>Talent Network</h1>
-          <p className="subtitle">Search and shortlist associates by skills, capacity and availability.</p>
+          <p className="subtitle">Search and shortlist associates.</p>
         </div>
         <div className="page-actions">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              const next = !showRates;
-              setShowRates(next);
-              try {
-                window.sessionStorage.setItem(RATE_KEY, next ? "1" : "0");
-              } catch {
-                // ignore
-              }
-            }}
-          >
-            {showRates ? "Hide rates" : "Show rates"}
-          </Button>
           <Button icon="plus" onClick={() => setAddOpen(true)}>
             Add associate
           </Button>
@@ -151,13 +123,15 @@ export default function AssociatesPage() {
             ))}
           </div>
           <div className={talent.toolbar}>
-            <input
-              className={`input ${talent.grow}`}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search name, role, skills…"
-              aria-label="Search talent network"
-            />
+            <label className={`search-field ${talent.grow}`} style={{ marginBottom: 0 }}>
+              <Icon name="search" size={15} />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search name, role, skills…"
+                aria-label="Search talent network"
+              />
+            </label>
             <select
               className={`input ${talent.toolbarSelect}`}
               value={availability}
@@ -249,64 +223,60 @@ export default function AssociatesPage() {
                     <tr>
                       <th>Name / role</th>
                       <th>Type / seniority</th>
-                      <th>Top skills</th>
+                      <th>Skills</th>
                       <th>Sector</th>
                       <th>Availability</th>
                       <th>Current assignment</th>
-                      <th>CV</th>
-                      {showRates && <th>Rate</th>}
-                      <th>Actions</th>
+                      <th>Quick action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paged.slice.map((associate) => {
                       const assignment = currentAssignmentLabel(state, associate);
-                      const capacity = associateCommittedCapacity(state, associate.id);
-                      const free = Math.max(0, 100 - capacity);
-                      const cv = latestCv(associate);
                       const shownSkills = associate.skills.slice(0, 3);
-                      const extraSkills = Math.max(0, associate.skills.length - shownSkills.length);
-                      const availabilityDetail =
-                        associate.availability !== "available" && associate.nextAvailableDate
-                          ? ` · from ${formatDate(associate.nextAvailableDate)}`
-                          : free < 100
-                            ? ` · ${free}% free`
-                            : "";
                       return (
                         <tr key={associate.id} className={talent.clickRow} onClick={() => setQuickId(associate.id)}>
                           <td>
                             <div className={talent.person}>
                               <span className="avatar avatar-sm">{initials(associate.name)}</span>
                               <span className={talent.personMeta}>
-                                <button type="button" className={styles.rowLink} onClick={() => setQuickId(associate.id)}>
-                                  {associate.name}
-                                </button>
-                                <div className="muted">{associate.headline}</div>
+                                <b>{associate.name}</b>
+                                <div className="muted">{associate.headline || roleLabel(associate.roleType)}</div>
                               </span>
                             </div>
                           </td>
                           <td className="nowrap">
                             {roleLabel(associate.roleType)} · {associate.seniority}
                           </td>
-                          <td className="nowrap">
-                            {shownSkills.length
-                              ? `${shownSkills.join(", ")}${extraSkills > 0 ? ` +${extraSkills}` : ""}`
-                              : "—"}
-                          </td>
-                          <td className="nowrap">{associate.sectors.slice(0, 2).join(", ") || "—"}</td>
+                          <td className="nowrap">{shownSkills.join(", ") || "—"}</td>
+                          <td className="nowrap">{associate.sectors[0] ?? "—"}</td>
                           <td className="nowrap">
                             <span className="chip chip-dot">{associate.availability}</span>
-                            {availabilityDetail ? <span className="muted">{availabilityDetail}</span> : null}
                           </td>
-                          <td className="nowrap">{assignment ? assignment.client : <span className="muted">Bench</span>}</td>
                           <td className="nowrap">
-                            <span className="chip">{cv?.verifiedAt ? "Ready" : "Review"}</span>
+                            {assignment ? (
+                              <Link
+                                href={`/staffing/placements/${assignment.placementId}`}
+                                className={styles.rowLink}
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                {assignment.client}
+                              </Link>
+                            ) : (
+                              <span className="muted">Bench</span>
+                            )}
                           </td>
-                          {showRates && <td className="tabular nowrap">{formatRate(associate.rate)}</td>}
-                          <td className="nowrap" onClick={(e) => e.stopPropagation()}>
-                            <Link href={`/staffing/associates/${associate.id}`} className="text-link">
-                              Profile
-                            </Link>
+                          <td onClick={(event) => event.stopPropagation()}>
+                            <div className={styles.rowActions}>
+                              <Button size="small" variant="secondary" onClick={() => setQuickId(associate.id)}>
+                                Quick view
+                              </Button>
+                              <Link href={`/staffing/associates/${associate.id}`}>
+                                <Button size="small" variant="ghost">
+                                  Profile
+                                </Button>
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -335,7 +305,7 @@ export default function AssociatesPage() {
         </div>
       </section>
 
-      {quickId && <AssociateQuickPanel associateId={quickId} onClose={() => setQuickId(null)} showRates={showRates} />}
+      {quickId && <AssociateQuickPanel associateId={quickId} onClose={() => setQuickId(null)} />}
       {addOpen && (
         <AddAssociateModal
           onClose={() => {

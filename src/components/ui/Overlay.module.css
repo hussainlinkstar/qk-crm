@@ -7,7 +7,7 @@
   padding: 20px;
   background: rgba(15, 23, 42, 0.42);
   backdrop-filter: blur(3px);
-  animation: fadeIn 0.18s ease-out;
+  animation: fadeIn var(--duration-fast) var(--ease-out);
 }
 
 .confirmBackdrop {
@@ -23,7 +23,7 @@
   border-radius: var(--radius-xl);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
-  animation: popIn 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  animation: popIn var(--duration) var(--ease-spring);
   outline: none;
 }
 
@@ -112,7 +112,7 @@
   border-left: 1px solid var(--line);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
-  animation: slideIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: slideIn 280ms var(--ease-spring);
   outline: none;
 }
 
@@ -176,8 +176,12 @@
 
 @keyframes slideIn {
   from {
-    transform: translateX(32px);
-    opacity: 0.4;
+    transform: translateX(28px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 

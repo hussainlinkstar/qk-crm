@@ -1,15 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import CreateRequirementModal from "@/components/staffing/CreateRequirementModal";
+import RequirementQuickPanel from "@/components/staffing/RequirementQuickPanel";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { formatDate, todayKey } from "@/lib/format";
-import { formatCandidatePipelineSummary, mapRequirementToOpsStage } from "@/lib/tessiant-insights";
+import { formatCandidateProgress, mapRequirementToOpsStage } from "@/lib/tessiant-insights";
 import {
   applyOpsBoardMove,
   boardColumns,
@@ -41,10 +41,11 @@ export default function RequirementsPage() {
   const ownerParam = params.get("owner");
   const priorityParam = params.get("priority");
   const categoryParam = params.get("category");
-  const layoutParam = params.get("layout") === "board" ? "board" : "table";
+  const layoutParam = params.get("layout") === "table" ? "table" : "board";
 
   const [layout, setLayout] = useState<Layout>(layoutParam);
   const [showForm, setShowForm] = useState(params.get("new") === "1");
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [clientId, setClientId] = useState(clientParam ?? "");
   const [ownerId, setOwnerId] = useState(ownerParam ?? "");
@@ -99,7 +100,7 @@ export default function RequirementsPage() {
   const setLayoutAndUrl = (next: Layout) => {
     setLayout(next);
     const search = new URLSearchParams(params.toString());
-    if (next === "board") search.set("layout", "board");
+    if (next === "table") search.set("layout", "table");
     else search.delete("layout");
     router.replace(`/staffing/requirements${search.size ? `?${search}` : ""}`);
   };
@@ -114,7 +115,7 @@ export default function RequirementsPage() {
     setCategory("");
     setFrom("");
     setTo("");
-    router.push(layout === "board" ? "/staffing/requirements?layout=board" : "/staffing/requirements");
+    setLayoutAndUrl(layout);
   };
 
   const closeForm = () => {
@@ -150,15 +151,15 @@ export default function RequirementsPage() {
       <header className="page-head">
         <div>
           <h1>Client Requirements</h1>
-          <p className="subtitle">Track staffing demand from brief to placement.</p>
+          <p className="subtitle">Demand from brief to placement.</p>
         </div>
         <div className="page-actions">
-          <div className={styles.viewToggle} role="group" aria-label="Layout">
-            <button type="button" aria-pressed={layout === "table"} onClick={() => setLayoutAndUrl("table")}>
-              Table
-            </button>
+          <div className="segmented" role="group" aria-label="Layout">
             <button type="button" aria-pressed={layout === "board"} onClick={() => setLayoutAndUrl("board")}>
               Board
+            </button>
+            <button type="button" aria-pressed={layout === "table"} onClick={() => setLayoutAndUrl("table")}>
+              Table
             </button>
           </div>
           {filterActive && (
@@ -245,11 +246,11 @@ export default function RequirementsPage() {
           {rows.length === 0 ? (
             <EmptyState title="No requirements match" icon="flag" />
           ) : layout === "board" ? (
-            <div className={styles.board} aria-label="Requirement board">
+            <div className={`kanban-board ${styles.board}`} aria-label="Requirement board">
               {columns.map((column) => (
                 <div
                   key={column.stage}
-                  className={styles.boardColumn}
+                  className={`kanban-column ${styles.boardColumn}`}
                   onDragOver={(event) => {
                     event.preventDefault();
                     setDragOver(column.stage);
@@ -275,28 +276,36 @@ export default function RequirementsPage() {
                       const account = tessiant.accounts.find((item) => item.id === req.accountId);
                       const priorityValue = requirementPriority(req);
                       const overdue = req.outcome === "active" && req.stage !== "Placed" && req.startDate < todayKey();
+                      const counts = requisitionCounts(state, req.id);
                       return (
-                        <Link
+                        <article
                           key={req.id}
-                          href={`/staffing/requirements/${req.id}`}
-                          className={styles.boardCard}
+                          className={`kanban-card ${styles.boardCard}`}
                           data-overdue={overdue ? "true" : undefined}
                           data-priority={priorityValue}
                           draggable
+                          role="button"
+                          tabIndex={0}
                           onDragStart={(event) => {
                             event.dataTransfer.setData("text/requirement-id", req.id);
                             event.dataTransfer.effectAllowed = "move";
                           }}
+                          onClick={() => setPreviewId(req.id)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              setPreviewId(req.id);
+                            }
+                          }}
                         >
                           <div className={styles.boardCardTitle}>{req.title}</div>
-                          <div className="muted nowrap" style={{ marginTop: 4 }}>
-                            {account?.name ?? "—"}
-                          </div>
+                          <div className={styles.boardCardClient}>{account?.name ?? "—"}</div>
                           <div className={styles.boardMeta}>
-                            {priorityValue === "high" ? <span className="chip chip-ai">high</span> : null}
-                            <span className="muted tabular">{req.headcount} pos · {daysOpen(req)}d open</span>
+                            <span className={`chip ${priorityValue === "high" ? "chip-ai" : ""}`}>{priorityValue}</span>
+                            {overdue ? <span className="chip">Overdue</span> : <span className="muted tabular">{daysOpen(req)}d</span>}
+                            <span className="muted">{formatCandidateProgress(counts)}</span>
                           </div>
-                        </Link>
+                        </article>
                       );
                     })
                   )}
@@ -308,38 +317,31 @@ export default function RequirementsPage() {
               <table className={`table ${styles.reqTable}`}>
                 <thead>
                   <tr>
-                    <th>Requirement / Role</th>
+                    <th>Requirement</th>
                     <th>Client</th>
-                    <th>Type</th>
                     <th>Priority</th>
-                    <th>Positions</th>
                     <th>Owner</th>
-                    <th>Start Date</th>
+                    <th>Start</th>
                     <th>Stage</th>
-                    <th>Candidates</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((req) => {
                     const account = tessiant.accounts.find((item) => item.id === req.accountId);
                     const owner = state.members.find((item) => item.id === req.ownerId);
-                    const counts = requisitionCounts(state, req.id);
                     const priorityValue = requirementPriority(req);
                     const overdue = req.outcome === "active" && req.stage !== "Placed" && req.startDate < todayKey();
                     return (
-                      <tr key={req.id}>
+                      <tr key={req.id} className={styles.clickRow} onClick={() => setPreviewId(req.id)}>
                         <td>
-                          <Link href={`/staffing/requirements/${req.id}`} className={styles.rowLink}>
+                          <button type="button" className={styles.rowLink} onClick={() => setPreviewId(req.id)}>
                             {req.title}
-                          </Link>
+                          </button>
                         </td>
                         <td className="nowrap">{account?.name ?? "—"}</td>
-                        <td className="nowrap">{req.category}</td>
                         <td className="nowrap">
                           <span className={`chip ${priorityValue === "high" ? "chip-ai" : ""}`}>{priorityValue}</span>
                         </td>
-                        <td className="tabular nowrap">{req.headcount}</td>
                         <td className="nowrap">{owner?.name ?? "Unassigned"}</td>
                         <td className="nowrap">
                           {formatDate(req.startDate)}
@@ -347,12 +349,6 @@ export default function RequirementsPage() {
                         </td>
                         <td className="nowrap">
                           <span className="chip chip-dot">{mapRequirementToOpsStage(req)}</span>
-                        </td>
-                        <td className="nowrap">{formatCandidatePipelineSummary(counts)}</td>
-                        <td className="nowrap">
-                          <Link href={`/staffing/requirements/${req.id}`} className="text-link">
-                            Open
-                          </Link>
                         </td>
                       </tr>
                     );
@@ -373,6 +369,8 @@ export default function RequirementsPage() {
           }}
         />
       )}
+
+      {previewId ? <RequirementQuickPanel requirementId={previewId} onClose={() => setPreviewId(null)} /> : null}
     </div>
   );
 }

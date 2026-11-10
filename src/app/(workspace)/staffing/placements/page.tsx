@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import AssignmentQuickPanel from "@/components/staffing/AssignmentQuickPanel";
 import { EmptyState, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
-import { formatDate, toDateKey } from "@/lib/format";
 import {
   assignmentDashboard,
   assignmentRoleTitle,
@@ -15,6 +15,7 @@ import {
   resolveAssignmentAccountId,
   type AssignmentListView,
 } from "@/lib/assignments";
+import { formatDate, toDateKey } from "@/lib/format";
 import { assignmentRenewalStatus } from "@/lib/tessiant-insights";
 import styles from "../staffing.module.css";
 
@@ -39,6 +40,7 @@ export default function AssignmentsPage() {
   const now = useNow();
   const tessiant = state?.tessiant;
   const [layout, setLayout] = useState<"assignments" | "clients">(viewParam === "clients" ? "clients" : "assignments");
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   const today = toDateKey(new Date(now || Date.now()));
   const view = layout === "clients" ? "clients" : viewParam === "clients" ? "all" : viewParam;
@@ -69,11 +71,11 @@ export default function AssignmentsPage() {
     <div className={`page ${styles.density}`}>
       <header className="page-head">
         <div>
-          <h1>Assignments and deployment</h1>
-          <p className="subtitle">Track deployed associates, capacity and renewals after placement.</p>
+          <h1>Assignments</h1>
+          <p className="subtitle">Deployments, capacity and renewals.</p>
         </div>
         <div className="page-actions">
-          <div className={styles.viewToggle} role="group" aria-label="Assignment views">
+          <div className="segmented" role="group" aria-label="Assignment views">
             <button type="button" aria-pressed={layout === "assignments"} onClick={() => setView(view === "clients" ? "all" : view)}>
               Assignments
             </button>
@@ -84,21 +86,21 @@ export default function AssignmentsPage() {
         </div>
       </header>
 
-      <section className={styles.kpiRowCompact} aria-label="Assignment KPIs">
-        <Link href="/staffing/placements?view=active" className={styles.kpi}>
-          <span className={styles.kpiLabel}>Active</span>
+      <section className="metric-grid metric-grid-4" aria-label="Assignment KPIs">
+        <Link href="/staffing/placements?view=active" className="metric-card">
+          <span className="metric-label">Active</span>
           <b className="tabular">{dashboard.active}</b>
         </Link>
-        <Link href="/staffing/placements?view=upcoming" className={styles.kpi}>
-          <span className={styles.kpiLabel}>Starting soon</span>
+        <Link href="/staffing/placements?view=upcoming" className="metric-card">
+          <span className="metric-label">Starting soon</span>
           <b className="tabular">{dashboard.startingSoon}</b>
         </Link>
-        <Link href="/staffing/placements?view=ending30" className={styles.kpi}>
-          <span className={styles.kpiLabel}>Ending soon</span>
+        <Link href="/staffing/placements?view=ending30" className="metric-card">
+          <span className="metric-label">Ending soon</span>
           <b className="tabular">{dashboard.ending30}</b>
         </Link>
-        <Link href="/staffing/placements?view=renewals" className={styles.kpi}>
-          <span className={styles.kpiLabel}>Pending renewal</span>
+        <Link href="/staffing/placements?view=renewals" className="metric-card">
+          <span className="metric-label">Pending renewal</span>
           <b className="tabular">{dashboard.renewals}</b>
         </Link>
       </section>
@@ -116,7 +118,11 @@ export default function AssignmentsPage() {
                 {clientRows.map((row) => (
                   <article key={row.accountId} className={styles.clientDeployCard}>
                     <div className={styles.metaRow}>
-                      <b>{row.accountName}</b>
+                      <b>
+                        <Link href={`/sales/accounts/${row.accountId}`} className={styles.rowLink}>
+                          {row.accountName}
+                        </Link>
+                      </b>
                       <span className="chip tabular">{row.associateCount} associates</span>
                       {row.endingSoonCount > 0 && <span className="chip">{row.endingSoonCount} ending soon</span>}
                       {row.renewalCount > 0 && <span className="chip">{row.renewalCount} renewal</span>}
@@ -194,15 +200,13 @@ export default function AssignmentsPage() {
                   <table className={`table ${styles.assignTable}`}>
                     <thead>
                       <tr>
-                        <th>Assignment / Role</th>
+                        <th>Role</th>
                         <th>Associate</th>
                         <th>Client</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
+                        <th>Dates</th>
                         <th>Capacity</th>
                         <th>Status</th>
                         <th>Renewal</th>
-                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -213,34 +217,52 @@ export default function AssignmentsPage() {
                         const status = deriveAssignmentStatus(assignment, today);
                         const renewal = assignmentRenewalStatus(assignment, today);
                         const highlighted = highlight === assignment.id;
+                        const ending = renewal === "ending" || renewal === "renewal_due";
                         return (
-                          <tr key={assignment.id} style={highlighted ? { background: "var(--brand-soft)" } : undefined}>
+                          <tr
+                            key={assignment.id}
+                            className={renewal === "ending" ? styles.endingRow : renewal === "renewal_due" ? styles.renewalRow : undefined}
+                            style={highlighted ? { background: "var(--brand-soft)" } : undefined}
+                            onClick={() => setPreviewId(assignment.id)}
+                          >
                             <td className="nowrap">
-                              <Link href={`/staffing/placements/${assignment.id}`} className={styles.rowLink}>
+                              <button type="button" className={styles.rowLink} onClick={() => setPreviewId(assignment.id)}>
                                 {assignmentRoleTitle(state, assignment)}
-                              </Link>
+                              </button>
                             </td>
                             <td className="nowrap">
-                              <Link href={`/staffing/associates/${assignment.associateId}`} className={styles.rowLink}>
+                              <Link
+                                href={`/staffing/associates/${assignment.associateId}`}
+                                className={styles.rowLink}
+                                onClick={(event) => event.stopPropagation()}
+                              >
                                 {associate?.name ?? "—"}
                               </Link>
                             </td>
-                            <td className="nowrap">{account?.name ?? "—"}</td>
-                            <td className="tabular nowrap">{assignment.terms.startDate ? formatDate(assignment.terms.startDate) : "—"}</td>
-                            <td className="tabular nowrap">{assignment.terms.endDate ? formatDate(assignment.terms.endDate) : "open"}</td>
+                            <td className="nowrap">
+                              {account ? (
+                                <Link
+                                  href={`/sales/accounts/${account.id}`}
+                                  className={styles.rowLink}
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  {account.name}
+                                </Link>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="tabular nowrap">
+                              {assignment.terms.startDate ? formatDate(assignment.terms.startDate) : "—"}
+                              {" → "}
+                              {assignment.terms.endDate ? formatDate(assignment.terms.endDate) : "open"}
+                            </td>
                             <td className="tabular nowrap">{assignment.capacityPercent ?? 100}%</td>
                             <td className="nowrap">
                               <span className="chip">{assignmentStatusLabel(status)}</span>
                             </td>
                             <td className="nowrap">
-                              <span className={`chip ${renewal === "renewal_due" || renewal === "ending" ? "chip-high" : ""}`}>
-                                {renewal.replaceAll("_", " ")}
-                              </span>
-                            </td>
-                            <td className="nowrap">
-                              <Link href={`/staffing/placements/${assignment.id}`} className="text-link">
-                                Open
-                              </Link>
+                              <span className={`chip ${ending ? "chip-high" : ""}`}>{renewal.replaceAll("_", " ")}</span>
                             </td>
                           </tr>
                         );
@@ -253,6 +275,8 @@ export default function AssignmentsPage() {
           </section>
         </>
       )}
+
+      {previewId ? <AssignmentQuickPanel assignmentId={previewId} onClose={() => setPreviewId(null)} /> : null}
     </div>
   );
 }

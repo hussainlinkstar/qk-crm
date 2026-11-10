@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type DragEvent } from "react";
 import { crm } from "@/lib/crm-store";
@@ -9,31 +8,46 @@ import { isOpen, sortTasks, taskCounts } from "@/lib/insights";
 import { PRIORITIES, type Priority, type Task, type TaskStatus } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
+import { Drawer } from "@/components/ui/Overlay";
 import { EmptyState, MemberAvatar, PriorityChip, SkeletonRows, TaskStatusChip, useWorkspaceData } from "@/components/ui/bits";
 import SuggestionCard from "@/components/tasks/SuggestionCard";
 import TaskCard from "@/components/tasks/TaskCard";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import styles from "./ActionWorkspace.module.css";
 
-const COLUMNS: { status: TaskStatus; label: string; hint: string }[] = [
-  { status: "pending", label: "Pending", hint: "Accepted and waiting to start" },
-  { status: "in_progress", label: "In progress", hint: "Being worked right now" },
-  { status: "completed", label: "Completed", hint: "Done — kept for history" },
+const COLUMNS: { status: TaskStatus; label: string }[] = [
+  { status: "pending", label: "To Do" },
+  { status: "in_progress", label: "In Progress" },
+  { status: "completed", label: "Done" },
 ];
 
+const SOURCES = [
+  ["", "All sources"],
+  ["manual", "Manual"],
+  ["suggestion", "From Qiko"],
+  ["copilot", "Ask Qiko"],
+] as const;
+
 type View = "all" | "pending" | "in_progress" | "completed" | "overdue" | "dismissed";
+type TaskSource = "" | "manual" | "suggestion" | "copilot";
+
+function isSalesScopedTask(task: Task) {
+  return Boolean(task.leadId || task.accountId || task.opportunityId || task.contactId);
+}
 
 export function ActionWorkspace({
   title = "Activities",
-  subtitle = "Follow-ups, calls and ownership across the sales motion. Suggested actions keep their evidence and history.",
+  subtitle = "Follow-ups and ownership.",
   askPrompt = "What activities are pending?",
   defaultOwnerMine = false,
+  scope = "all",
 }: {
   title?: string;
   subtitle?: string;
   askPrompt?: string;
-  /** When true (My Tasks), default the owner filter to the current user. */
   defaultOwnerMine?: boolean;
+  /** When "sales", only tasks linked to leads/accounts/opportunities/contacts. */
+  scope?: "all" | "sales";
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -43,9 +57,11 @@ export function ActionWorkspace({
   const [layout, setLayout] = useState<"board" | "list">("board");
   const [owner, setOwner] = useState(defaultOwnerMine ? "me" : "");
   const [priority, setPriority] = useState<Priority | "">("");
+  const [source, setSource] = useState<TaskSource>("");
   const [query, setQuery] = useState("");
-  const [showAllSuggestions, setShowAllSuggestions] = useState(false);
   const [dragOver, setDragOver] = useState<TaskStatus | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const view = (params.get("view") as View) || "all";
 
   const setView = (next: View) => router.replace(next === "all" ? pathname : `${pathname}?view=${next}`, { scroll: false });
@@ -56,8 +72,10 @@ export function ActionWorkspace({
     const today = todayKey();
     return sortTasks(
       state.tasks.filter((task) => {
+        if (scope === "sales" && !isSalesScopedTask(task)) return false;
         if (owner && (owner === "none" ? task.ownerId !== null : task.ownerId !== owner)) return false;
         if (priority && task.priority !== priority) return false;
+        if (source && task.origin !== source) return false;
         if (term) {
           const leadName = task.leadId ? workspace.leadById.get(task.leadId)?.name ?? "" : "";
           if (!`${task.title} ${task.description} ${leadName}`.toLowerCase().includes(term)) return false;
@@ -68,7 +86,27 @@ export function ActionWorkspace({
         return task.status !== "dismissed";
       }),
     );
-  }, [state, workspace, owner, priority, query, view]);
+  }, [state, workspace, owner, priority, source, query, view, scope]);
+
+  const suggestions = useMemo(() => {
+    if (!state || !workspace) return [];
+    const openLeadIds = new Set(state.tasks.filter(isOpen).map((task) => task.leadId).filter(Boolean));
+    const acceptedTitles = new Set(
+      state.tasks
+        .filter((task) => task.origin === "suggestion" && isOpen(task))
+        .map((task) => `${task.leadId}:${task.title.trim().toLowerCase()}`),
+    );
+    return workspace.suggestions.filter((item) => {
+      if (state.decisions[item.id]) return false;
+      if (openLeadIds.has(item.leadId)) return false;
+      if (acceptedTitles.has(`${item.leadId}:${item.title.trim().toLowerCase()}`)) return false;
+      if (query.trim()) {
+        const leadName = workspace.leadById.get(item.leadId)?.name ?? "";
+        if (!`${item.title} ${leadName}`.toLowerCase().includes(query.trim().toLowerCase())) return false;
+      }
+      return true;
+    });
+  }, [state, workspace, query]);
 
   if (!state || !workspace) {
     return (
@@ -79,17 +117,26 @@ export function ActionWorkspace({
   }
 
   const memberById = new Map(state.members.map((member) => [member.id, member]));
-  const counts = { ...taskCounts(state.tasks), dismissed: state.tasks.filter((task) => task.status === "dismissed").length };
-  const suggestions = workspace.suggestions.filter(
-    (item) => !query.trim() || `${item.title} ${workspace.leadById.get(item.leadId)?.name}`.toLowerCase().includes(query.trim().toLowerCase()),
-  );
-  const visibleSuggestions = showAllSuggestions ? suggestions : suggestions.slice(0, 4);
-  const boardStatuses = view === "all" || view === "overdue" ? COLUMNS : COLUMNS.filter((column) => column.status === view);
+  const scopedTasks = scope === "sales" ? state.tasks.filter(isSalesScopedTask) : state.tasks;
+  const counts = { ...taskCounts(scopedTasks), dismissed: scopedTasks.filter((task) => task.status === "dismissed").length };
+  const today = todayKey();
   const useBoard = layout === "board" && view !== "dismissed";
+
+  const relatedFor = (task: Task) => {
+    if (task.leadId) return workspace.leadById.get(task.leadId)?.name ?? null;
+    if (task.opportunityId) {
+      return (state.opportunities ?? []).find((item) => item.id === task.opportunityId)?.name ?? null;
+    }
+    if (task.accountId) {
+      return state.tessiant?.accounts.find((item) => item.id === task.accountId)?.name ?? null;
+    }
+    return null;
+  };
 
   const onDrop = (event: DragEvent, status: TaskStatus) => {
     event.preventDefault();
     setDragOver(null);
+    setDraggingId(null);
     const id = event.dataTransfer.getData("text/task-id");
     const task = state.tasks.find((item) => item.id === id);
     if (task && task.status !== status) {
@@ -97,14 +144,6 @@ export function ActionWorkspace({
       toast(`Moved to ${COLUMNS.find((column) => column.status === status)?.label}`);
     }
   };
-
-  const tiles: { key: View; label: string; value: number; tone?: string }[] = [
-    { key: "all", label: "All open", value: counts.pending + counts.in_progress },
-    { key: "pending", label: "Pending", value: counts.pending, tone: "pending" },
-    { key: "in_progress", label: "In progress", value: counts.in_progress, tone: "progress" },
-    { key: "completed", label: "Completed", value: counts.completed, tone: "done" },
-    { key: "overdue", label: "Overdue", value: counts.overdue, tone: "overdue" },
-  ];
 
   return (
     <div className="page">
@@ -114,13 +153,7 @@ export function ActionWorkspace({
           <p className="subtitle">{subtitle}</p>
         </div>
         <div className="page-actions">
-          <Button
-            variant="secondary"
-            icon="sparkles"
-            className="mobile-icon-button"
-            aria-label="Ask about tasks"
-            onClick={() => askQiko(askPrompt)}
-          >
+          <Button variant="secondary" icon="sparkles" className="mobile-icon-button" aria-label="Ask about tasks" onClick={() => askQiko(askPrompt)}>
             <span className="mobile-icon-label">Ask Qiko</span>
           </Button>
           <Button icon="plus" className="mobile-icon-button mobile-main-button" aria-label="New task" onClick={() => openTaskForm()}>
@@ -129,28 +162,25 @@ export function ActionWorkspace({
         </div>
       </header>
 
-      <section className={styles.tiles}>
-        {tiles.map((tile) => (
-          <button
-            type="button"
-            key={tile.key}
-            className={`${styles.tile} ${view === tile.key ? styles.tileActive : ""}`}
-            onClick={() => setView(tile.key)}
-            aria-pressed={view === tile.key}
-          >
-            <span className={styles.tileLabel}>
-              {tile.tone && <i className={styles[tile.tone]} />}
-              {tile.label}
-            </span>
-            <b className="tabular">{tile.value}</b>
-          </button>
-        ))}
+      <section className={styles.summaryBar} aria-label="Task summary">
+        <button type="button" className={view === "all" ? styles.summaryActive : undefined} onClick={() => setView("all")}>
+          Open <b className="tabular">{counts.pending + counts.in_progress}</b>
+        </button>
+        <button type="button" className={view === "overdue" ? styles.summaryActive : undefined} onClick={() => setView(view === "overdue" ? "all" : "overdue")}>
+          Overdue <b className={`tabular ${counts.overdue ? styles.overdueText : ""}`}>{counts.overdue}</b>
+        </button>
+        <button type="button" className={view === "completed" ? styles.summaryActive : undefined} onClick={() => setView(view === "completed" ? "all" : "completed")}>
+          Done <b className="tabular">{counts.completed}</b>
+        </button>
+        <button type="button" className={view === "dismissed" ? styles.summaryActive : undefined} onClick={() => setView(view === "dismissed" ? "all" : "dismissed")}>
+          Dismissed <b className="tabular">{counts.dismissed}</b>
+        </button>
       </section>
 
       <section className={styles.toolbar}>
         <label className={styles.search}>
           <Icon name="search" size={15} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tasks or leads" aria-label="Search tasks" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tasks" aria-label="Search tasks" />
         </label>
         <select className={`select ${styles.filter}`} value={owner} onChange={(event) => setOwner(event.target.value)} aria-label="Owner">
           <option value="">All owners</option>
@@ -161,40 +191,36 @@ export function ActionWorkspace({
             </option>
           ))}
         </select>
-        <select
-          className={`select ${styles.filter}`}
-          value={priority}
-          onChange={(event) => setPriority(event.target.value as Priority | "")}
-          aria-label="Priority"
-        >
+        <select className={`select ${styles.filter}`} value={priority} onChange={(event) => setPriority(event.target.value as Priority | "")} aria-label="Priority">
           <option value="">All priorities</option>
           {PRIORITIES.map((item) => (
             <option key={item} value={item}>
-              {item[0].toUpperCase() + item.slice(1)} priority
+              {item[0].toUpperCase() + item.slice(1)}
             </option>
           ))}
         </select>
-        <button
-          type="button"
-          className={`${styles.dismissedToggle} ${view === "dismissed" ? styles.tileActive : ""}`}
-          onClick={() => setView(view === "dismissed" ? "all" : "dismissed")}
-        >
-          Dismissed · {counts.dismissed}
-        </button>
+        <select className={`select ${styles.filter}`} value={source} onChange={(event) => setSource(event.target.value as TaskSource)} aria-label="Task source">
+          {SOURCES.map(([value, label]) => (
+            <option key={value || "all"} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
         <div className="segmented" role="group" aria-label="Layout">
           <button type="button" aria-pressed={layout === "board"} onClick={() => setLayout("board")}>
-            <Icon name="board" size={14} /> Board
+            Board
           </button>
           <button type="button" aria-pressed={layout === "list"} onClick={() => setLayout("list")}>
-            <Icon name="list" size={14} /> List
+            List
           </button>
         </div>
       </section>
 
       {useBoard ? (
-        <section className={styles.board} style={{ gridTemplateColumns: `repeat(${boardStatuses.length}, minmax(0, 1fr))` }}>
-          {boardStatuses.map((column) => {
+        <section className={styles.board} aria-label="Task board">
+          {COLUMNS.map((column) => {
             const items = filtered.filter((task) => task.status === column.status);
+            const columnOverdue = column.status === "pending" ? items.filter((task) => task.due !== null && task.due < today).length : 0;
             return (
               <div
                 key={column.status}
@@ -203,21 +229,20 @@ export function ActionWorkspace({
                   event.preventDefault();
                   setDragOver(column.status);
                 }}
-                onDragLeave={() => setDragOver(null)}
+                onDragLeave={() => setDragOver((current) => (current === column.status ? null : current))}
                 onDrop={(event) => onDrop(event, column.status)}
               >
                 <div className={styles.columnHead}>
                   <div>
                     <p className={styles.columnTitle}>{column.label}</p>
-                    <p className={styles.columnHint}>{column.hint}</p>
+                    {columnOverdue > 0 && <p className={styles.overdueHint}>{columnOverdue} overdue</p>}
                   </div>
                   <span className={styles.columnCount}>{items.length}</span>
                 </div>
                 <div className={styles.columnBody}>
                   {items.length === 0 ? (
                     <div className={styles.columnEmpty}>
-                      <b>Nothing here</b>
-                      <span>{column.status === "completed" ? "Completed tasks land here." : "Drag a task here or create one."}</span>
+                      <span>Drop here</span>
                     </div>
                   ) : (
                     items.map((task) => (
@@ -227,13 +252,19 @@ export function ActionWorkspace({
                         onDragStart={(event) => {
                           event.dataTransfer.setData("text/task-id", task.id);
                           event.dataTransfer.effectAllowed = "move";
+                          setDraggingId(task.id);
                         }}
-                        className={styles.draggable}
+                        onDragEnd={() => {
+                          setDraggingId(null);
+                          setDragOver(null);
+                        }}
+                        className={`${styles.draggable} ${draggingId === task.id ? styles.dragging : ""}`}
                       >
                         <TaskCard
                           task={task}
                           owner={task.ownerId ? memberById.get(task.ownerId) : null}
-                          leadName={task.leadId ? workspace.leadById.get(task.leadId)?.name : null}
+                          relatedLabel={relatedFor(task)}
+                          dragging={draggingId === task.id}
                         />
                       </div>
                     ))
@@ -247,9 +278,7 @@ export function ActionWorkspace({
         <section className="card">
           {filtered.length === 0 ? (
             <div style={{ padding: 16 }}>
-              <EmptyState icon="tasks" title="No tasks match" actions={<Button size="small" icon="plus" onClick={() => openTaskForm()}>New task</Button>}>
-                Try clearing the filters.
-              </EmptyState>
+              <EmptyState icon="tasks" title="No tasks match" actions={<Button size="small" icon="plus" onClick={() => openTaskForm()}>New task</Button>} />
             </div>
           ) : (
             <div className="table-wrap">
@@ -257,28 +286,25 @@ export function ActionWorkspace({
                 <thead>
                   <tr>
                     <th>Task</th>
-                    <th>Linked lead</th>
+                    <th>Related</th>
                     <th>Status</th>
                     <th>Priority</th>
                     <th>Due</th>
                     <th>Owner</th>
-                    <th aria-label="Actions" />
+                    <th>Source</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((task: Task) => {
-                    const lead = task.leadId ? workspace.leadById.get(task.leadId) : undefined;
+                    const related = relatedFor(task);
                     const due = dueLabel(task.due, task.status);
                     return (
                       <tr key={task.id} className="clickable" onClick={() => openTask(task.id)}>
                         <td className={styles.taskCell}>
                           <b>{task.title}</b>
-                          {task.origin !== "manual" && (
-                            <small>{task.origin === "suggestion" ? "From Qiko suggestion" : "From Ask Qiko"}</small>
-                          )}
                         </td>
-                        <td onClick={(event) => event.stopPropagation()}>
-                          {lead ? <Link href={`/sales/leads/${lead.id}`}>{lead.name}</Link> : <span className="muted">—</span>}
+                        <td>
+                          {related ? <span>{related}</span> : <span className="muted">—</span>}
                         </td>
                         <td>
                           <TaskStatusChip status={task.status} />
@@ -293,32 +319,8 @@ export function ActionWorkspace({
                             {task.ownerId ? memberById.get(task.ownerId)?.name : "Unassigned"}
                           </span>
                         </td>
-                        <td onClick={(event) => event.stopPropagation()}>
-                          {isOpen(task) ? (
-                            <Button
-                              size="small"
-                              variant="secondary"
-                              icon="check"
-                              onClick={() => {
-                                crm.setTaskStatus(task.id, "completed");
-                                toast("Task completed");
-                              }}
-                            >
-                              Complete
-                            </Button>
-                          ) : (
-                            <Button
-                              size="small"
-                              variant="ghost"
-                              icon="undo"
-                              onClick={() => {
-                                crm.setTaskStatus(task.id, "pending");
-                                toast("Task reopened");
-                              }}
-                            >
-                              Reopen
-                            </Button>
-                          )}
+                        <td>
+                          <span className="tag">{task.origin === "suggestion" ? "Qiko" : task.origin === "copilot" ? "Ask Qiko" : "Manual"}</span>
                         </td>
                       </tr>
                     );
@@ -330,33 +332,37 @@ export function ActionWorkspace({
         </section>
       )}
 
-      <section className={`card ${styles.suggestions}`}>
-        <div className="card-head">
-          <div>
-            <p className="kicker">
-              <Icon name="sparkles" size={11} /> Suggested by Qiko
-            </p>
-            <h2>{suggestions.length ? `${suggestions.length} recommended ${suggestions.length === 1 ? "action" : "actions"}` : "No new suggestions"}</h2>
-            <p className="card-sub">Built from recorded activity. Facts are confirmed; recommendations are marked as AI inference.</p>
+      {suggestions.length > 0 && !suggestionsOpen && (
+        <button type="button" className={styles.suggestionToggle} onClick={() => setSuggestionsOpen(true)}>
+          <span>
+            <Icon name="sparkles" size={14} />
+            Suggested by Qiko ({suggestions.length})
+          </span>
+          <span className="muted">Open panel</span>
+        </button>
+      )}
+
+      {suggestionsOpen && (
+        <Drawer
+          kicker="Recommendations"
+          title={`Suggested by Qiko (${suggestions.length})`}
+          onClose={() => setSuggestionsOpen(false)}
+          width={480}
+          focusPanel
+        >
+          <p className={styles.panelIntro}>Recommendations only — accept to create a task. Accepted items are hidden here.</p>
+          <div className={styles.suggestionStack}>
+            {suggestions.length === 0 ? (
+              <EmptyState icon="checkCircle" title="No open recommendations" />
+            ) : (
+              suggestions.map((suggestion) => (
+                <SuggestionCard key={suggestion.id} suggestion={suggestion} lead={workspace.leadById.get(suggestion.leadId)} />
+              ))
+            )}
           </div>
-          {suggestions.length > 4 && (
-            <button type="button" className="link-button" onClick={() => setShowAllSuggestions((value) => !value)}>
-              {showAllSuggestions ? "Show fewer" : `Show all ${suggestions.length}`}
-            </button>
-          )}
-        </div>
-        <div className={`card-body ${styles.suggestionGrid}`}>
-          {visibleSuggestions.length === 0 ? (
-            <EmptyState icon="checkCircle" title="You're all caught up">
-              New inbound leads and enquiries will create suggestions here.
-            </EmptyState>
-          ) : (
-            visibleSuggestions.map((suggestion) => (
-              <SuggestionCard key={suggestion.id} suggestion={suggestion} lead={workspace.leadById.get(suggestion.leadId)} />
-            ))
-          )}
-        </div>
-      </section>
+        </Drawer>
+      )}
+
     </div>
   );
 }
