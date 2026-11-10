@@ -2595,6 +2595,10 @@ export const crm = {
     recommendedAction: { label: string; suggestedOwnerId?: string };
     evidence: { entityType: string; entityId: string; href?: string }[];
   }): string {
+    const existingReview = readCrm()?.tessiant?.pulse?.reviews?.[insight.id];
+    if (existingReview?.decision === "accepted" && existingReview.taskId) {
+      return existingReview.taskId;
+    }
     const accountEvidenceId = insight.evidence.find((item) => item.entityType === "account")?.entityId;
     const leadId = accountEvidenceId
       ? readCrm()?.tessiant?.accounts.find((account) => account.id === accountEvidenceId)?.linkedLeadId ?? null

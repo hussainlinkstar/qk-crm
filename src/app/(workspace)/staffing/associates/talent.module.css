@@ -1,8 +1,13 @@
 .views {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 2px;
   align-items: center;
+  max-width: 100%;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
 }
 
 .viewChip {
@@ -10,22 +15,22 @@
   align-items: center;
   justify-content: center;
   min-height: 32px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  border-radius: 999px;
-  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 0 12px;
   font: inherit;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1;
-  color: var(--ink-3);
+  color: var(--muted);
   cursor: pointer;
 }
 
 .viewChip[data-active="true"] {
-  border-color: var(--brand);
-  background: var(--brand-soft);
-  color: var(--brand-ink);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(226, 232, 240, 0.8);
 }
 
 .toolbarCard {
@@ -48,6 +53,13 @@
   height: 40px;
 }
 
+.toolbarSelect {
+  flex: 0 0 160px;
+  min-width: 140px;
+  min-height: 40px;
+  height: 40px;
+}
+
 .filterGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -60,10 +72,10 @@
 }
 
 .demoNote {
-  margin: -12px 0 0;
+  margin: -8px 0 0;
   color: var(--subtle);
   font-size: 12px;
-  line-height: 16px;
+  line-height: 1.35;
 }
 
 .clickRow {
@@ -120,8 +132,21 @@
   align-items: center;
 }
 
+.compactTable {
+  font-size: 14px;
+}
+
 .compactTable td {
   vertical-align: middle;
+  white-space: nowrap;
+}
+
+.compactTable td:first-child {
+  white-space: normal;
+}
+
+.compactTable .muted {
+  white-space: nowrap;
 }
 
 .compactTable th:first-child,
@@ -152,12 +177,15 @@
 }
 
 .tabs {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 6px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 8px;
+  gap: 2px;
+  max-width: 100%;
   margin-bottom: 14px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
 }
 
 .tab {
@@ -165,14 +193,17 @@
   background: transparent;
   padding: 8px 10px;
   border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
 }
 
 .tab[data-active="true"] {
-  background: var(--brand-soft);
-  color: var(--brand-ink);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(226, 232, 240, 0.8);
 }
 
 .sideStack {
@@ -187,9 +218,9 @@
   gap: 8px;
   align-items: center;
   padding: 10px 12px;
-  border: 1px dashed var(--line-strong);
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--well);
+  background: var(--surface);
 }
 
 .docRow {

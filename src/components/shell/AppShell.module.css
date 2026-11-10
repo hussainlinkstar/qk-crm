@@ -442,7 +442,7 @@
 }
 
 .askButton:hover {
-  box-shadow: 0 6px 16px -8px rgba(79, 70, 229, 0.5);
+  box-shadow: 0 6px 16px -8px rgba(47, 111, 94, 0.45);
   transform: translateY(-1px);
 }
 
@@ -787,7 +787,7 @@
     border-radius: 999px;
     background: var(--brand-gradient);
     color: #fff;
-    box-shadow: 0 12px 28px -10px rgba(79, 70, 229, 0.7);
+    box-shadow: 0 12px 28px -10px rgba(47, 111, 94, 0.55);
     cursor: pointer;
   }
 

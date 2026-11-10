@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8fa">
+  <title>Qiko CRM | Product Scope</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f7f8fa;
+      --surface: #fff;
+      --ink: #0c0f16;
+      --text: #263248;
+      --muted: #657187;
+      --line: #e3e7ee;
+      --well: #f1f3f7;
+      --purple: #6d3ce6;
+      --purple-soft: #f1edff;
+      --green: #18794e;
+      --green-soft: #eaf6ef;
+      --amber: #99620b;
+      --amber-soft: #fff5df;
+      --blue: #2857a4;
+      --blue-soft: #edf4ff;
+      --radius: 12px;
+      --shadow: 0 16px 48px rgba(27, 38, 59, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: #e9edf3; scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: #e9edf3;
+      font: 14px/1.58 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { font: inherit; }
+
+    .toolbar {
+      position: sticky;
+      z-index: 5;
+      top: 0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      width: min(100%, 210mm);
+      margin: 0 auto;
+      padding: 14px 18px;
+      background: rgba(247, 248, 250, .94);
+      border: 1px solid rgba(227, 231, 238, .85);
+      border-top: 0;
+      border-radius: 0 0 12px 12px;
+      backdrop-filter: blur(12px);
+    }
+
+    .toolbar button {
+      min-height: 40px;
+      padding: 0 15px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 650;
+    }
+
+    .toolbar button.primary {
+      color: #fff;
+      background: #111827;
+      border-color: #111827;
+    }
+
+    .toolbar button:hover { border-color: #b7bfcd; }
+    .toolbar button:focus-visible { outline: 3px solid #bba8ff; outline-offset: 2px; }
+
+    .document {
+      width: min(100% - 32px, 210mm);
+      margin: 22px auto 48px;
+    }
+
+    .page {
+      position: relative;
+      display: flex;
+      min-height: 297mm;
+      flex-direction: column;
+      margin-bottom: 20px;
+      padding: 17mm 16mm 14mm;
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .page-content { flex: 1; }
+
+    .masthead {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--purple);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .12em;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 27px;
+      height: 27px;
+      place-items: center;
+      color: #fff;
+      background: var(--purple);
+      border-radius: 8px;
+      font-size: 14px;
+      letter-spacing: -.04em;
+    }
+
+    .document-meta {
+      color: var(--muted);
+      font-size: 11px;
+      text-align: right;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 700px;
+      margin: 26px 0 11px;
+      color: var(--ink);
+      font-size: clamp(32px, 5vw, 49px);
+      font-weight: 780;
+      letter-spacing: -.055em;
+      line-height: 1.06;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      color: var(--ink);
+      font-size: 21px;
+      font-weight: 760;
+      letter-spacing: -.025em;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin: 0 0 7px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    p { margin-bottom: 12px; }
+
+    .eyebrow, .section-kicker {
+      color: var(--purple);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .section-kicker { margin: 23px 0 8px; }
+
+    .lede {
+      max-width: 640px;
+      margin-bottom: 21px;
+      color: #4b5563;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .cover-intro {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+      margin: 26px 0 21px;
+    }
+
+    .statement, .cover-stat, .card, .diagram-card, .note {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    .statement {
+      padding: 19px 20px;
+      background: #fff;
+    }
+
+    .statement p { margin: 0; font-size: 14px; }
+
+    .cover-stat {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 18px 20px;
+      background: var(--purple-soft);
+      border-color: #e4dcff;
+    }
+
+    .cover-stat strong {
+      color: var(--purple);
+      font-size: 21px;
+      letter-spacing: -.03em;
+    }
+
+    .cover-stat span { color: #4e4770; font-size: 12px; }
+
+    .section-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 25px 0 12px;
+    }
+
+    .section-heading h2 { margin: 0; }
+
+    .section-heading p {
+      max-width: 390px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .grid-2, .grid-3 {
+      display: grid;
+      gap: 11px;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .card { padding: 15px 16px; background: #fff; }
+    .card p, .card li { font-size: 12px; }
+    .card p:last-child { margin-bottom: 0; }
+
+    .card.tint { background: #f8f9fb; }
+    .card.purple { background: var(--purple-soft); border-color: #e4dcff; }
+    .card.green { background: var(--green-soft); border-color: #d7eddf; }
+    .card.amber { background: var(--amber-soft); border-color: #f1e4c7; }
+
+    .card ul, .check-list, .plain-list {
+      margin: 0;
+      padding-left: 17px;
+    }
+
+    li { margin: 4px 0; }
+    li::marker { color: var(--purple); }
+
+    .scope-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .scope-table th {
+      padding: 8px 10px;
+      color: var(--muted);
+      background: #f7f8fa;
+      font-size: 10px;
+      letter-spacing: .07em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    .scope-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    .scope-table tr:last-child td { border-bottom: 0; }
+    .scope-table strong { color: var(--ink); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .badge.in { color: var(--green); background: var(--green-soft); }
+    .badge.later { color: var(--amber); background: var(--amber-soft); }
+    .badge.demo { color: var(--blue); background: var(--blue-soft); }
+
+    .diagram-card {
+      margin: 14px 0;
+      padding: 15px;
+      background: #fbfcfe;
+    }
+
+    .diagram-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 11px;
+    }
+
+    .diagram-title strong { color: var(--ink); font-size: 13px; }
+    .diagram-title span { color: var(--muted); font-size: 10px; }
+    .diagram { display: block; width: 100%; height: auto; }
+    .diagram-mobile { display: none; }
+
+    .step {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin: 9px 0;
+    }
+
+    .step-number {
+      display: grid;
+      width: 23px;
+      height: 23px;
+      flex: 0 0 23px;
+      place-items: center;
+      color: var(--purple);
+      background: var(--purple-soft);
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .step p { margin: 0; font-size: 12px; }
+
+    .callout {
+      margin: 13px 0;
+      padding: 12px 14px;
+      background: var(--well);
+      border-left: 3px solid var(--purple);
+      border-radius: 0 8px 8px 0;
+      font-size: 12px;
+    }
+
+    .callout strong { color: var(--ink); }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 21px;
+      padding-top: 9px;
+      color: #8792a6;
+      border-top: 1px solid var(--line);
+      font-size: 9px;
+    }
+
+    .page-number::after { content: counter(page); }
+
+    .small-note { color: var(--muted); font-size: 10.5px; }
+    .no-break { break-inside: avoid; page-break-inside: avoid; }
+
+    @media (max-width: 680px) {
+      .toolbar { position: static; justify-content: center; border-radius: 0; }
+      .document { width: 100%; margin: 0 auto 20px; }
+      .page { min-height: 0; margin-bottom: 10px; padding: 26px 21px 20px; }
+      .cover-intro, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .section-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .section-heading p { text-align: left; }
+      .desktop-diagram { display: none; }
+      .diagram-mobile { display: block; }
+      .scope-table { font-size: 11px; }
+      .scope-table td, .scope-table th { padding: 7px 6px; }
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    @media print {
+      html, body { width: 210mm; background: #fff; }
+      body { font-size: 11px; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .toolbar { display: none !important; }
+      .document { width: 210mm; margin: 0; }
+      .page {
+        width: 210mm;
+        height: 297mm;
+        min-height: 297mm;
+        margin: 0;
+        padding: 14mm 15mm 11mm;
+        box-shadow: none;
+        break-after: page;
+        page-break-after: always;
+      }
+      .page:last-child { break-after: auto; page-break-after: auto; }
+      h1 { font-size: 38px; }
+      h2 { font-size: 19px; }
+      .lede { font-size: 14px; }
+      .card { padding: 12px 13px; }
+      .section-kicker { margin-top: 18px; }
+      .section-heading { margin-top: 20px; }
+      .page:nth-of-type(3) .section-heading { margin: 15px 0 8px; }
+      .page:nth-of-type(4) .section-heading { margin: 12px 0 7px; }
+      .page:nth-of-type(4) .card { padding: 8px 10px; }
+      .page:nth-of-type(4) .card p,
+      .page:nth-of-type(4) .card li { font-size: 10px; line-height: 1.38; }
+      .page:nth-of-type(4) li { margin: 2px 0; }
+      .page:nth-of-type(4) .section-kicker { margin: 11px 0 5px; }
+      .page:nth-of-type(4) .callout { margin: 8px 0; padding: 8px 11px; }
+      .page:nth-of-type(4) .grid-2,
+      .page:nth-of-type(4) .grid-3 { gap: 8px; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="toolbar" aria-label="Document actions">
+    <button type="button" onclick="window.print()" class="primary">Print / Save as PDF</button>
+  </nav>
+
+  <main class="document">
+    <section class="page" aria-labelledby="cover-title">
+      <div class="page-content">
+        <header class="masthead">
+          <div class="brand"><span class="brand-mark" aria-hidden="true">q</span><span>QIKO CORE</span></div>
+          <div class="document-meta">PRODUCT SCOPE · V1.0<br>04 November 2026</div>
+        </header>
+
+        <p class="eyebrow" style="margin:36px 0 0">Product scope &amp; delivery brief</p>
+        <h1 id="cover-title">Qiko CRM</h1>
+        <p class="lede">One clear home for every prospect, every meaningful interaction, and the next action the team should take.</p>
+
+        <div class="cover-intro">
+          <div class="statement">
+            <p><strong>Qiko CRM is the sales workspace inside Qiko Core.</strong> It brings Signal registrations, website enquiries, completed scans, and manually added prospects into a single, traceable customer record—then helps the team act on the right follow-up.</p>
+          </div>
+          <div class="cover-stat">
+            <strong>One person. One record.</strong>
+            <span>Shared context from first signal to next step.</span>
+          </div>
+        </div>
+
+        <div class="section-heading">
+          <h2>At a glance</h2>
+          <p>Product intent and delivery boundaries for the initial release.</p>
+        </div>
+        <div class="grid-3">
+          <article class="card purple">
+            <p class="section-kicker" style="margin-top:0">Primary user</p>
+            <h3>Sales team</h3>
+            <p>Starting with the personalised workspace for Ed and the sales team.</p>
+          </article>
+          <article class="card tint">
+            <p class="section-kicker" style="margin-top:0">MVP focus</p>
+            <h3>Sales workspace</h3>
+            <p>Home, Sales overview, unified leads, lead profile, pipeline, and actions.</p>
+          </article>
+          <article class="card tint">
+            <p class="section-kicker" style="margin-top:0">Product principle</p>
+            <h3>Actions over vanity</h3>
+            <p>Metrics give context; evidence-backed follow-up actions drive the workflow.</p>
+          </article>
+        </div>
+
+        <p class="section-kicker">Product outcome</p>
+        <p>Help the team understand who a prospect is, what has happened, what is confirmed, and what to do next—without losing source attribution or inventing customer facts.</p>
+        <div class="callout"><strong>Scope note:</strong> This document reflects the Qiko Core CRM product summary and current demo boundary. Live third-party feeds and future workspaces are clearly separated from V1 functionality.</div>
+      </div>
+      <footer class="footer"><span>Qiko CRM · Product scope</span><span>Confidential · Internal product brief</span></footer>
+    </section>
+
+    <section class="page" aria-labelledby="scope-title">
+      <div class="page-content">
+        <header class="masthead">
+          <div class="brand"><span class="brand-mark" aria-hidden="true">q</span><span>QIKO CORE</span></div>
+          <div class="document-meta">01 · PRODUCT BOUNDARY</div>
+        </header>
+
+        <p class="section-kicker">Purpose &amp; system flow</p>
+        <h2 id="scope-title">Bring customer signals into one useful workflow</h2>
+        <p class="small-note">The diagram preserves the product flow represented in the source summary: capture, unify, understand, and follow up.</p>
+
+        <div class="diagram-card no-break">
+          <div class="diagram-title"><strong>Qiko CRM lead-to-action flow</strong><span>V1 workspace boundary</span></div>
+          <svg class="diagram desktop-diagram" viewBox="0 0 760 305" role="img" aria-labelledby="flow-title flow-desc">
+            <title id="flow-title">Qiko CRM lead-to-action flow</title>
+            <desc id="flow-desc">Signal, website, free audit, and manual-entry sources flow into identity matching and one CRM record. Activity is used to create evidence-backed suggested actions and tasks. Pulse, Marketing, and Finance Ops are later scope.</desc>
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#9aa5b7"/></marker>
+              <style>
+                .node { fill:#fff; stroke:#dfe4ec; stroke-width:1.5 }
+                .nodeMain { fill:#f4f0ff; stroke:#cfc1ff; stroke-width:1.7 }
+                .nodeOut { fill:#f8f9fb; stroke:#dfe4ec; stroke-width:1.5 }
+                .t { font:600 13px Inter,Arial,sans-serif; fill:#182235 }
+                .s { font:11px Inter,Arial,sans-serif; fill:#647087 }
+                .tag { font:700 9px Inter,Arial,sans-serif; fill:#6d3ce6; letter-spacing:1px }
+                .line { fill:none; stroke:#9aa5b7; stroke-width:1.5; marker-end:url(#arrow) }
+                .future { fill:#fffaf0; stroke:#eadbb7; stroke-width:1.3; stroke-dasharray:4 4 }
+              </style>
+            </defs>
+            <rect class="node" x="14" y="21" width="157" height="48" rx="9"/>
+            <text class="t" x="29" y="42">Qiko Signal</text><text class="s" x="29" y="58">Sign-ups · activity · scans</text>
+            <rect class="node" x="14" y="82" width="157" height="48" rx="9"/>
+            <text class="t" x="29" y="103">Website</text><text class="s" x="29" y="119">Contact · assessment enquiry</text>
+            <rect class="node" x="14" y="143" width="157" height="48" rx="9"/>
+            <text class="t" x="29" y="164">Free audit</text><text class="s" x="29" y="180">Completed scan · findings</text>
+            <rect class="node" x="14" y="204" width="157" height="48" rx="9"/>
+            <text class="t" x="29" y="225">Manual entry</text><text class="s" x="29" y="241">Team-added lead</text>
+            <path class="line" d="M171 45 C195 45 191 123 217 123"/>
+            <path class="line" d="M171 106 L217 128"/>
+            <path class="line" d="M171 167 L217 141"/>
+            <path class="line" d="M171 228 C195 228 191 151 217 151"/>
+            <rect class="node" x="224" y="91" width="155" height="91" rx="12"/>
+            <text class="tag" x="243" y="115">IDENTITY</text>
+            <text class="t" x="243" y="138">Match &amp; deduplicate</text>
+            <text class="s" x="243" y="158">Email-based person match</text>
+            <path class="line" d="M379 137 L408 137"/>
+            <rect class="nodeMain" x="416" y="77" width="164" height="120" rx="13"/>
+            <text class="tag" x="434" y="103">QIKO CRM</text>
+            <text class="t" x="434" y="127">One lead record</text>
+            <text class="s" x="434" y="148">Profile · source · timeline</text>
+            <text class="s" x="434" y="166">Notes · scans · conversations</text>
+            <path class="line" d="M580 121 C601 121 595 76 617 76"/>
+            <path class="line" d="M580 154 C601 154 595 191 617 191"/>
+            <rect class="nodeOut" x="624" y="39" width="122" height="72" rx="10"/>
+            <text class="tag" x="638" y="60">INTELLIGENCE</text>
+            <text class="t" x="638" y="81">Evidence + next step</text>
+            <text class="s" x="638" y="97">Ask Qiko · suggestions</text>
+            <rect class="nodeOut" x="624" y="157" width="122" height="72" rx="10"/>
+            <text class="tag" x="638" y="178">WORK</text>
+            <text class="t" x="638" y="199">Tasks &amp; actions</text>
+            <text class="s" x="638" y="215">Owner · due date · status</text>
+            <path class="line" d="M685 111 L685 149"/>
+            <path d="M416 223 L746 223 L746 274 L416 274 Z" class="future"/>
+            <text class="tag" x="431" y="244" style="fill:#99620b">LATER / NOT LIVE IN V1</text>
+            <text class="s" x="431" y="262">Live integrations · Marketing · Finance Ops · Qiko Pulse</text>
+            <text class="s" x="20" y="284">Source attribution and timestamps travel with the customer activity wherever available.</text>
+          </svg>
+          <svg class="diagram diagram-mobile" viewBox="0 0 340 550" role="img" aria-labelledby="flow-mobile-title flow-mobile-desc">
+            <title id="flow-mobile-title">Qiko CRM lead-to-action flow</title>
+            <desc id="flow-mobile-desc">Four sources feed one deduplicated lead record, which supports evidence-based intelligence and tasks. Future features are shown separately.</desc>
+            <defs>
+              <marker id="arrow-m" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#9aa5b7"/></marker>
+              <style>
+                .mnode { fill:#fff; stroke:#dfe4ec; stroke-width:1.5 }
+                .mmain { fill:#f4f0ff; stroke:#cfc1ff; stroke-width:1.7 }
+                .mfut { fill:#fffaf0; stroke:#eadbb7; stroke-width:1.3; stroke-dasharray:4 4 }
+                .mt { font:600 12px Inter,Arial,sans-serif; fill:#182235 }
+                .ms { font:10px Inter,Arial,sans-serif; fill:#647087 }
+                .ma { fill:none; stroke:#9aa5b7; stroke-width:1.5; marker-end:url(#arrow-m) }
+              </style>
+            </defs>
+            <rect class="mnode" x="10" y="10" width="153" height="46" rx="9"/><text class="mt" x="23" y="29">Qiko Signal</text><text class="ms" x="23" y="45">Sign-ups · scans · product use</text>
+            <rect class="mnode" x="177" y="10" width="153" height="46" rx="9"/><text class="mt" x="190" y="29">Website</text><text class="ms" x="190" y="45">Contact · assessment enquiry</text>
+            <rect class="mnode" x="10" y="67" width="153" height="46" rx="9"/><text class="mt" x="23" y="86">Free audit</text><text class="ms" x="23" y="102">Completed scan · findings</text>
+            <rect class="mnode" x="177" y="67" width="153" height="46" rx="9"/><text class="mt" x="190" y="86">Manual entry</text><text class="ms" x="190" y="102">Team-added lead</text>
+            <path class="ma" d="M86 56 L150 133"/><path class="ma" d="M254 56 L190 133"/><path class="ma" d="M86 113 L150 133"/><path class="ma" d="M254 113 L190 133"/>
+            <rect class="mnode" x="68" y="140" width="204" height="64" rx="11"/><text class="mt" x="87" y="164">Match &amp; deduplicate by email</text><text class="ms" x="87" y="184">Resolve activities to one person</text>
+            <path class="ma" d="M170 204 L170 229"/>
+            <rect class="mmain" x="68" y="237" width="204" height="83" rx="12"/><text class="mt" x="87" y="263">One Qiko CRM lead record</text><text class="ms" x="87" y="283">Profile · source · activity timeline</text><text class="ms" x="87" y="300">Notes · scans · conversations</text>
+            <path class="ma" d="M170 320 L170 344"/>
+            <rect class="mnode" x="10" y="352" width="153" height="64" rx="10"/><text class="mt" x="23" y="376">Evidence + next step</text><text class="ms" x="23" y="395">Ask Qiko · suggestions</text>
+            <rect class="mnode" x="177" y="352" width="153" height="64" rx="10"/><text class="mt" x="190" y="376">Tasks &amp; actions</text><text class="ms" x="190" y="395">Owner · due date · status</text>
+            <rect class="mfut" x="10" y="444" width="320" height="65" rx="10"/><text class="mt" x="24" y="468">Later / not live in V1</text><text class="ms" x="24" y="489">Live integrations · Marketing · Finance Ops · Pulse</text>
+            <text class="ms" x="10" y="535">Source and timestamp stay attached where available.</text>
+          </svg>
+        </div>
+
+        <div class="section-heading">
+          <h2>Scope boundary</h2>
+          <p>What the first release includes—and what it deliberately does not claim.</p>
+        </div>
+        <div class="grid-2">
+          <article class="card green">
+            <h3>In the V1 product experience</h3>
+            <ul>
+              <li>Sales-first workspace, lead records, profiles, pipeline, tasks, and actions.</li>
+              <li>Sample/demo records for product walkthrough and browser-local edits.</li>
+              <li>Grounded summaries and suggestions based on data available in the workspace.</li>
+            </ul>
+          </article>
+          <article class="card amber">
+            <h3>Not a live data promise</h3>
+            <ul>
+              <li>Production Signal, website, or Admin data feeds are not live in the current demo.</li>
+              <li>Marketing, Finance Ops, and Qiko Pulse are future scope.</li>
+              <li>Demo sign-in does not verify a real account or password.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+      <footer class="footer"><span>Qiko CRM · Product scope</span><span>01 · Scope boundary</span></footer>
+    </section>
+
+    <section class="page" aria-labelledby="experience-title">
+      <div class="page-content">
+        <header class="masthead">
+          <div class="brand"><span class="brand-mark" aria-hidden="true">q</span><span>QIKO CORE</span></div>
+          <div class="document-meta">02 · PRODUCT EXPERIENCE</div>
+        </header>
+
+        <p class="section-kicker">Functional scope</p>
+        <h2 id="experience-title">A focused workspace for the full sales day</h2>
+        <p class="small-note">The CRM experience is organised around a simple loop: prioritise, inspect, act, and keep the record current.</p>
+
+        <div class="grid-2">
+          <article class="card">
+            <p class="section-kicker" style="margin-top:0">01 · Home</p>
+            <h3>Start with today's priorities</h3>
+            <ul>
+              <li>Personal greeting and Ask Qiko entry point.</li>
+              <li>Up to three high- or medium-priority groups, with people and tasks to review.</li>
+              <li>Pending, in-progress, and completed task snapshot.</li>
+              <li>Recent activity and business changes, such as new leads, recent scans, wins, and overdue tasks.</li>
+              <li>Sales is available; future workspaces are labelled “Soon”.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="section-kicker" style="margin-top:0">02 · Sales overview</p>
+            <h3>See supported metrics, then take action</h3>
+            <ul>
+              <li>Total leads, Signal sign-ups, completed free scans, active users (30 days), new enquiries, and follow-ups due.</li>
+              <li>Daily sign-up and completed-scan trends for 7, 14, or 30 days when valid history exists.</li>
+              <li>Pipeline counts across New, Contacted, Qualified, Won, and Lost.</li>
+              <li>Lead sources, engaged open leads, and suggested actions with evidence.</li>
+              <li>Add a lead or ask Qiko for a sales summary.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="section-kicker" style="margin-top:0">03 · Unified leads</p>
+            <h3>Find and manage the right record</h3>
+            <ul>
+              <li>Search by name, company, or email; filter by status, source, owner, or activity.</li>
+              <li>Activity filters for attention, scan, recent use, open task, or unassigned owner.</li>
+              <li>Sort by last activity, newest, engagement, or name; export filtered results to CSV.</li>
+              <li>Paginated list (15 per page); row opens quick panel, name opens full profile.</li>
+              <li>Confirm status and owner changes; block duplicate email on edit.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="section-kicker" style="margin-top:0">04 · Pipeline</p>
+            <h3>Make progress visible</h3>
+            <ul>
+              <li>Five stages: New, Contacted, Qualified, Won, and Lost.</li>
+              <li>Cards show company, source, owner, last activity, and engagement.</li>
+              <li>Search and filters are consistent with the lead list.</li>
+              <li>Drag to another stage with confirmation before the record changes.</li>
+              <li>Each lead's next action is informed by a note, open task, or Qiko suggestion.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="section-heading">
+          <h2>One complete lead profile</h2>
+          <p>Customer context should remain attached to the record, not scattered across screens.</p>
+        </div>
+        <div class="grid-2">
+          <article class="card tint">
+            <h3>Identity &amp; engagement</h3>
+            <p>Name, role, company, email, phone, source, status, owner, next action, and engagement score out of 100.</p>
+          </article>
+          <article class="card tint">
+            <h3>Record tabs</h3>
+            <p>Overview, Activity, Conversations, Scans and reports, Tasks, and Notes.</p>
+          </article>
+          <article class="card tint">
+            <h3>Activity timeline</h3>
+            <p>Product, scan, enquiry, and CRM activity with source and timestamp when available.</p>
+          </article>
+          <article class="card tint">
+            <h3>Conversations &amp; follow-up</h3>
+            <p>Log calls, email, WhatsApp, meetings, or messages; compose messages; create tasks from a lead or scan.</p>
+          </article>
+        </div>
+      </div>
+      <footer class="footer"><span>Qiko CRM · Product scope</span><span>02 · Product experience</span></footer>
+    </section>
+
+    <section class="page" aria-labelledby="workflow-title">
+      <div class="page-content">
+        <header class="masthead">
+          <div class="brand"><span class="brand-mark" aria-hidden="true">q</span><span>QIKO CORE</span></div>
+          <div class="document-meta">03 · WORKFLOWS &amp; DATA</div>
+        </header>
+
+        <p class="section-kicker">Work to be done</p>
+        <h2 id="workflow-title">Make every recommendation explainable</h2>
+        <p class="small-note">An action is a piece of work with an owner, a reason, and a clear outcome—not just a metric or an alert.</p>
+
+        <div class="grid-2">
+          <article class="card">
+            <p class="section-kicker" style="margin-top:0">Action workspace</p>
+            <h3>Turn follow-up into trackable work</h3>
+            <ul>
+              <li>Suggested actions can be accepted, edited, or dismissed; accepting creates a task.</li>
+              <li>Task board states: Pending, In progress, Completed; also filter Overdue and Dismissed.</li>
+              <li>Board/list views, search, and filters by owner or priority.</li>
+              <li>Each task retains due date, owner, linked lead, evidence, and change history.</li>
+              <li>Drag to update task state; preserve list and board context.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="section-kicker" style="margin-top:0">Suggestion rules</p>
+            <h3>Suggest only when there's a reason</h3>
+            <ul>
+              <li>New Signal sign-up not yet contacted.</li>
+              <li>Scan completed within the last 72 hours.</li>
+              <li>Website enquiry waiting for a reply.</li>
+              <li>Strong product use in the last three days.</li>
+              <li>Contacted or qualified lead with no follow-up for seven days.</li>
+              <li>Do not show a suggestion if the lead is closed or already has an open task.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="section-heading">
+          <h2>Ask Qiko</h2>
+          <p>Useful answers remain grounded in records the user can inspect.</p>
+        </div>
+        <div class="grid-3">
+          <article class="card purple">
+            <h3>Ask in plain language</h3>
+            <p>Today’s sales, recent Signal sign-ups, completed scans, who to follow up with, pending tasks, pipeline, or one prospect.</p>
+          </article>
+          <article class="card tint">
+            <h3>Show the evidence</h3>
+            <p>Each response separates the answer, relevant facts and source, and the recommended next step.</p>
+          </article>
+          <article class="card tint">
+            <h3>Confirm before changes</h3>
+            <p>Supported actions can create a task, update a status, or open a page; consequential changes require confirmation.</p>
+          </article>
+        </div>
+
+        <div class="section-heading">
+          <h2>Data and trust requirements</h2>
+          <p>These are release requirements, not optional integrations.</p>
+        </div>
+        <div class="card">
+          <table class="scope-table">
+            <thead><tr><th>Area</th><th>Requirement</th><th>Boundary</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Identity</strong></td><td>Merge multiple activities for one identifiable person; use email to deduplicate.</td><td><span class="badge in">V1 behavior</span></td></tr>
+              <tr><td><strong>Provenance</strong></td><td>Retain source attribution and timestamps whenever supplied by the source.</td><td><span class="badge in">Required</span></td></tr>
+              <tr><td><strong>Truthfulness</strong></td><td>Separate confirmed facts from recommendations; never invent metrics or customer details.</td><td><span class="badge in">Required</span></td></tr>
+              <tr><td><strong>Data access</strong></td><td>Use a replaceable provider layer for demo and production data; validate API coverage before claiming a live feed.</td><td><span class="badge later">Integration-dependent</span></td></tr>
+              <tr><td><strong>Demo safety</strong></td><td>Label sample data and keep it separate from production data; edits remain browser-local in the demo.</td><td><span class="badge demo">Current demo</span></td></tr>
+              <tr><td><strong>Reliability</strong></td><td>Show meaningful loading, empty, and error states; report sync failures rather than silently presenting stale data as live.</td><td><span class="badge in">Required</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <footer class="footer"><span>Qiko CRM · Product scope</span><span>03 · Workflows &amp; data</span></footer>
+    </section>
+
+    <section class="page" aria-labelledby="delivery-title">
+      <div class="page-content">
+        <header class="masthead">
+          <div class="brand"><span class="brand-mark" aria-hidden="true">q</span><span>QIKO CORE</span></div>
+          <div class="document-meta">04 · DELIVERY &amp; ACCEPTANCE</div>
+        </header>
+
+        <p class="section-kicker">Release plan</p>
+        <h2 id="delivery-title">Ship the useful sales loop first</h2>
+        <p class="small-note">Keep the MVP modular: prove the daily workflow with clearly labelled demo data, then connect validated sources without changing the user-facing record model.</p>
+
+        <div class="grid-2">
+          <article class="card">
+            <p class="section-kicker" style="margin-top:0">P0 · Core MVP</p>
+            <h3>Reliable daily sales operations</h3>
+            <ul>
+              <li>Authentication experience and personalised Home.</li>
+              <li>Sales dashboard and supported KPI presentation.</li>
+              <li>Unified lead search, filtering, profile, and activity history.</li>
+              <li>Tasks, notes, lead actions, and pipeline stage management.</li>
+              <li>Clear demo labeling and browser-local demo reset.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="section-kicker" style="margin-top:0">P1 · Intelligence</p>
+            <h3>Evidence-led assistance</h3>
+            <ul>
+              <li>Ask Qiko grounded in available CRM records.</li>
+              <li>Follow-up recommendations with facts and reasoning.</li>
+              <li>Time-based activity trends only where history is valid.</li>
+              <li>Confirmed execution for supported changes.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="section-heading">
+          <h2>Acceptance checklist</h2>
+          <p>V1 is ready when a sales user can complete these outcomes without misleading data.</p>
+        </div>
+        <div class="card">
+          <div class="grid-2">
+            <ul class="check-list">
+              <li>Sign in and reach a useful Home workspace.</li>
+              <li>Review priorities and open related leads or tasks.</li>
+              <li>View available Sales KPIs with accurate labels.</li>
+              <li>Search and filter the lead list; open a lead profile.</li>
+              <li>Understand a prospect's source and activity timeline.</li>
+            </ul>
+            <ul class="check-list">
+              <li>Create, assign, update, and complete tasks.</li>
+              <li>Update pipeline status with confirmation.</li>
+              <li>Review an AI suggestion's evidence before accepting it.</li>
+              <li>Ask a grounded question and inspect its facts.</li>
+              <li>Identify sample data and reset it without confusion.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section-heading">
+          <h2>Explicitly later / out of current demo</h2>
+        </div>
+        <div class="grid-3">
+          <article class="card amber">
+            <h3>Live integrations</h3>
+            <p>Production synchronisation with Qiko Signal, website, and Admin services until APIs, permissions, and field coverage are validated.</p>
+          </article>
+          <article class="card amber">
+            <h3>Future workspaces</h3>
+            <p>Marketing campaigns, Finance Ops, and Qiko Pulse remain visible as future directions, not usable V1 features.</p>
+          </article>
+          <article class="card amber">
+            <h3>Production identity</h3>
+            <p>Real account verification and password recovery are outside the current demo sign-in behavior.</p>
+          </article>
+        </div>
+
+        <div class="callout"><strong>Delivery guardrail:</strong> Do not present an unavailable integration as live. Show source, freshness, and errors clearly; keep the CRM data contract stable while providers evolve.</div>
+
+        <p class="section-kicker">Product direction</p>
+        <p>Start with Sales. Preserve a clear route to future workspaces and Qiko Pulse, but let evidence, reliable records, and completed follow-ups—not future-facing UI—define the first release.</p>
+      </div>
+      <footer class="footer"><span>Qiko CRM · Product scope</span><span>04 · Delivery &amp; acceptance</span></footer>
+    </section>
+  </main>
+</body>
+</html>

@@ -258,7 +258,7 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
           summary: "Active account has a primary relationship owner and no documented secondary owner. Assign continuity coverage.",
           priority: "high",
           evidence: [
-            { entityType: "account", entityId: account.id, field: "primaryOwnerId", observedValue: account.primaryOwnerId, href: "/staffing/clients" },
+            { entityType: "account", entityId: account.id, field: "primaryOwnerId", observedValue: account.primaryOwnerId, href: `/sales/accounts/${account.id}` },
             { entityType: "account", entityId: account.id, field: "secondaryOwnerId", observedValue: "null" },
           ],
           generatedAt: asOf,
@@ -300,7 +300,9 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
             { entityType: "requirement", entityId: req.id, field: "category", observedValue: req.category, href: `/staffing/requirements/${req.id}` },
             { entityType: "candidate", entityId: candidate.id, field: "interview.outcome", observedValue: candidate.interview.outcome },
             { entityType: "associate", entityId: associate.id, field: "roleType", observedValue: "SIA", href: `/staffing/associates/${associate.id}` },
-            ...(account ? [{ entityType: "account" as const, entityId: account.id, field: "name", observedValue: account.name, href: "/staffing/clients" }] : []),
+            ...(account
+              ? [{ entityType: "account" as const, entityId: account.id, field: "name", observedValue: account.name, href: `/sales/accounts/${account.id}` }]
+              : []),
           ],
           generatedAt: asOf,
           dataAsOf: asOf,

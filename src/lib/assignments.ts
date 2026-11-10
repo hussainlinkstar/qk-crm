@@ -115,10 +115,12 @@ export function assignmentDashboard(state: CrmState, today = todayKey()) {
 export type AssignmentListView =
   | "all"
   | "active"
+  | "live"
   | "upcoming"
   | "ending30"
   | "ending60"
   | "renewals"
+  | "month"
   | "completed"
   | "clients";
 
@@ -128,6 +130,8 @@ export function filterAssignments(state: CrmState, view: AssignmentListView | st
   switch (view) {
     case "active":
       return deployedAssignments(state, today).sort(byEnd);
+    case "live":
+      return liveAssignments(state, today).sort(byEnd);
     case "upcoming":
       return upcomingAssignments(state, today, 90).sort(byStart);
     case "ending30":
@@ -137,6 +141,22 @@ export function filterAssignments(state: CrmState, view: AssignmentListView | st
       return assignmentsEndingWithin(state, 60, today).sort(byEnd);
     case "renewals":
       return pendingRenewals(state, today).sort(byEnd);
+    case "month": {
+      const now = new Date(`${today}T12:00:00`);
+      const month = now.getMonth();
+      const year = now.getFullYear();
+      return t.placements
+        .filter((placement) => {
+          if (!placement.placementDate) return false;
+          const date = new Date(placement.placementDate);
+          return (
+            date.getMonth() === month &&
+            date.getFullYear() === year &&
+            (placement.status === "confirmed" || placement.status === "closed")
+          );
+        })
+        .sort((a, b) => (b.placementDate ?? "").localeCompare(a.placementDate ?? ""));
+    }
     case "completed":
       return completedAssignments(state).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     default:

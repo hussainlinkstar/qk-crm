@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { EmptyState, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import InsightCard from "@/components/pulse/InsightCard";
+import PulseSubnav from "@/components/pulse/PulseSubnav";
+import { TESSIANT_KNOWLEDGE_BLOCKS } from "@/lib/tessiant-knowledge";
 import { generateTessiantInsights } from "@/lib/tessiant-pulse-rules";
 import type { InsightReviewStatus, KnowledgeBlockId } from "@/lib/tessiant-pulse-types";
 import styles from "../pulse.module.css";
@@ -36,28 +38,31 @@ export default function PulseInsightsPage() {
         <div>
           <div className={styles.context}>
             <span className="chip chip-ai">Qiko Pulse</span>
-            <span className="chip">Tessiant insights</span>
+            <span className="chip">Insights</span>
           </div>
           <h1>Insight review</h1>
-          <p className="subtitle">Explainable deterministic signals with evidence, priority and recommended next step.</p>
+          <p className="subtitle">Priority signals with recommended next steps. Open Review for evidence and rule detail.</p>
         </div>
       </header>
+
+      <PulseSubnav />
 
       <section className="card">
         <div className="card-body">
           <div className={styles.actions}>
             <select className="input" value={block} onChange={(e) => setBlock(e.target.value as KnowledgeBlockId | "")} aria-label="Filter knowledge block">
               <option value="">All blocks</option>
-              <option value="network">network</option>
-              <option value="augmentation">augmentation</option>
-              <option value="commercial">commercial</option>
-              <option value="capability">capability</option>
+              {TESSIANT_KNOWLEDGE_BLOCKS.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
             </select>
             <select className="input" value={status} onChange={(e) => setStatus(e.target.value as InsightReviewStatus | "")} aria-label="Filter review status">
               <option value="">All statuses</option>
-              <option value="pending">pending</option>
-              <option value="accepted">accepted</option>
-              <option value="rejected">rejected</option>
+              <option value="pending">Pending</option>
+              <option value="accepted">Accepted</option>
+              <option value="rejected">Rejected</option>
             </select>
           </div>
         </div>

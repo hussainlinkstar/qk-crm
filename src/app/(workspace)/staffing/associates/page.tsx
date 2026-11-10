@@ -14,15 +14,13 @@ import {
   TALENT_PAGE_SIZE,
   TALENT_SAVED_VIEWS,
   currentAssignmentLabel,
-  engagementStatus,
   filterTalentNetwork,
   latestCv,
-  needsProfileUpdate,
   paginateTalent,
   roleLabel,
   type TalentSavedView,
 } from "@/lib/talent-network";
-import type { AssociateRoleType, AvailabilityStatus, SeniorityLevel, TalentEngagementStatus } from "@/lib/tessiant-types";
+import type { AssociateRoleType, AvailabilityStatus, SeniorityLevel } from "@/lib/tessiant-types";
 import styles from "../staffing.module.css";
 import talent from "./talent.module.css";
 
@@ -40,16 +38,14 @@ export default function AssociatesPage() {
   const [sector, setSector] = useState(params.get("sector") ?? "");
   const [roleType, setRoleType] = useState<AssociateRoleType | "">((params.get("type") as AssociateRoleType | null) ?? "");
   const [seniority, setSeniority] = useState<SeniorityLevel | "">((params.get("seniority") as SeniorityLevel | null) ?? "");
-  const [location, setLocation] = useState(params.get("location") ?? "");
   const [availability, setAvailability] = useState<AvailabilityStatus | "">(
     (params.get("availability") as AvailabilityStatus | null) ?? "",
   );
-  const [engagement, setEngagement] = useState<TalentEngagementStatus | "">((params.get("engagement") as TalentEngagementStatus | null) ?? "");
   const [page, setPage] = useState(Number(params.get("page") || 1));
   const [showRates, setShowRates] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [quickId, setQuickId] = useState<string | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(params.get("new") === "1");
 
   useEffect(() => {
     try {
@@ -62,6 +58,7 @@ export default function AssociatesPage() {
 
   useEffect(() => {
     if (params.get("verified") === "1") setView("available_now");
+    if (params.get("new") === "1") setAddOpen(true);
   }, [params]);
 
   const skills = useMemo(() => {
@@ -72,10 +69,6 @@ export default function AssociatesPage() {
     if (!tessiant) return [];
     return [...new Set(tessiant.associates.flatMap((item) => item.sectors))].sort();
   }, [tessiant]);
-  const locations = useMemo(() => {
-    if (!tessiant) return [];
-    return [...new Set(tessiant.associates.map((item) => item.location.split("·")[0]?.trim() || item.location))].sort();
-  }, [tessiant]);
 
   const filtered = useMemo(() => {
     if (!state) return [];
@@ -85,23 +78,24 @@ export default function AssociatesPage() {
       sector,
       seniority,
       roleType,
-      location,
+      location: "",
       availability,
-      engagement,
+      engagement: "",
       view,
     });
-  }, [state, q, skill, sector, seniority, roleType, location, availability, engagement, view]);
+  }, [state, q, skill, sector, seniority, roleType, availability, view]);
 
   const paged = useMemo(() => paginateTalent(filtered, page, TALENT_PAGE_SIZE), [filtered, page]);
-  const activeFilterCount = [skill, sector, roleType, seniority, location, availability, engagement].filter(Boolean).length;
+  const advancedFilterCount = [skill, sector, roleType, seniority].filter(Boolean).length;
+  const activeFilterCount = advancedFilterCount + (availability ? 1 : 0);
 
   useEffect(() => {
     setPage(1);
-  }, [q, skill, sector, seniority, roleType, location, availability, engagement, view]);
+  }, [q, skill, sector, seniority, roleType, availability, view]);
 
   if (!state || !tessiant) {
     return (
-      <div className="page">
+      <div className={`page ${styles.density}`}>
         <SkeletonRows rows={6} height={48} />
       </div>
     );
@@ -112,48 +106,33 @@ export default function AssociatesPage() {
     router.replace(next === "all" ? "/staffing/associates" : `/staffing/associates?view=${next}`);
   };
 
-  const toggleRates = () => {
-    const next = !showRates;
-    setShowRates(next);
-    try {
-      window.sessionStorage.setItem(RATE_KEY, next ? "1" : "0");
-    } catch {
-      // ignore
-    }
-  };
-
-  const clearFilters = () => {
-    setSkill("");
-    setSector("");
-    setRoleType("");
-    setSeniority("");
-    setLocation("");
-    setAvailability("");
-    setEngagement("");
-  };
-
   return (
-    <div className="page">
+    <div className={`page ${styles.density}`}>
       <header className="page-head">
         <div>
-          <p className="kicker">Staffing</p>
           <h1>Talent Network</h1>
-          <p className="subtitle">Search, filter and shortlist associates by skills, capacity and availability.</p>
+          <p className="subtitle">Search and shortlist associates by skills, capacity and availability.</p>
         </div>
         <div className="page-actions">
-          <Button variant="secondary" onClick={toggleRates}>
-            {showRates ? "Hide day rates" : "Show day rates"}
+          <Button
+            variant="secondary"
+            onClick={() => {
+              const next = !showRates;
+              setShowRates(next);
+              try {
+                window.sessionStorage.setItem(RATE_KEY, next ? "1" : "0");
+              } catch {
+                // ignore
+              }
+            }}
+          >
+            {showRates ? "Hide rates" : "Show rates"}
           </Button>
           <Button icon="plus" onClick={() => setAddOpen(true)}>
             Add associate
           </Button>
         </div>
       </header>
-
-      <p className={talent.demoNote} role="note">
-        Sample directory · {tessiant.networkStats.sampleSize} profiles · illustrative network{" "}
-        {tessiant.networkStats.totalMembers}+ · details in Settings
-      </p>
 
       <section className="card">
         <div className={`card-body ${talent.toolbarCard}`}>
@@ -179,22 +158,39 @@ export default function AssociatesPage() {
               placeholder="Search name, role, skills…"
               aria-label="Search talent network"
             />
-            <Button
-              variant="secondary"
-              className={styles.controlMatch}
-              onClick={() => setFiltersOpen((value) => !value)}
-              aria-expanded={filtersOpen}
+            <select
+              className={`input ${talent.toolbarSelect}`}
+              value={availability}
+              onChange={(e) => setAvailability(e.target.value as AvailabilityStatus | "")}
+              aria-label="Filter availability"
             >
-              Filters{activeFilterCount ? ` · ${activeFilterCount}` : ""}
+              <option value="">All availability</option>
+              <option value="available">Available</option>
+              <option value="limited">Limited</option>
+              <option value="unavailable">Unavailable</option>
+              <option value="unknown">Unknown</option>
+            </select>
+            <Button variant="secondary" className={styles.controlMatch} onClick={() => setFiltersOpen((v) => !v)} aria-expanded={filtersOpen}>
+              More filters{advancedFilterCount ? ` · ${advancedFilterCount}` : ""}
             </Button>
             {activeFilterCount > 0 && (
-              <Button variant="ghost" className={styles.controlMatch} onClick={clearFilters}>
+              <Button
+                variant="ghost"
+                className={styles.controlMatch}
+                onClick={() => {
+                  setSkill("");
+                  setSector("");
+                  setRoleType("");
+                  setSeniority("");
+                  setAvailability("");
+                }}
+              >
                 Clear
               </Button>
             )}
           </div>
           {filtersOpen && (
-            <div className={talent.filterGrid} role="group" aria-label="Talent filters">
+            <div className={talent.filterGrid} role="group" aria-label="Advanced talent filters">
               <select className="input" value={skill} onChange={(e) => setSkill(e.target.value)} aria-label="Filter skill">
                 <option value="">All skills</option>
                 {skills.map((item) => (
@@ -226,29 +222,6 @@ export default function AssociatesPage() {
                 <option value="principal">Principal</option>
                 <option value="executive">Executive</option>
               </select>
-              <select className="input" value={location} onChange={(e) => setLocation(e.target.value)} aria-label="Filter location">
-                <option value="">All locations</option>
-                {locations.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-              <select className="input" value={availability} onChange={(e) => setAvailability(e.target.value as AvailabilityStatus | "")} aria-label="Filter availability">
-                <option value="">All availability</option>
-                <option value="available">Available</option>
-                <option value="limited">Limited</option>
-                <option value="unavailable">Unavailable</option>
-                <option value="unknown">Unknown</option>
-              </select>
-              <select className="input" value={engagement} onChange={(e) => setEngagement(e.target.value as TalentEngagementStatus | "")} aria-label="Filter engagement">
-                <option value="">All engagement</option>
-                <option value="available">Available</option>
-                <option value="deployed">Deployed</option>
-                <option value="limited">Limited</option>
-                <option value="unavailable">Unavailable</option>
-                <option value="inactive">Inactive</option>
-              </select>
             </div>
           )}
         </div>
@@ -270,43 +243,37 @@ export default function AssociatesPage() {
             </EmptyState>
           ) : (
             <>
-              <div className={styles.tableWrap}>
-                <table className={`${styles.table} ${talent.compactTable}`}>
+              <div className="table-wrap">
+                <table className={`table ${talent.compactTable}`}>
                   <thead>
                     <tr>
                       <th>Name / role</th>
-                      <th>Type</th>
-                      <th>Skills</th>
-                      <th>Location</th>
-                      <th>Capacity</th>
-                      <th>Assignment</th>
-                      <th>Rate</th>
+                      <th>Type / seniority</th>
+                      <th>Top skills</th>
+                      <th>Sector</th>
+                      <th>Availability</th>
+                      <th>Current assignment</th>
                       <th>CV</th>
-                      <th />
+                      {showRates && <th>Rate</th>}
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paged.slice.map((associate) => {
                       const assignment = currentAssignmentLabel(state, associate);
-                      const engagementLabel = engagementStatus(state, associate);
                       const capacity = associateCommittedCapacity(state, associate.id);
                       const free = Math.max(0, 100 - capacity);
                       const cv = latestCv(associate);
-                      const stale = needsProfileUpdate(associate);
+                      const shownSkills = associate.skills.slice(0, 3);
+                      const extraSkills = Math.max(0, associate.skills.length - shownSkills.length);
+                      const availabilityDetail =
+                        associate.availability !== "available" && associate.nextAvailableDate
+                          ? ` · from ${formatDate(associate.nextAvailableDate)}`
+                          : free < 100
+                            ? ` · ${free}% free`
+                            : "";
                       return (
-                        <tr
-                          key={associate.id}
-                          className={talent.clickRow}
-                          onClick={() => setQuickId(associate.id)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              setQuickId(associate.id);
-                            }
-                          }}
-                          tabIndex={0}
-                          aria-label={`Quick view ${associate.name}`}
-                        >
+                        <tr key={associate.id} className={talent.clickRow} onClick={() => setQuickId(associate.id)}>
                           <td>
                             <div className={talent.person}>
                               <span className="avatar avatar-sm">{initials(associate.name)}</span>
@@ -318,52 +285,26 @@ export default function AssociatesPage() {
                               </span>
                             </div>
                           </td>
-                          <td>
-                            <b>{roleLabel(associate.roleType)}</b>
-                            <div className="muted">{associate.seniority}</div>
+                          <td className="nowrap">
+                            {roleLabel(associate.roleType)} · {associate.seniority}
                           </td>
-                          <td>
-                            <div className={styles.metaRow}>
-                              {associate.skills.slice(0, 2).map((item) => (
-                                <span key={item} className="chip">
-                                  {item}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="muted">{associate.sectors.slice(0, 2).join(" · ")}</div>
+                          <td className="nowrap">
+                            {shownSkills.length
+                              ? `${shownSkills.join(", ")}${extraSkills > 0 ? ` +${extraSkills}` : ""}`
+                              : "—"}
                           </td>
-                          <td>
-                            {associate.location}
-                            <div className="muted">{associate.workingMode}</div>
-                          </td>
-                          <td>
+                          <td className="nowrap">{associate.sectors.slice(0, 2).join(", ") || "—"}</td>
+                          <td className="nowrap">
                             <span className="chip chip-dot">{associate.availability}</span>
-                            <div className="muted tabular">
-                              {capacity}% committed · {free}% free
-                            </div>
-                            <div className="muted">{engagementLabel}</div>
+                            {availabilityDetail ? <span className="muted">{availabilityDetail}</span> : null}
                           </td>
-                          <td>
-                            {assignment ? (
-                              <>
-                                <b>{assignment.client}</b>
-                                <div className="muted">{assignment.role}</div>
-                              </>
-                            ) : (
-                              <span className="muted">Bench</span>
-                            )}
+                          <td className="nowrap">{assignment ? assignment.client : <span className="muted">Bench</span>}</td>
+                          <td className="nowrap">
+                            <span className="chip">{cv?.verifiedAt ? "Ready" : "Review"}</span>
                           </td>
-                          <td className="tabular">{showRates ? formatRate(associate.rate) : "Restricted"}</td>
-                          <td>
-                            <span className="chip">{cv?.verifiedAt ? "CV ready" : "CV review"}</span>
-                            <div className="muted">
-                              {associate.verifiedAt ? "Verified" : "Unverified"}
-                              {stale ? " · update due" : ""}
-                            </div>
-                            <div className="muted">{associate.profileUpdatedAt ? formatDate(associate.profileUpdatedAt) : "—"}</div>
-                          </td>
-                          <td onClick={(event) => event.stopPropagation()}>
-                            <Link href={`/staffing/associates/${associate.id}`} className="muted">
+                          {showRates && <td className="tabular nowrap">{formatRate(associate.rate)}</td>}
+                          <td className="nowrap" onClick={(e) => e.stopPropagation()}>
+                            <Link href={`/staffing/associates/${associate.id}`} className="text-link">
                               Profile
                             </Link>
                           </td>
@@ -378,13 +319,13 @@ export default function AssociatesPage() {
                   Showing {(paged.page - 1) * TALENT_PAGE_SIZE + 1}–{Math.min(paged.page * TALENT_PAGE_SIZE, paged.total)} of {paged.total}
                 </span>
                 <div className={talent.pagerControls}>
-                  <Button size="small" variant="secondary" disabled={paged.page <= 1} onClick={() => setPage((value) => value - 1)}>
+                  <Button size="small" variant="secondary" disabled={paged.page <= 1} onClick={() => setPage((v) => v - 1)}>
                     Previous
                   </Button>
                   <span className="tabular">
                     {paged.page} / {paged.pageCount}
                   </span>
-                  <Button size="small" variant="secondary" disabled={paged.page >= paged.pageCount} onClick={() => setPage((value) => value + 1)}>
+                  <Button size="small" variant="secondary" disabled={paged.page >= paged.pageCount} onClick={() => setPage((v) => v + 1)}>
                     Next
                   </Button>
                 </div>
@@ -397,10 +338,14 @@ export default function AssociatesPage() {
       {quickId && <AssociateQuickPanel associateId={quickId} onClose={() => setQuickId(null)} showRates={showRates} />}
       {addOpen && (
         <AddAssociateModal
-          onClose={() => setAddOpen(false)}
+          onClose={() => {
+            setAddOpen(false);
+            if (params.get("new") === "1") router.replace("/staffing/associates");
+          }}
           onCreated={(id) => {
             setAddOpen(false);
             setQuickId(id);
+            if (params.get("new") === "1") router.replace("/staffing/associates");
           }}
         />
       )}

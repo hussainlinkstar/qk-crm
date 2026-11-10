@@ -62,30 +62,45 @@ export default function SalesOverviewPage() {
       </header>
 
       {buckets && (
-        <section className={styles.kpis} aria-label="Commercial distinctions">
+        <section className={`${styles.kpis} ${styles.kpisCommercial}`} aria-label="Commercial distinctions">
           <div className={styles.kpi}>
             <span className={styles.kpiLabel}>Open pipeline</span>
             <b className="tabular">£{buckets.pipeline.toLocaleString("en-GB")}</b>
+            <span className={styles.kpiDelta} aria-hidden="true">
+              &nbsp;
+            </span>
             <small>Face-value opportunities still open</small>
           </div>
           <div className={styles.kpi}>
             <span className={styles.kpiLabel}>Weighted pipeline</span>
             <b className="tabular">£{buckets.weighted.toLocaleString("en-GB")}</b>
+            <span className={styles.kpiDelta} aria-hidden="true">
+              &nbsp;
+            </span>
             <small>Probability-adjusted — still not revenue</small>
           </div>
           <div className={styles.kpi}>
             <span className={styles.kpiLabel}>Agreed contract</span>
             <b className="tabular">£{buckets.agreed.toLocaleString("en-GB")}</b>
+            <span className={styles.kpiDelta} aria-hidden="true">
+              &nbsp;
+            </span>
             <small>Closed won contract value</small>
           </div>
           <div className={styles.kpi}>
             <span className={styles.kpiLabel}>Expected billing</span>
             <b className="tabular">£{buckets.expectedBilling.toLocaleString("en-GB")}</b>
+            <span className={styles.kpiDelta} aria-hidden="true">
+              &nbsp;
+            </span>
             <small>Forecast from won work</small>
           </div>
           <div className={styles.kpi}>
             <span className={styles.kpiLabel}>Recognised revenue</span>
             <b className="tabular">£{buckets.recognised.toLocaleString("en-GB")}</b>
+            <span className={styles.kpiDelta} aria-hidden="true">
+              &nbsp;
+            </span>
             <small>Realised only — not pipeline</small>
           </div>
         </section>
@@ -96,7 +111,7 @@ export default function SalesOverviewPage() {
           <Link key={metric.key} href={metric.href} className={styles.kpi} style={{ animationDelay: `${index * 40}ms` }}>
             <span className={styles.kpiLabel}>{metric.label}</span>
             <b className="tabular">{metric.value}</b>
-            <span className={`${styles.kpiDelta} ${metric.tone ? styles[metric.tone] : ""}`}>{metric.delta}</span>
+            <span className={`${styles.kpiDelta} ${metric.tone ? styles[metric.tone] : ""}`}>{metric.delta || "\u00a0"}</span>
             <small>{metric.description}</small>
           </Link>
         ))}

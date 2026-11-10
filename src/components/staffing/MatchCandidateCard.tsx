@@ -55,14 +55,12 @@ export default function MatchCandidateCard({
           <span className="chip" data-tone={presentation.suitabilityBand}>
             {suitabilityBandLabel(presentation.suitabilityBand)}
           </span>
-          <span className="chip" data-tone={presentation.availabilityFit}>
-            {presentation.availabilityConfirmed ? "Availability confirmed" : availabilityFitLabel(presentation.availabilityFit)}
-          </span>
-          {candidate.sourcedExternally && <span className="chip">external source</span>}
-          {candidate.matchFlags.includes("manual_override") && <span className="chip">manual override</span>}
         </div>
         <div className="muted">
-          {headline} · {formatRate(presentation.associateRate)}
+          {headline} · {formatRate(presentation.associateRate)} ·{" "}
+          {presentation.availabilityConfirmed ? "Availability confirmed" : availabilityFitLabel(presentation.availabilityFit)}
+          {candidate.sourcedExternally ? " · external" : ""}
+          {candidate.matchFlags.includes("manual_override") ? " · override" : ""}
         </div>
 
         {!compact && (
@@ -241,7 +239,7 @@ export default function MatchCandidateCard({
       <div className={styles.matchScore}>
         <b className="tabular">{presentation.suitabilityScore}</b>
         <small>suitability</small>
-        <span className="muted tabular" style={{ fontSize: 11, marginTop: 6 }}>
+        <span className="muted tabular" style={{ marginTop: 6 }}>
           rank {presentation.matchScore}
         </span>
       </div>

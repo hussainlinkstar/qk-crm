@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
+import TagMultiSelect from "@/components/ui/TagMultiSelect";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
@@ -17,7 +18,6 @@ import {
   latestCv,
   roleLabel,
   specialisationsBeyondSkills,
-  uniqueSkillLabels,
 } from "@/lib/talent-network";
 import { shortlistLabel } from "@/lib/tessiant-matching";
 import type { AvailabilityStatus, AssociateStatus, WorkingMode } from "@/lib/tessiant-types";
@@ -61,8 +61,9 @@ export default function AssociateDetailPage() {
     location: "",
     email: "",
     phone: "",
-    skills: "",
-    specialisations: "",
+    skills: [] as string[],
+    specialisations: [] as string[],
+    sectors: [] as string[],
     notes: "",
   });
 
@@ -87,8 +88,9 @@ export default function AssociateDetailPage() {
       location: associate.location,
       email: associate.email ?? "",
       phone: associate.phone ?? "",
-      skills: associate.skills.join(", "),
-      specialisations: (associate.specialisations ?? []).join(", "),
+      skills: [...associate.skills],
+      specialisations: [...(associate.specialisations ?? [])],
+      sectors: [...associate.sectors],
       notes: associate.notes,
     });
   }, [associate?.id]);
@@ -105,7 +107,7 @@ export default function AssociateDetailPage() {
 
   if (!state || !tessiant) {
     return (
-      <div className="page">
+      <div className={`page ${styles.density}`}>
         <SkeletonRows rows={5} height={80} />
       </div>
     );
@@ -113,7 +115,7 @@ export default function AssociateDetailPage() {
 
   if (!associate) {
     return (
-      <div className="page">
+      <div className={`page ${styles.density}`}>
         <EmptyState title="Associate not found" icon="users">
           <Link href="/staffing/associates">Back to talent network</Link>
         </EmptyState>
@@ -128,8 +130,8 @@ export default function AssociateDetailPage() {
       toast("Headline and summary are required", "error");
       return;
     }
-    const skills = uniqueSkillLabels(draft.skills.split(","));
-    const specialisations = specialisationsBeyondSkills(skills, draft.specialisations.split(","));
+    const skills = draft.skills;
+    const specialisations = specialisationsBeyondSkills(skills, draft.specialisations);
     crm.updateAssociate(associate.id, {
       headline: draft.headline.trim(),
       summary: draft.summary.trim(),
@@ -137,6 +139,7 @@ export default function AssociateDetailPage() {
       nextAvailableDate: draft.nextAvailableDate || null,
       status: draft.status,
       workingMode: draft.workingMode,
+      sectors: draft.sectors,
       location: draft.location.trim(),
       email: draft.email.trim() || null,
       phone: draft.phone.trim() || null,
@@ -158,7 +161,7 @@ export default function AssociateDetailPage() {
   const recentRecruitment = linked.candidates.slice(0, 3);
 
   return (
-    <div className="page">
+    <div className={`page ${styles.density}`}>
       <header className="page-head">
         <div>
           <p className="kicker">
@@ -290,64 +293,98 @@ export default function AssociateDetailPage() {
               </div>
               <div className="card-body">
                 {editing ? (
-                  <div className={styles.formGrid}>
-                    <div className={`${styles.field} ${styles.full}`}>
-                      <label htmlFor="headline">Role / title</label>
-                      <input id="headline" className="input" value={draft.headline} onChange={(e) => setDraft({ ...draft, headline: e.target.value })} />
-                    </div>
-                    <div className={`${styles.field} ${styles.full}`}>
-                      <label htmlFor="summary">Summary</label>
-                      <textarea id="summary" className="input" rows={4} value={draft.summary} onChange={(e) => setDraft({ ...draft, summary: e.target.value })} />
-                    </div>
-                    <div className={styles.field}>
-                      <label htmlFor="availability">Availability</label>
-                      <select id="availability" className="input" value={draft.availability} onChange={(e) => setDraft({ ...draft, availability: e.target.value as AvailabilityStatus })}>
-                        <option value="available">available</option>
-                        <option value="limited">limited</option>
-                        <option value="unavailable">unavailable</option>
-                        <option value="unknown">unknown</option>
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label htmlFor="nextAvailableDate">Next available</label>
-                      <input id="nextAvailableDate" type="date" className="input" value={draft.nextAvailableDate} onChange={(e) => setDraft({ ...draft, nextAvailableDate: e.target.value })} />
-                    </div>
-                    <div className={styles.field}>
-                      <label htmlFor="status">Status</label>
-                      <select id="status" className="input" value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as AssociateStatus })}>
-                        <option value="active">active</option>
-                        <option value="unverified">unverified</option>
-                        <option value="inactive">inactive</option>
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label htmlFor="workingMode">Working preference</label>
-                      <select id="workingMode" className="input" value={draft.workingMode} onChange={(e) => setDraft({ ...draft, workingMode: e.target.value as WorkingMode })}>
-                        <option value="remote">remote</option>
-                        <option value="hybrid">hybrid</option>
-                        <option value="onsite">onsite</option>
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label htmlFor="location">Location</label>
-                      <input id="location" className="input" value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
-                    </div>
-                    <div className={styles.field}>
-                      <label htmlFor="email">Contact email</label>
-                      <input id="email" className="input" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
-                    </div>
-                    <div className={styles.field}>
-                      <label htmlFor="phone">Phone</label>
-                      <input id="phone" className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
-                    </div>
-                    <div className={`${styles.field} ${styles.full}`}>
-                      <label htmlFor="skills">Skills</label>
-                      <input id="skills" className="input" value={draft.skills} onChange={(e) => setDraft({ ...draft, skills: e.target.value })} />
-                    </div>
-                    <div className={`${styles.field} ${styles.full}`}>
-                      <label htmlFor="specialisations">Specialisations (optional, excludes skills already listed)</label>
-                      <input id="specialisations" className="input" value={draft.specialisations} onChange={(e) => setDraft({ ...draft, specialisations: e.target.value })} />
-                    </div>
+                  <div className={styles.formSections}>
+                    <section>
+                      <h3 className={styles.formSectionTitle}>Basic information</h3>
+                      <div className={styles.formGrid}>
+                        <div className={`${styles.field} ${styles.full}`}>
+                          <label htmlFor="headline">Role / title</label>
+                          <input id="headline" className="input" value={draft.headline} onChange={(e) => setDraft({ ...draft, headline: e.target.value })} />
+                        </div>
+                        <div className={styles.field}>
+                          <label htmlFor="email">Contact email</label>
+                          <input id="email" className="input" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
+                        </div>
+                        <div className={styles.field}>
+                          <label htmlFor="phone">Phone</label>
+                          <input id="phone" className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+                        </div>
+                        <div className={styles.field}>
+                          <label htmlFor="status">Profile status</label>
+                          <select id="status" className="input" value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as AssociateStatus })}>
+                            <option value="active">Active</option>
+                            <option value="unverified">Unverified</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        </div>
+                      </div>
+                    </section>
+                    <section>
+                      <h3 className={styles.formSectionTitle}>Skills & experience</h3>
+                      <div className={styles.formGrid}>
+                        <div className={`${styles.field} ${styles.full}`}>
+                          <label htmlFor="summary">Professional summary</label>
+                          <textarea id="summary" className="input" rows={5} value={draft.summary} onChange={(e) => setDraft({ ...draft, summary: e.target.value })} />
+                        </div>
+                        <div className={`${styles.field} ${styles.full}`}>
+                          <label>Skills</label>
+                          <TagMultiSelect
+                            value={draft.skills}
+                            options={[...new Set(tessiant.associates.flatMap((item) => item.skills))].sort()}
+                            onChange={(skills) => setDraft({ ...draft, skills })}
+                            aria-label="Skills"
+                          />
+                        </div>
+                        <div className={`${styles.field} ${styles.full}`}>
+                          <label>Specialisations</label>
+                          <TagMultiSelect
+                            value={draft.specialisations}
+                            options={[...new Set(tessiant.associates.flatMap((item) => item.skills))].sort()}
+                            onChange={(specialisations) => setDraft({ ...draft, specialisations })}
+                            aria-label="Specialisations"
+                          />
+                        </div>
+                        <div className={`${styles.field} ${styles.full}`}>
+                          <label>Sectors</label>
+                          <TagMultiSelect
+                            value={draft.sectors}
+                            options={[...new Set(tessiant.associates.flatMap((item) => item.sectors))].sort()}
+                            onChange={(sectors) => setDraft({ ...draft, sectors })}
+                            aria-label="Sectors"
+                          />
+                        </div>
+                      </div>
+                    </section>
+                    <section>
+                      <h3 className={styles.formSectionTitle}>Availability</h3>
+                      <div className={styles.formGrid}>
+                        <div className={styles.field}>
+                          <label htmlFor="availability">Status</label>
+                          <select id="availability" className="input" value={draft.availability} onChange={(e) => setDraft({ ...draft, availability: e.target.value as AvailabilityStatus })}>
+                            <option value="available">Available</option>
+                            <option value="limited">Limited</option>
+                            <option value="unavailable">Unavailable</option>
+                            <option value="unknown">Unknown</option>
+                          </select>
+                        </div>
+                        <div className={styles.field}>
+                          <label htmlFor="nextAvailableDate">Next available</label>
+                          <input id="nextAvailableDate" type="date" className="input" value={draft.nextAvailableDate} onChange={(e) => setDraft({ ...draft, nextAvailableDate: e.target.value })} />
+                        </div>
+                        <div className={styles.field}>
+                          <label htmlFor="workingMode">Working preference</label>
+                          <select id="workingMode" className="input" value={draft.workingMode} onChange={(e) => setDraft({ ...draft, workingMode: e.target.value as WorkingMode })}>
+                            <option value="remote">Remote</option>
+                            <option value="hybrid">Hybrid</option>
+                            <option value="onsite">Onsite</option>
+                          </select>
+                        </div>
+                        <div className={styles.field}>
+                          <label htmlFor="location">Location</label>
+                          <input id="location" className="input" value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
+                        </div>
+                      </div>
+                    </section>
                   </div>
                 ) : (
                   <>
@@ -392,10 +429,7 @@ export default function AssociateDetailPage() {
           {tab === "documents" && (
             <section className="card">
               <div className="card-head">
-                <div>
-                  <h2>CV & documents</h2>
-                  <p className="card-sub">Latest verified CV is highlighted. Document storage is configured in Settings.</p>
-                </div>
+                <h2>CV & documents</h2>
               </div>
               <div className="card-body">
                 {(associate.documents ?? []).length === 0 ? (
@@ -472,14 +506,13 @@ export default function AssociateDetailPage() {
             <section className="card">
               <div className="card-head">
                 <h2>Assignments</h2>
-                <p className="card-sub">Current and previous client engagements from Tessiant placements.</p>
               </div>
               <div className="card-body">
                 {linked.placements.length === 0 ? (
                   <EmptyState title="No assignments yet" icon="building" />
                 ) : (
-                  <div className={styles.tableWrap}>
-                    <table className={styles.table}>
+                  <div className="table-wrap">
+                    <table className="table">
                       <thead>
                         <tr>
                           <th>Client / role</th>
@@ -499,11 +532,11 @@ export default function AssociateDetailPage() {
                                 </Link>
                                 <div className="muted">{account?.name ?? "Client"}</div>
                               </td>
-                              <td className="tabular">
+                              <td className="tabular nowrap">
                                 {placement.terms.startDate ? formatDate(placement.terms.startDate) : "—"} →{" "}
                                 {placement.terms.endDate ? formatDate(placement.terms.endDate) : "open"}
                               </td>
-                              <td>
+                              <td className="nowrap">
                                 <span className="chip">{placement.status}</span>
                                 <div className="muted">{placement.outcome ?? "—"}</div>
                               </td>
@@ -522,7 +555,6 @@ export default function AssociateDetailPage() {
             <section className="card">
               <div className="card-head">
                 <h2>Recruitment activity</h2>
-                <p className="card-sub">Shortlists, interviews, offers and feedback for this associate.</p>
               </div>
               <div className="card-body">
                 {linked.candidates.length === 0 ? (
@@ -556,7 +588,6 @@ export default function AssociateDetailPage() {
             <section className="card">
               <div className="card-head">
                 <h2>Commercials</h2>
-                <p className="card-sub">Cost and agreed rates for resource managers.</p>
               </div>
               <div className="card-body">
                 <div className={talent.rateGate}>

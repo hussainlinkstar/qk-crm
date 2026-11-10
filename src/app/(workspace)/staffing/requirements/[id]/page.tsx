@@ -25,13 +25,11 @@ import { REQUIREMENT_STAGES, type RequirementStage } from "@/lib/tessiant-types"
 import styles from "../../staffing.module.css";
 
 const SECTIONS = [
-  { id: "brief", label: "Requirement Brief" },
-  { id: "matching", label: "Matching & Sourcing" },
-  { id: "pipeline", label: "Candidate Pipeline" },
-  { id: "interviews", label: "Interviews & Feedback" },
+  { id: "overview", label: "Overview" },
+  { id: "candidates", label: "Candidates" },
+  { id: "interviews", label: "Interviews" },
   { id: "commercials", label: "Commercials" },
-  { id: "placement", label: "Placement & Assignments" },
-  { id: "activity", label: "Activity & Tasks" },
+  { id: "activity", label: "Activity" },
 ] as const;
 
 export default function RequirementDetailPage() {
@@ -121,7 +119,7 @@ export default function RequirementDetailPage() {
 
   if (!state || !tessiant) {
     return (
-      <div className="page">
+      <div className={`page ${styles.density}`}>
         <SkeletonRows rows={6} height={72} />
       </div>
     );
@@ -129,7 +127,7 @@ export default function RequirementDetailPage() {
 
   if (!requirement) {
     return (
-      <div className="page">
+      <div className={`page ${styles.density}`}>
         <EmptyState title="Requirement not found" icon="flag">
           <Link href="/staffing/requirements">Back to requirements</Link>
         </EmptyState>
@@ -325,7 +323,7 @@ export default function RequirementDetailPage() {
   };
 
   return (
-    <div className="page">
+    <div className={`page ${styles.density}`}>
       <header className="page-head">
         <div>
           <p className="kicker">
@@ -455,10 +453,10 @@ export default function RequirementDetailPage() {
         </div>
       </section>
 
-      <section id="brief" className={styles.split}>
+      <section id="overview" className={`${styles.split} ${styles.sectionAnchor}`}>
         <article className="card">
           <div className="card-head">
-            <h2>Requirement Brief</h2>
+            <h2>Overview</h2>
           </div>
           <div className="card-body">
             <p>{requirement.description}</p>
@@ -488,10 +486,10 @@ export default function RequirementDetailPage() {
             {opportunity && (
               <p className="muted">
                 Linked opportunity: <Link href={`/sales/accounts/${opportunity.accountId}`}>{opportunity.name}</Link> · {opportunity.stage} · £
-                {opportunity.amount.toLocaleString("en-GB")} pipeline (not recognised revenue)
+                {opportunity.amount.toLocaleString("en-GB")}
               </p>
             )}
-            <p className="muted">{requirement.notes}</p>
+            {requirement.notes ? <p className="muted">{requirement.notes}</p> : null}
           </div>
         </article>
 
@@ -515,13 +513,10 @@ export default function RequirementDetailPage() {
         </article>
       </section>
 
-      <section id="matching" className="card">
+      <section id="candidates" className={`card ${styles.sectionAnchor}`}>
         <div className="card-head">
           <div>
-            <h2>Matching & Shortlisting</h2>
-            <p className="card-sub">
-              Deterministic ranking preserved. Suitability band is separate from availability and commercial fit — a high skills score does not mean ready to submit.
-            </p>
+            <h2>Candidates</h2>
           </div>
           <Button variant="secondary" size="small" icon="search" onClick={runMatches}>
             Refresh matches
@@ -529,8 +524,8 @@ export default function RequirementDetailPage() {
         </div>
         <div className="card-body stack-gap">
           {matchingCandidates.length === 0 ? (
-            <EmptyState title="No active match suggestions" icon="users">
-              Click <b>Find Matches</b> to generate an explainable shortlist, or record an external candidate below.
+            <EmptyState title="No match suggestions" icon="users">
+              Use <b>Find Matches</b> or add a candidate below.
             </EmptyState>
           ) : (
             <div className={styles.stack}>{matchingCandidates.map((candidate) => renderCard(candidate))}</div>
@@ -589,10 +584,7 @@ export default function RequirementDetailPage() {
           </div>
 
           <div className={styles.externalForm}>
-            <h3 style={{ margin: "0 0 8px", fontSize: 14 }}>Record candidate not in Tessiant network</h3>
-            <p className="muted" style={{ marginBottom: 10 }}>
-              Creates a stub associate marked external/unverified, shortlists them, and logs the action on the timeline.
-            </p>
+            <h3 style={{ margin: "0 0 8px", fontSize: 14 }}>Record external candidate</h3>
             <div className={styles.formGrid}>
               <div className={styles.field}>
                 <label htmlFor="extName">Name</label>
@@ -686,59 +678,50 @@ export default function RequirementDetailPage() {
               </Button>
             </div>
           </div>
+
+          <div style={{ marginTop: 8 }}>
+            <h3 style={{ margin: "0 0 4px", fontSize: 14 }}>Pipeline</h3>
+            {pipelineGroups.length === 0 ? (
+              <EmptyState title="Pipeline empty" icon="users" />
+            ) : (
+              pipelineGroups.map((group) => (
+                <div key={group.status} className={styles.pipelineGroup}>
+                  <h3>
+                    {group.label} <span className="chip tabular">{group.items.length}</span>
+                  </h3>
+                  {group.items.length === 0 ? (
+                    <p className="muted">None</p>
+                  ) : (
+                    <div className={styles.stack}>{group.items.map((candidate) => renderCard(candidate, true))}</div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </section>
 
-      <section id="pipeline" className="card">
+      <section id="interviews" className={`card ${styles.sectionAnchor}`}>
         <div className="card-head">
-          <div>
-            <h2>Candidate Pipeline</h2>
-            <p className="card-sub">State-scoped actions only. Every action updates the record and the activity timeline.</p>
-          </div>
+          <h2>Interviews</h2>
         </div>
         <div className="card-body">
-          {pipelineGroups.length === 0 ? (
-            <EmptyState title="Pipeline empty" icon="users" />
+          {interviewCandidates.length === 0 ? (
+            <EmptyState title="No interviews yet" icon="users" />
           ) : (
-            pipelineGroups.map((group) => (
-              <div key={group.status} className={styles.pipelineGroup}>
-                <h3>
-                  {group.label} <span className="chip tabular">{group.items.length}</span>
-                </h3>
-                {group.items.length === 0 ? (
-                  <p className="muted">None</p>
-                ) : (
-                  <div className={styles.stack}>{group.items.map((candidate) => renderCard(candidate, true))}</div>
-                )}
-              </div>
-            ))
+            <div className={styles.stack}>{interviewCandidates.map((candidate) => renderCard(candidate, true))}</div>
           )}
         </div>
       </section>
 
-      <section id="interviews" className={styles.split}>
+      <section id="commercials" className={`${styles.split} ${styles.sectionAnchor}`}>
         <article className="card">
-          <div className="card-head">
-            <h2>Interviews & Feedback</h2>
-          </div>
-          <div className="card-body">
-            {interviewCandidates.length === 0 ? (
-              <EmptyState title="No interviews yet" icon="users" />
-            ) : (
-              <div className={styles.stack}>{interviewCandidates.map((candidate) => renderCard(candidate, true))}</div>
-            )}
-          </div>
-        </article>
-
-        <article id="commercials" className="card">
           <div className="card-head">
             <h2>Commercials</h2>
           </div>
           <div className="card-body">
             {commercialCandidates.length === 0 ? (
-              <EmptyState title="No quotes yet" icon="checkCircle">
-                Move a candidate to offer / commercial negotiation to capture client rate.
-              </EmptyState>
+              <EmptyState title="No quotes yet" icon="checkCircle" />
             ) : (
               <ul className={styles.timeline}>
                 {commercialCandidates.map((candidate) => {
@@ -772,18 +755,14 @@ export default function RequirementDetailPage() {
             )}
           </div>
         </article>
-      </section>
 
-      <section id="placement" className={styles.split}>
         <article className="card">
           <div className="card-head">
-            <h2>Placement & Assignments</h2>
+            <h2>Placement</h2>
           </div>
           <div className="card-body">
             {!activePlacement ? (
-              <EmptyState title="No placement confirmed" icon="checkCircle">
-                Agree commercials, then confirm placement to activate an assignment. Quotes are not realised revenue.
-              </EmptyState>
+              <EmptyState title="No placement confirmed" icon="checkCircle" />
             ) : (
               <>
                 <p>
@@ -826,45 +805,44 @@ export default function RequirementDetailPage() {
             )}
           </div>
         </article>
+      </section>
 
-        <article id="activity" className="card">
-          <div className="card-head">
-            <h2>Activity & Tasks</h2>
-            <p className="card-sub">Stage changes, candidate actions, placements and linked tasks.</p>
-          </div>
-          <div className="card-body">
-            <p>
-              Client: <Link href="/staffing/clients">{account?.name ?? "—"}</Link>
-            </p>
-            {tasks.length > 0 && (
-              <ul className={styles.timeline} style={{ marginBottom: 16 }}>
-                {tasks.map((task) => (
-                  <li key={task.id}>
-                    <b>{task.title}</b>
-                    <div className="muted">
-                      {task.status} · due {task.due ? formatDate(task.due) : "—"}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {timeline.length === 0 ? (
-              <EmptyState title="No activity yet" icon="tasks" />
-            ) : (
-              <ul className={`${styles.timeline} ${styles.eventFeed}`}>
-                {timeline.map((item) => (
-                  <li key={item.id}>
-                    <b>{item.title}</b>
-                    <div className="muted">
-                      {timeAgo(item.at)} · {item.actor}
-                      {item.detail ? ` · ${item.detail}` : ""}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </article>
+      <section id="activity" className={`card ${styles.sectionAnchor}`}>
+        <div className="card-head">
+          <h2>Activity</h2>
+        </div>
+        <div className="card-body">
+          <p>
+            Client: <Link href="/staffing/clients">{account?.name ?? "—"}</Link>
+          </p>
+          {tasks.length > 0 && (
+            <ul className={styles.timeline} style={{ marginBottom: 16 }}>
+              {tasks.map((task) => (
+                <li key={task.id}>
+                  <b>{task.title}</b>
+                  <div className="muted">
+                    {task.status} · due {task.due ? formatDate(task.due) : "—"}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          {timeline.length === 0 ? (
+            <EmptyState title="No activity yet" icon="tasks" />
+          ) : (
+            <ul className={`${styles.timeline} ${styles.eventFeed}`}>
+              {timeline.map((item) => (
+                <li key={item.id}>
+                  <b>{item.title}</b>
+                  <div className="muted">
+                    {timeAgo(item.at)} · {item.actor}
+                    {item.detail ? ` · ${item.detail}` : ""}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
     </div>
   );

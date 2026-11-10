@@ -85,7 +85,6 @@ export function actionsForCandidate(status: string): CandidateAction[] {
     case "suggested":
       return [
         { type: "shortlist", label: "Shortlist", next: "shortlisted" },
-        { type: "contact", label: "Log contact", next: "contacted", needsNote: true },
         { type: "request_availability", label: "Request availability", needsNote: true },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
@@ -93,41 +92,35 @@ export function actionsForCandidate(status: string): CandidateAction[] {
       return [
         { type: "shortlist", label: "Shortlist", next: "shortlisted" },
         { type: "confirm_availability", label: "Confirm availability", next: "availability_confirmed" },
-        { type: "contact", label: "Log contact", needsNote: true },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
     case "availability_confirmed":
       return [
-        { type: "shortlist", label: "Shortlist", next: "shortlisted" },
         { type: "submit_client", label: "Submit to client", next: "submitted_to_client" },
-        { type: "remove_shortlist", label: "Remove from shortlist", next: "suggested" },
+        { type: "shortlist", label: "Shortlist", next: "shortlisted" },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
     case "shortlisted":
       return [
-        { type: "confirm_availability", label: "Confirm availability", next: "availability_confirmed" },
         { type: "submit_client", label: "Submit to client", next: "submitted_to_client" },
-        { type: "contact", label: "Log contact", needsNote: true },
-        { type: "remove_shortlist", label: "Remove from shortlist", next: "suggested" },
+        { type: "confirm_availability", label: "Confirm availability", next: "availability_confirmed" },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
     case "submitted_to_client":
       return [
         { type: "interview", label: "Record interview", next: "interview", needsNote: true },
-        { type: "contact", label: "Log contact", needsNote: true },
         { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
     case "interview":
       return [
         { type: "interview", label: "Log feedback", next: "interview", needsNote: true },
-        { type: "offer", label: "Move to offer / commercials", next: "offer" },
-        { type: "reject", label: "Reject with reason", next: "rejected", needsReason: true },
+        { type: "offer", label: "Move to offer", next: "offer" },
+        { type: "reject", label: "Reject", next: "rejected", needsReason: true },
       ];
     case "offer":
       return [
         { type: "place", label: "Confirm placement" },
-        { type: "contact", label: "Log contact", needsNote: true },
-        { type: "reject", label: "Reject / offer declined", next: "rejected", needsReason: true },
+        { type: "reject", label: "Offer declined", next: "rejected", needsReason: true },
       ];
     case "placed":
     case "rejected":

@@ -17,7 +17,7 @@ import { adaptLeadRecord, normalizeLeadSource, normalizeLeadStatus } from "@/lib
 import { addDays, toDateKey } from "@/lib/format";
 import { createTessiantSlice } from "./tessiant-seed";
 
-export const DATA_VERSION = 12;
+export const DATA_VERSION = 13;
 
 export function demoMessages(ago: (hours: number) => string): ConversationMessage[] {
   return [
@@ -99,13 +99,28 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
     event(leadId, "scan", "Completed a free scan", hoursAgo, "Qiko Signal", `${website} · score ${score}/100`);
   };
 
-  const task = (data: Omit<Task, "id" | "history" | "createdAt" | "updatedAt" | "completedAt" | "evidence" | "origin"> & { createdHoursAgo: number; completedHoursAgo?: number }) => {
-    const { createdHoursAgo, completedHoursAgo, ...rest } = data;
-    const id = `task_${tasks.length + 1}`;
+  const task = (
+    data: Omit<Task, "id" | "history" | "createdAt" | "updatedAt" | "completedAt" | "evidence" | "origin"> & {
+      id?: string;
+      createdHoursAgo: number;
+      completedHoursAgo?: number;
+    },
+  ) => {
+    const { createdHoursAgo, completedHoursAgo, id: customId, ...rest } = data;
+    const id = customId ?? `task_${tasks.length + 1}`;
     const history = [{ at: ago(createdHoursAgo), actorId: rest.ownerId ?? "me", action: "Created task" }];
     if (rest.status === "in_progress") history.push({ at: ago(createdHoursAgo - 2), actorId: rest.ownerId ?? "me", action: "Started work" });
     if (completedHoursAgo !== undefined) history.push({ at: ago(completedHoursAgo), actorId: rest.ownerId ?? "me", action: "Marked completed" });
-    tasks.push({ id, ...rest, origin: "manual", evidence: [], history, createdAt: ago(createdHoursAgo), updatedAt: ago(completedHoursAgo ?? createdHoursAgo), completedAt: completedHoursAgo !== undefined ? ago(completedHoursAgo) : null });
+    tasks.push({
+      id,
+      ...rest,
+      origin: "manual",
+      evidence: [],
+      history,
+      createdAt: ago(createdHoursAgo),
+      updatedAt: ago(completedHoursAgo ?? createdHoursAgo),
+      completedAt: completedHoursAgo !== undefined ? ago(completedHoursAgo) : null,
+    });
   };
 
   // — Five new Qiko Signal registrations awaiting review
@@ -284,6 +299,46 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
     ownerId: "me",
     leadId: "l_felix",
     createdHoursAgo: 5,
+  });
+
+  // Pulse demo journey — accepted insights → to-dos → outcomes (fictional but coherent).
+  task({
+    id: "task_pulse_rel_crest",
+    title: "Assign secondary owner and capture relationship history",
+    description:
+      "[pulse-insight:ins_rel_acc_crest]\nActive account has a primary relationship owner and no documented secondary owner.\nRecommended: Assign secondary owner and capture relationship history",
+    status: "completed",
+    priority: "high",
+    due: addDays(-1),
+    ownerId: "m_sarah",
+    leadId: "l_felix",
+    createdHoursAgo: 72,
+    completedHoursAgo: 18,
+  });
+  task({
+    id: "task_pulse_coverage_sap",
+    title: "Review sourcing or clarify constraints",
+    description:
+      "[pulse-insight:ins_coverage_req_sap]\n[requirement:req_sap]\nOpen SAP requirement has thin verified available coverage.\nRecommended: Review sourcing or clarify constraints",
+    status: "completed",
+    priority: "high",
+    due: today,
+    ownerId: "me",
+    leadId: null,
+    createdHoursAgo: 40,
+    completedHoursAgo: 8,
+  });
+  task({
+    id: "task_pulse_cross_sia",
+    title: "Review possible consulting/advisory opportunity (pipeline only)",
+    description:
+      "[pulse-insight:ins_crosssell_req_sia]\n[requirement:req_sia]\nSIA interview recorded positive feedback without a confirmed placement.\nRecommended: Review possible consulting/advisory opportunity (pipeline only)",
+    status: "in_progress",
+    priority: "medium",
+    due: addDays(2),
+    ownerId: "me",
+    leadId: "l_felix",
+    createdHoursAgo: 20,
   });
 
   const contacts: Contact[] = [

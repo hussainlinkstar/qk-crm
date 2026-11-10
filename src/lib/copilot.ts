@@ -5,15 +5,20 @@
 import type { CopilotAnswer, CrmState, Evidence, Execution } from "./types";
 import { buildWorkspace, isOpen, sortTasks, type LeadView } from "./insights";
 import { addDays, formatDate, plural, timeAgo, todayKey, uid } from "./format";
+import {
+  assignmentsEndingSoon,
+  isUrgentRequirement,
+  staffingCommandKpis,
+} from "./tessiant-insights";
+import { activeAssignments } from "./tessiant-insights";
 
 const DAY = 86_400_000;
 
 export const SUGGESTED_QUESTIONS = [
-  "What happened in sales today?",
-  "Who signed up on Signal this week?",
-  "Show me users who completed a free scan",
-  "Which leads should I follow up with first?",
-  "What actions are pending?",
+  "Which client requirements need attention?",
+  "Who is available for upcoming assignments?",
+  "Which assignments are ending soon?",
+  "What sales opportunities need follow-up?",
 ];
 
 function answer(question: string, data: Omit<CopilotAnswer, "id" | "question" | "at" | "grounded"> & { grounded?: boolean }): CopilotAnswer {
@@ -46,9 +51,102 @@ export function answerQuestion(state: CrmState, question: string, contextLeadId?
   const leads = workspace.leads;
   const memberName = (id: string | null) => (id ? state.members.find((member) => member.id === id)?.name ?? "Unassigned" : "Unassigned");
 
+  const tessiant = state.tessiant;
+  const unsupportedTessiant = (topic: string) =>
+    answer(question, {
+      answer: `I can answer ${topic} from Tessiant staffing records, but this workspace has no Tessiant staffing data loaded.`,
+      evidence: [],
+      recommendation: null,
+      executions: [{ type: "open", label: "Open Staffing", href: "/staffing" }],
+      grounded: false,
+    });
+
+  // — Tessiant suggested prompts (must stay grounded; no fabrication)
+  if (/client requirements? need attention|requirements? need attention|urgent requirements?|staffing demand/.test(text)) {
+    if (!tessiant) return unsupportedTessiant("which requirements need attention");
+    const urgent = tessiant.requirements.filter((req) => isUrgentRequirement(state, req));
+    const open = tessiant.requirements.filter((req) => !req.archived && req.outcome === "active" && req.stage !== "Placed");
+    const focus = urgent.length ? urgent : open;
+    return answer(question, {
+      answer: urgent.length
+        ? `${plural(urgent.length, "requirement")} need attention right now. Top: ${urgent[0].title}.`
+        : open.length
+          ? `No urgent requirements, but ${plural(open.length, "open requirement")} remain active.`
+          : "No open staffing requirements in the workspace.",
+      evidence: focus.slice(0, 5).map((req): Evidence => ({
+        label: req.title,
+        detail: `${req.stage} · start ${req.startDate}`,
+        at: req.updatedAt,
+        source: "Tessiant CRM",
+        kind: "fact",
+      })),
+      recommendation: focus[0] ? `Open ${focus[0].title} and continue matching.` : null,
+      executions: [
+        ...(focus[0] ? [{ type: "open", label: "Open top requirement", href: `/staffing/requirements/${focus[0].id}` } as Execution] : []),
+        { type: "open", label: "Open requirements", href: "/staffing/requirements?view=open" },
+      ],
+    });
+  }
+
+  if (/who is available|available for upcoming|available associates|who is free|bench/.test(text)) {
+    if (!tessiant) return unsupportedTessiant("associate availability");
+    const available = tessiant.associates.filter((item) => item.availability === "available" && item.status === "active");
+    return answer(question, {
+      answer: available.length
+        ? `${plural(available.length, "associate")} currently marked available.`
+        : "No associates are marked available right now.",
+      evidence: available.slice(0, 6).map((item): Evidence => ({
+        label: item.name,
+        detail: `${item.headline} · ${item.skills.slice(0, 2).join(", ") || "skills TBD"}`,
+        source: "Tessiant CRM",
+        kind: "fact",
+      })),
+      recommendation: available[0] ? `Start shortlisting with ${available[0].name}.` : null,
+      executions: [{ type: "open", label: "Open Talent Network", href: "/staffing/associates?view=available_now" }],
+    });
+  }
+
+  if (/assignments? (are )?ending soon|ending soon|renewal|redeploy/.test(text)) {
+    if (!tessiant) return unsupportedTessiant("assignments ending soon");
+    const ending = assignmentsEndingSoon(state);
+    return answer(question, {
+      answer: ending.length
+        ? `${plural(ending.length, "assignment")} ending within 30 days.`
+        : "No assignments are ending in the next 30 days.",
+      evidence: ending.slice(0, 5).map((item): Evidence => ({
+        label: item.roleTitle ?? `Assignment ${item.id}`,
+        detail: `Ends ${item.terms.endDate ?? "open"}`,
+        source: "Tessiant CRM",
+        kind: "fact",
+      })),
+      recommendation: ending[0] ? "Create a renewal or redeployment follow-up on the assignment." : null,
+      executions: [{ type: "open", label: "Assignments ending soon", href: "/staffing/placements?view=ending30" }],
+    });
+  }
+
+  if (/sales opportunit.*(follow-?up|follow up)|opportunit.*(follow-?up|follow up)|follow-?up.*(sales|opportunit|pipeline)/.test(text)) {
+    const open = (state.opportunities ?? []).filter((item) => !["Closed Won", "Closed Lost"].includes(item.stage));
+    const focus = open.filter((item) => ["Proposal", "Negotiation"].includes(item.stage));
+    return answer(question, {
+      answer: focus.length
+        ? `${plural(focus.length, "opportunity")} in Proposal or Negotiation need follow-up.`
+        : open.length
+          ? `${plural(open.length, "open opportunity")} — none currently in late stage.`
+          : "No open sales opportunities in the workspace.",
+      evidence: (focus.length ? focus : open).slice(0, 5).map((item): Evidence => ({
+        label: item.name,
+        detail: `${item.stage} · £${item.amount.toLocaleString("en-GB")}`,
+        source: "Tessiant CRM",
+        kind: "fact",
+      })),
+      recommendation: focus[0] ? `Follow up on ${focus[0].name}.` : open[0] ? `Review ${open[0].name} in the pipeline.` : null,
+      executions: [{ type: "open", label: "Open pipeline", href: "/sales/pipeline" }],
+    });
+  }
+
   // — A specific prospect
   const lead = /everything|about|tell me|profile|who is|summar|know/.test(text) || contextLeadId ? findLead(question, leads, contextLeadId) : findLead(question, leads);
-  if (lead && !/pending|follow up with first|signed up|free scan/.test(text)) {
+  if (lead && !/pending|follow up with first|signed up|free scan|requirement|assignment/.test(text)) {
     const events = workspace.byLead.get(lead.id) ?? [];
     const scans = state.scans.filter((scan) => scan.leadId === lead.id);
     const notes = state.notes.filter((note) => note.leadId === lead.id);
@@ -176,8 +274,23 @@ export function answerQuestion(state: CrmState, question: string, contextLeadId?
     });
   }
 
+  if (tessiant) {
+    const kpis = staffingCommandKpis(state, now);
+    const deployed = activeAssignments(state).length;
+    return answer(question, {
+      answer: `I couldn't match that exactly. In this Tessiant workspace you have ${kpis.find((item) => item.key === "open")?.value ?? 0} open requirements and ${deployed} active assignments. Try asking about requirements needing attention, available associates, assignments ending soon, or sales follow-ups.`,
+      evidence: [],
+      recommendation: null,
+      executions: [
+        { type: "open", label: "Staffing overview", href: "/staffing" },
+        { type: "open", label: "Sales pipeline", href: "/sales/pipeline" },
+      ],
+      grounded: false,
+    });
+  }
+
   return answer(question, {
-    answer: "I can only answer from your Qiko Core workspace data, and I couldn't match that question to it. Try asking about sign-ups, scans, follow-ups, pending actions, the pipeline, or a specific lead by name.",
+    answer: "I can only answer from your workspace data, and I couldn't match that question to it. Try asking about requirements, availability, assignments, sales follow-ups, or pending actions.",
     evidence: [],
     recommendation: null,
     executions: [],

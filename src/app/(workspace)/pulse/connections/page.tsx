@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
-import { getPulseSnapshot, PULSE_SCHEMA_VERSION, PULSE_SOURCE } from "@/lib/pulse-adapter";
+import PulseSubnav from "@/components/pulse/PulseSubnav";
+import { getPulseSnapshot } from "@/lib/pulse-adapter";
 import { timeAgo } from "@/lib/format";
 import styles from "../pulse.module.css";
 
@@ -26,10 +27,12 @@ export default function PulseConnectionsPage() {
             <span className="chip chip-ai">Qiko Pulse</span>
             <span className="chip">Connections</span>
           </div>
-          <h1>Data sources</h1>
-          <p className="subtitle">Honest connector status for the Tessiant demo — no fictitious live enterprise sync.</p>
+          <h1>Connections</h1>
+          <p className="subtitle">Where Tessiant Pulse reads business data — honest demo connector status.</p>
         </div>
       </header>
+
+      <PulseSubnav />
 
       <section className="card">
         <div className="card-body">
@@ -43,12 +46,12 @@ export default function PulseConnectionsPage() {
             </thead>
             <tbody>
               <tr>
-                <td style={{ padding: 8 }}>Tessiant CRM (shared local fixture)</td>
+                <td style={{ padding: 8 }}>Tessiant CRM</td>
                 <td style={{ padding: 8 }}>
-                  <span className="chip chip-ai">Connected (DEMO)</span>
+                  <span className="chip chip-ai">Connected</span>
                 </td>
                 <td style={{ padding: 8 }} className="muted">
-                  source={PULSE_SOURCE} · schema v{PULSE_SCHEMA_VERSION} · same entity IDs as Staffing · freshness {timeAgo(snapshot.generatedAt)}
+                  Live demo fixture · same associates, requirements and assignments as Staffing · refreshed {timeAgo(snapshot.generatedAt)}
                 </td>
               </tr>
               <tr>
@@ -57,7 +60,7 @@ export default function PulseConnectionsPage() {
                   <span className="chip">Not connected</span>
                 </td>
                 <td style={{ padding: 8 }} className="muted">
-                  Out of scope for Demo V1
+                  Available later — CRM entity mappings already prepared in Pulse
                 </td>
               </tr>
               <tr>
@@ -66,7 +69,7 @@ export default function PulseConnectionsPage() {
                   <span className="chip">Not connected</span>
                 </td>
                 <td style={{ padding: 8 }} className="muted">
-                  No real personal documents processed
+                  No personal documents processed in this demo
                 </td>
               </tr>
               <tr>
@@ -85,26 +88,33 @@ export default function PulseConnectionsPage() {
 
       <section className="card">
         <div className="card-head">
-          <h2>Adapter snapshot</h2>
+          <h2>What Pulse can see</h2>
         </div>
         <div className="card-body">
-          <p className="muted">{snapshot.financials.note}</p>
           <ul>
             <li>
-              Illustrative network {snapshot.network.totalMembers} · seeded sample {snapshot.network.sampleSize}
+              Illustrative network {snapshot.network.totalMembers} · workspace sample {snapshot.network.sampleSize}
             </li>
             <li>
               Open requirements {snapshot.requirements.open} · placed {snapshot.requirements.placed}
             </li>
             <li>
-              Capacity signals {snapshot.capacitySignals.length} · recent events {snapshot.recentEvents.length}
+              Capacity signals ready for review {snapshot.capacitySignals.length}
             </li>
           </ul>
           <Link href="/staffing" className="text-link">
-            Open Tessiant CRM staffing overview
+            Open Tessiant staffing overview
           </Link>
         </div>
       </section>
+
+      <details className={styles.advanced}>
+        <summary>Advanced configuration</summary>
+        <div className={styles.advancedBody}>
+          <p className="muted">{snapshot.financials.note}</p>
+          <p className="muted">Integration diagnostics and schema details stay here — not on the customer cockpit.</p>
+        </div>
+      </details>
     </div>
   );
 }

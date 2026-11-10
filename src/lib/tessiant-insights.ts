@@ -100,49 +100,45 @@ export function assignmentRenewalsDue(state: CrmState, today = todayKey()) {
   return pendingRenewals(state, today);
 }
 
-/** Primary command-centre KPIs — prioritised for resource managers. */
+/** Compact operational KPIs for the staffing desk (six clickable metrics). */
 export function staffingCommandKpis(state: CrmState, now = Date.now()) {
   const t = state.tessiant;
   if (!t) return [];
-  const today = toDateKey(new Date(now));
   const openReqs = t.requirements.filter((req) => !req.archived && req.outcome === "active" && req.stage !== "Placed");
   const availableVerified = t.associates.filter(isVerifiedAvailable).length;
+  const availableAll = t.associates.filter((item) => item.availability === "available" && item.status === "active").length;
   const deployments = activeAssignments(state);
   const deployedAssociateIds = new Set(deployments.map((item) => item.associateId));
-  const awaitingCandidates = openReqs.filter((req) => verifiedAvailableMatchCount(state, req.id) < 2).length;
-  const interviewsOffers = t.candidates.filter((candidate) =>
-    ["interview", "offer", "quoted", "selected"].includes(candidate.shortlistStatus),
-  ).length;
+  const live = liveAssignments(state);
   const monthPlacements = placementsThisMonth(state, new Date(now)).length;
-  const endingSoon = assignmentsEndingSoon(state, today).length;
 
   return [
     {
-      key: "network",
-      label: "Illustrative network",
-      value: String(t.networkStats.totalMembers),
-      delta: `${t.networkStats.sampleSize} seeded in workspace`,
-      description: "Illustrative Tessiant network size — not the sample table count",
+      key: "total",
+      label: "Total associates",
+      value: String(t.associates.length),
+      delta: "",
+      description: "",
       href: "/staffing/associates",
       emphasis: "primary" as const,
       tone: undefined as "positive" | "warning" | undefined,
     },
     {
       key: "available",
-      label: "Available & verified",
-      value: String(availableVerified),
-      delta: `Of ${t.networkStats.sampleSize} seeded profiles`,
-      description: "From the workspace sample — ready for shortlist",
-      href: "/staffing/associates?availability=available&verified=1",
+      label: "Available associates",
+      value: String(availableAll),
+      delta: availableVerified > 0 ? `${availableVerified} verified` : "",
+      description: "",
+      href: "/staffing/associates?view=available_now",
       emphasis: "primary" as const,
-      tone: availableVerified > 0 ? ("positive" as const) : ("warning" as const),
+      tone: availableAll > 0 ? ("positive" as const) : ("warning" as const),
     },
     {
       key: "deployed",
       label: "Currently deployed",
       value: String(deployedAssociateIds.size),
-      delta: `${deployments.length} active assignments`,
-      description: "Associates on live client work",
+      delta: "",
+      description: "",
       href: "/staffing/placements?view=active",
       emphasis: "primary" as const,
       tone: undefined,
@@ -151,53 +147,47 @@ export function staffingCommandKpis(state: CrmState, now = Date.now()) {
       key: "open",
       label: "Open requirements",
       value: String(openReqs.length),
-      delta: `${awaitingCandidates} need suitable candidates`,
-      description: "Active client resource requests",
+      delta: "",
+      description: "",
       href: "/staffing/requirements?view=open",
       emphasis: "primary" as const,
       tone: openReqs.length > 0 ? ("positive" as const) : undefined,
     },
     {
-      key: "awaiting",
-      label: "Awaiting candidates",
-      value: String(awaitingCandidates),
-      delta: "Fewer than 2 verified available matches",
-      description: "Roles still hard to fill",
-      href: "/staffing/requirements?view=awaiting",
-      emphasis: "secondary" as const,
-      tone: awaitingCandidates > 0 ? ("warning" as const) : undefined,
-    },
-    {
-      key: "pipeline",
-      label: "Interviews & offers",
-      value: String(interviewsOffers),
-      delta: "Candidate-level in-flight",
-      description: "Interview / offer pipeline",
-      href: "/staffing/requirements?view=interview_offer",
-      emphasis: "secondary" as const,
+      key: "assignments",
+      label: "Active assignments",
+      value: String(live.length),
+      delta: "",
+      description: "",
+      href: "/staffing/placements?view=live",
+      emphasis: "primary" as const,
       tone: undefined,
     },
     {
       key: "month",
-      label: "Placed this month",
+      label: "Placements this month",
       value: String(monthPlacements),
-      delta: new Date(now).toLocaleString("en-GB", { month: "short", year: "numeric" }),
-      description: "Confirmed or closed this month",
+      delta: "",
+      description: "",
       href: "/staffing/placements?view=month",
-      emphasis: "secondary" as const,
+      emphasis: "primary" as const,
       tone: monthPlacements > 0 ? ("positive" as const) : undefined,
     },
-    {
-      key: "ending",
-      label: "Ending in 30 days",
-      value: String(endingSoon),
-      delta: "Renewal / release planning",
-      description: "Active assignments nearing end",
-      href: "/staffing/placements?view=ending30",
-      emphasis: "secondary" as const,
-      tone: endingSoon > 0 ? ("warning" as const) : undefined,
-    },
   ];
+}
+
+export function formatCandidatePipelineSummary(counts: {
+  shortlisted: number;
+  interviewed: number;
+  offered: number;
+  filled: number;
+}) {
+  const parts: string[] = [];
+  if (counts.shortlisted) parts.push(`${counts.shortlisted} shortlisted`);
+  if (counts.interviewed) parts.push(`${counts.interviewed} interview`);
+  if (counts.offered) parts.push(`${counts.offered} offer`);
+  if (counts.filled) parts.push(`${counts.filled} placed`);
+  return parts.length ? parts.join(" · ") : "No candidates yet";
 }
 
 /** @deprecated Prefer staffingCommandKpis for the operations desk. */
