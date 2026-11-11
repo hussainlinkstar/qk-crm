@@ -10,7 +10,7 @@ import {
 } from "./tessiant-insights";
 import { pendingRenewals } from "./assignments";
 import { generateTessiantInsights } from "./tessiant-pulse-rules";
-import { todayKey, toDateKey } from "./format";
+import { formatDate, todayKey, toDateKey } from "./format";
 
 export interface HomePriorityCard {
   id: string;
@@ -107,7 +107,7 @@ export function buildTessiantHomePriorities(state: CrmState, workspace: Workspac
         {
           id: `urgent-req-${urgent[0].id}`,
           title: urgent[0].title,
-          summary: `${mapRequirementToOpsStage(urgent[0])} · starts ${urgent[0].startDate}`,
+          summary: `${mapRequirementToOpsStage(urgent[0])} · starts ${formatDate(urgent[0].startDate)}`,
           priority: "high",
           href: `/staffing/requirements/${urgent[0].id}`,
           source: "operational",

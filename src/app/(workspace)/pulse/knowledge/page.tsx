@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
+import AskPulseChat from "@/components/pulse/AskPulseChat";
+import PulseShell from "@/components/pulse/PulseShell";
 import PulseSubnav from "@/components/pulse/PulseSubnav";
-import { formatDate } from "@/lib/format";
 import { getPulseSnapshot } from "@/lib/pulse-adapter";
 import {
   getKnowledgeBlockLiveMetrics,
@@ -15,6 +16,28 @@ import {
 import { generateTessiantInsights, networkMix, placementFunnel } from "@/lib/tessiant-pulse-rules";
 import styles from "../pulse.module.css";
 
+const BLOCK_LABEL: Record<string, string> = {
+  network: "Network",
+  augmentation: "Placement",
+  commercial: "Commercial",
+  capability: "Capability",
+};
+
+const CARD_METRIC_LABEL: Record<string, string> = {
+  "Verified available": "Available",
+  "Capacity vs demand": "Capacity",
+  "Thin coverage": "Thin gaps",
+  "Open requirements": "Open",
+  "In sourcing": "Sourcing",
+  "In interview": "Interview",
+  Accounts: "Accounts",
+  "Single-owner risk": "Single owner",
+  "Pipeline potential": "Pipeline",
+  "Sectors covered": "Sectors",
+  "Open demand": "Demand",
+  "Verified capacity": "Verified",
+};
+
 export default function PulseKnowledgePage() {
   const { state } = useWorkspaceData();
   const now = useNow();
@@ -24,61 +47,66 @@ export default function PulseKnowledgePage() {
   const funnel = useMemo(() => (state ? placementFunnel(state) : null), [state]);
   const snapshot = useMemo(() => (state ? getPulseSnapshot(state) : null), [state]);
 
-  if (!state) {
+  if (!state || !snapshot) {
     return (
-      <div className="page">
-        <SkeletonRows rows={4} height={110} />
-      </div>
+      <PulseShell>
+        <div className={styles.pulsePageExact}>
+          <SkeletonRows rows={4} height={110} />
+        </div>
+      </PulseShell>
     );
   }
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <div>
-          <div className={styles.context}>
-            <span className="chip chip-ai">Qiko Pulse</span>
-            <span className="chip">Knowledge</span>
+    <PulseShell>
+      <div className={styles.pulsePageExact} data-view="knowledge">
+        <header className={styles.pulseHeadExact}>
+          <div className={styles.pulseHeadCopyExact}>
+            <h1>Knowledge</h1>
+            <p>
+              Each block is a structured record of confirmed learnings. A learning is written here when an action is
+              completed and measured. Open a card for the worker behind the numbers.
+            </p>
           </div>
-          <h1>Knowledge</h1>
-          <p className="subtitle">Each block is a Tessiant intelligence module with live metrics, insights and outcomes.</p>
-        </div>
-      </header>
+          <div className={styles.pulseHeadToolsExact}>
+            <AskPulseChat state={state} realised={snapshot.financials.realised} />
+          </div>
+        </header>
 
-      <PulseSubnav />
+        <PulseSubnav />
 
-      <section className={styles.knowledgeGrid}>
-        {TESSIANT_KNOWLEDGE_BLOCKS.map((block) => {
-          const blockInsights = insights.filter((item) => item.knowledgeBlockId === block.id);
-          const counts = summarizeBlockInsights(blockInsights);
-          const metric = getKnowledgeBlockLiveMetrics(block.id, { mix, funnel, snapshot, state })[0];
-          const pending = blockInsights.find((item) => item.reviewStatus === "pending");
+        <section className={styles.knowledgeGrid} aria-label="Knowledge blocks">
+          {TESSIANT_KNOWLEDGE_BLOCKS.map((block) => {
+            const blockInsights = insights.filter((item) => item.knowledgeBlockId === block.id);
+            const counts = summarizeBlockInsights(blockInsights);
+            const metrics = getKnowledgeBlockLiveMetrics(block.id, { mix, funnel, snapshot, state }).slice(0, 3);
 
-          return (
-            <Link key={block.id} href={`/pulse/knowledge/${block.id}`} className={styles.knowledgeCard} data-priority={block.priority}>
-              <div className={styles.knowledgeCardTop}>
-                <span className={styles.knowledgeInitials}>{KNOWLEDGE_BLOCK_INITIALS[block.id] ?? "QP"}</span>
-                <span className="chip tabular">{counts.pending} pending</span>
-              </div>
-              <h2>{block.title}</h2>
-              <p className={styles.knowledgePurpose}>{block.purpose}</p>
-              {metric ? (
-                <p>
-                  {metric.label}: <b className="tabular">{metric.value}</b>
-                  {metric.hint ? <span className="muted"> · {metric.hint}</span> : null}
+            return (
+              <Link key={block.id} href={`/pulse/knowledge/${block.id}`} className={styles.knowledgeCard}>
+                <div className={styles.knowledgeTileHead}>
+                  <span className={styles.knowledgeInitials}>{KNOWLEDGE_BLOCK_INITIALS[block.id] ?? "QP"}</span>
+                  <div className={styles.knowledgeTileCopy}>
+                    <p className={styles.monoKickerExact}>{BLOCK_LABEL[block.id] ?? block.owner} block</p>
+                    <h2>{block.title}</h2>
+                    <p className={styles.knowledgePurpose}>{block.purpose}</p>
+                  </div>
+                </div>
+                <div className={styles.knowledgeTileMetrics}>
+                  {metrics.map((metric) => (
+                    <div key={metric.label}>
+                      <b className="tabular">{metric.value}</b>
+                      <span>{CARD_METRIC_LABEL[metric.label] ?? metric.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className={styles.knowledgeTileFoot}>
+                  Worker · {block.owner} · {counts.pending} pending
                 </p>
-              ) : null}
-              {pending ? <p className={styles.knowledgePurpose}>{pending.summary}</p> : null}
-              <div className={styles.knowledgeCardFoot}>
-                <span>
-                  <b className="tabular">{counts.total}</b> insights
-                </span>
-                <span className="muted">{formatDate(block.updatedAt, true)}</span>
-              </div>
-            </Link>
-          );
-        })}
-      </section>
-    </div>
+              </Link>
+            );
+          })}
+        </section>
+      </div>
+    </PulseShell>
   );
 }

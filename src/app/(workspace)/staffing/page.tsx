@@ -13,6 +13,7 @@ import {
   upcomingStaffingActions,
 } from "@/lib/tessiant-insights";
 import AssignmentRecommendedActions from "@/components/staffing/AssignmentRecommendedActions";
+import SupplyDemand from "@/components/staffing/SupplyDemand";
 import { staffingDeskFindings } from "@/lib/record-intelligence";
 import { daysOpen, requirementPriority } from "@/lib/requisition";
 import { formatDate, todayKey } from "@/lib/format";
@@ -113,6 +114,8 @@ export default function StaffingOverviewPage() {
       ) : null}
 
       <AssignmentRecommendedActions state={state} />
+
+      <SupplyDemand state={state} />
 
       <section className={styles.opsSummary} aria-label="Recruitment pipeline">
         <div className={styles.opsSummaryHead}>

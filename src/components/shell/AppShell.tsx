@@ -50,9 +50,9 @@ const NAV: NavItem[] = [
     match: (path) => path.startsWith("/sales"),
     children: [
       { href: "/sales/leads", label: "Leads", match: (path) => path.startsWith("/sales/leads") },
+      { href: "/sales/pipeline", label: "Opportunities", match: (path) => path.startsWith("/sales/pipeline") },
       { href: "/sales/accounts", label: "Accounts", match: (path) => path.startsWith("/sales/accounts") },
       { href: "/sales/contacts", label: "Contacts", match: (path) => path.startsWith("/sales/contacts") },
-      { href: "/sales/pipeline", label: "Opportunities", match: (path) => path.startsWith("/sales/pipeline") },
       { href: "/sales/actions", label: "Activities", match: (path) => path.startsWith("/sales/actions") },
     ],
   },

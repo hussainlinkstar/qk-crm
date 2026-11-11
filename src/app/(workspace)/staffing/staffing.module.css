@@ -1,3 +1,126 @@
+.supply {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--qiko-accent) 24%, var(--line));
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--qiko-accent-soft), var(--surface) 36%);
+}
+
+.supplyHead h2 {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.supplyHead p,
+.supplyNote {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.supplyKicker {
+  margin: 0;
+  color: var(--qiko-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.supplyList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.supplyRow {
+  display: grid;
+  grid-template-columns: minmax(110px, 160px) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration) var(--ease-out), transform var(--duration) var(--ease-out);
+}
+
+.supplyRow:hover,
+.supplyRow[data-hot="true"] {
+  border-color: #c7d2fe;
+  transform: translateY(-1px);
+}
+
+.supplyName {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supplyBars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.supplyBars i {
+  display: block;
+  height: 7px;
+  border-radius: 999px;
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.supplyBars i:first-child {
+  background: #c7d2fe;
+}
+
+.supplyBars i:last-child {
+  background: var(--qiko-accent);
+}
+
+.supplyMeta {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.supplyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 720px) {
+  .supplyRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .supplyRow:hover,
+  .supplyBars i {
+    transform: none;
+    transition: none;
+  }
+}
+
 /* Staffing density shell — readable body (≥14px), tighter chrome, not tiny UI */
 .density {
   gap: 18px;

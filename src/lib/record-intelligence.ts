@@ -1,7 +1,7 @@
 // Presentation helpers over existing CRM + Pulse rules. No new engine, no invented edges.
 
 import { liveAssignments, resolveAssignmentAccountId } from "./assignments";
-import { addDays, todayKey } from "./format";
+import { addDays, formatDate, todayKey } from "./format";
 import { recommendedMatches } from "./requirement-recommendations";
 import { generateTessiantInsights } from "./tessiant-pulse-rules";
 import { assignmentsEndingSoon, verifiedAvailableMatchCount } from "./tessiant-insights";
@@ -85,7 +85,7 @@ export function opportunityBrief(state: CrmState, opportunity: Opportunity, now 
 
   let why = `${opportunity.stage} · ${opportunity.type}`;
   if (opportunity.expectedCloseDate <= horizon && opportunity.stage !== "Closed Won" && opportunity.stage !== "Closed Lost") {
-    why = `Closing ${opportunity.expectedCloseDate}`;
+    why = `Closing ${formatDate(opportunity.expectedCloseDate)}`;
   } else if (!opportunity.nextStep && ["Proposal", "Negotiation"].includes(opportunity.stage)) {
     why = "Stalled — no next step";
   } else if (missing.includes("0 verified matches")) {

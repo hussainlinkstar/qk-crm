@@ -10,8 +10,9 @@ import type { KnowledgeBlockDefinition, TessiantInsight } from "@/lib/tessiant-p
 import type { CrmState } from "@/lib/types";
 import styles from "@/app/(workspace)/pulse/pulse.module.css";
 
+const PULSE_SKY = "#0ea5e9";
 const PULSE_INDIGO = "#4f46e5";
-const PULSE_LILAC = "#818cf8";
+const PULSE_TEAL = "#0891b2";
 
 export default function NetworkIntelligenceDashboard({
   state,
@@ -56,30 +57,42 @@ export default function NetworkIntelligenceDashboard({
         </div>
       </section>
 
-      <section className={styles.charts} aria-label="Network visualisations">
-        <article className={`card ${styles.pulseCard}`}>
-          <div className="card-head">
+      <section className={styles.chartsGridExact} aria-label="Network visualisations">
+        <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
+          <div className={styles.pulseChartHeadExact}>
             <div>
-              <h2>Skills in the sample</h2>
-              <p className="card-sub">Distribution across {view.sampleSize} seeded profiles — not the {view.networkTotal} illustrative total.</p>
+              <h2 className={styles.pulseChartTitleExact}>Skills in the sample</h2>
+              <p className={styles.pulseChartSubExact}>Distribution across {view.sampleSize} seeded profiles — not the {view.networkTotal} illustrative total.</p>
+            </div>
+            <div className={styles.pulseChartSideExact}>
+              <div className={styles.pulseChartTotalExact}>
+                <strong>{view.sampleSize}</strong>
+                <span>Sample profiles</span>
+              </div>
             </div>
           </div>
-          <div className="card-body">
+          <div className={styles.pulseChartBodyExact}>
             {view.skillSeries.length ? (
-              <PulseLiveChart kind="bar" series={view.skillSeries} color={PULSE_INDIGO} />
+              <PulseLiveChart kind="bar" series={view.skillSeries} color={PULSE_SKY} />
             ) : (
               <EmptyState title="No skills recorded on the sample" icon="sparkles" />
             )}
           </div>
         </article>
-        <article className={`card ${styles.pulseCard}`}>
-          <div className="card-head">
+        <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
+          <div className={styles.pulseChartHeadExact}>
             <div>
-              <h2>Demand vs verified available</h2>
-              <p className="card-sub">Open must-have skills against verified available associates in sample.</p>
+              <h2 className={styles.pulseChartTitleExact}>Demand vs verified available</h2>
+              <p className={styles.pulseChartSubExact}>Open must-have skills against verified available associates in sample.</p>
+            </div>
+            <div className={styles.pulseChartSideExact}>
+              <div className={styles.pulseChartTotalExact}>
+                <strong>{view.verifiedAvailable}/{view.openDemandHeadcount}</strong>
+                <span>Available vs demand</span>
+              </div>
             </div>
           </div>
-          <div className="card-body">
+          <div className={styles.pulseChartBodyExact}>
             {view.demandSeries.length ? (
               <>
                 <PulseLiveChart
@@ -87,14 +100,14 @@ export default function NetworkIntelligenceDashboard({
                   series={view.demandSeries}
                   compare={view.capacitySeries}
                   color={PULSE_INDIGO}
-                  compareColor={PULSE_LILAC}
+                  compareColor={PULSE_TEAL}
                 />
-                <div className={styles.chartLegend}>
+                <div className={styles.chartLegend} style={{ padding: "0 .9rem .35rem" }}>
                   <span>
                     <i style={{ background: PULSE_INDIGO }} /> Open demand
                   </span>
                   <span>
-                    <i style={{ background: PULSE_LILAC }} /> Verified available
+                    <i style={{ background: PULSE_TEAL }} /> Verified available
                   </span>
                 </div>
               </>

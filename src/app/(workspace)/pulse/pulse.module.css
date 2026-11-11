@@ -686,35 +686,221 @@ a.kpi:hover {
   margin: 6px 0 0;
 }
 
+.valueKpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.valueKpi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  background: #fff;
+  padding: 1rem 1.05rem;
+}
+
+.valueKpi b {
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+.valueKpi span {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.valuePanelHead {
+  padding: 0.9rem 1.15rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.valuePanelHead h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.valuePanelHead p {
+  margin: 0.2rem 0 0;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.valueRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem 1.15rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.valueRow h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: #0f172a;
+}
+
+.valueRow p {
+  margin: 0.25rem 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.valueMeta {
+  margin: 0.3rem 0 0;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.valueChip {
+  display: inline-flex;
+  align-items: center;
+  height: 1.35rem;
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  font-size: 11px;
+  font-weight: 650;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.valueChip[data-status="pending"] {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.valueChip[data-status="completed"] {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.valueEmpty {
+  margin: 0;
+  padding: 1.25rem 1.15rem;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.valueForm {
+  flex: 1 0 100%;
+  padding-top: 0.35rem;
+}
+
+.channelGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.channelCard {
+  display: flex;
+  min-height: 148px;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.channelCard h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: #0f172a;
+}
+
+.channelCard p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.channelStatus {
+  margin-top: auto;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.channelSection h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.channelSection > p {
+  margin: 0.25rem 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+@media (max-width: 1100px) {
+  .channelGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .channelGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .valueKpis {
+    grid-template-columns: 1fr;
+  }
+}
+
 .knowledgeGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
 }
 
 .knowledgeCard {
   display: flex;
+  min-height: 220px;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-xs);
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   color: inherit;
+  text-align: left;
   text-decoration: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .knowledgeCard:hover {
-  border-color: var(--brand-ring);
-  box-shadow: var(--shadow-sm);
+  border-color: #c7d2fe;
+  background: rgba(238, 242, 255, 0.4);
 }
 
 .knowledgeCard h2 {
-  margin: 0;
-  font-size: 18px;
+  margin: 0.2rem 0 0;
+  font-size: 17px;
+  font-weight: 600;
   letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: #0f172a;
 }
 
 .knowledgeCardTop {
@@ -725,10 +911,66 @@ a.kpi:hover {
 }
 
 .knowledgePurpose {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: 13.5px;
-  line-height: 1.45;
+  margin: 0.2rem 0 0;
+  color: #64748b;
+  font-size: 12.5px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.knowledgeTileHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.knowledgeTileCopy {
+  flex: 1;
+  min-width: 0;
+}
+
+.knowledgeTileMetrics {
+  margin-top: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 1rem 0;
+}
+
+.knowledgeTileMetrics > div {
+  min-width: 0;
+}
+
+.knowledgeTileMetrics b {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.knowledgeTileMetrics span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #64748b;
+  overflow-wrap: break-word;
+}
+
+.knowledgeTileFoot {
+  margin: auto 0 0;
+  padding-top: 1rem;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #64748b;
 }
 
 .knowledgeMetricStrip {
@@ -995,6 +1237,10 @@ a.kpi:hover {
   .kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .knowledgeGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1100px) {
@@ -1002,7 +1248,6 @@ a.kpi:hover {
   .three,
   .charts,
   .valueGrid,
-  .knowledgeGrid,
   .valueFlow,
   .outcomeKpis {
     grid-template-columns: 1fr 1fr;
@@ -1024,11 +1269,14 @@ a.kpi:hover {
 }
 
 @media (max-width: 720px) {
+  .knowledgeGrid {
+    grid-template-columns: 1fr;
+  }
+
   .kpis,
   .three,
   .charts,
   .valueGrid,
-  .knowledgeGrid,
   .knowledgeMetricStrip,
   .liveMetricGrid,
   .metaGrid,
@@ -2207,6 +2455,266 @@ a.kpi:hover {
 
 .btnPulseSecondary:hover {
   background: #f8fafc;
+}
+
+.todoComposer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0.85rem 1rem;
+}
+
+.todoComposer label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: #334155;
+}
+
+.todoComposer input {
+  flex: 1;
+  min-width: 220px;
+  height: 2.5rem;
+}
+
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.kanbanCol {
+  display: flex;
+  min-width: 0;
+  min-height: 18rem;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.kanbanHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0 0.1rem;
+}
+
+.kanbanKicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.kanbanHint {
+  margin: 0.15rem 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #94a3b8;
+}
+
+.kanbanCount {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  min-width: 1.45rem;
+  height: 1.25rem;
+  border-radius: 0.4rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 0 0.35rem;
+  font-size: 11px;
+  font-weight: 650;
+  color: #64748b;
+}
+
+.kanbanBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.kanbanCard {
+  border-radius: 0.7rem;
+  border: 1px solid #e6eaf0;
+  background: #fff;
+  padding: 0.7rem 0.75rem 0.65rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.kanbanCard:hover {
+  border-color: #d5dbe6;
+}
+
+.kanbanId {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #64748b;
+}
+
+.kanbanDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.kanbanTitle {
+  margin: 0.35rem 0 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  line-height: 1.4;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kanbanTitle:hover {
+  color: #4338ca;
+}
+
+.kanbanChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+
+.kanbanChip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  height: 1.25rem;
+  border-radius: 0.35rem;
+  background: #f1f5f9;
+  padding: 0 0.4rem;
+  font-size: 11px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kanbanChipResult {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.kanbanFoot {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.kanbanAvatar {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.kanbanDate {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+.kanbanGo {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: #4f46e5;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.kanbanGo:hover {
+  color: #3730a3;
+}
+
+.kanbanEmpty {
+  display: flex;
+  min-height: 8.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  border: 1px dashed #d5dbe6;
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 1rem;
+  text-align: center;
+}
+
+.kanbanEmpty b {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.kanbanEmpty span {
+  max-width: 24ch;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+.todoMeasure {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.todoMeasure p {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.todoMeasure .input {
+  height: 2.25rem;
+}
+
+.todoMeasureActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .kanban {
+    grid-template-columns: 1fr;
+  }
+
+  .kanbanCol {
+    min-height: 0;
+  }
 }
 
 .feedSigExact {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { addDays, todayKey } from "@/lib/format";
+import { addDays, formatDate, todayKey } from "@/lib/format";
 import { commercialBuckets, isOpenLead } from "@/lib/sales-crm";
 import { opportunityBrief } from "@/lib/record-intelligence";
 import { isOpen, sortTasks } from "@/lib/insights";
@@ -152,7 +152,7 @@ export default function SalesOverviewPage() {
                   <span>
                     <b>{task.title}</b>
                     <small>
-                      {task.due ? (task.due < todayKey() ? `Overdue · ${task.due}` : `Due ${task.due}`) : "No due date"}
+                      {task.due ? (task.due < todayKey() ? `Overdue · ${formatDate(task.due)}` : `Due ${formatDate(task.due)}`) : "No due date"}
                     </small>
                   </span>
                 </button>

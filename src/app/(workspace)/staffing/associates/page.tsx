@@ -307,13 +307,12 @@ export default function AssociatesPage() {
                           <span className={talent.cardRole}>
                             {roleLabel(associate.roleType)} · {associate.seniority}
                           </span>
-                          <span className={talent.cardPlace}>
-                            {associate.location || "Location TBC"}
-                            {associate.sectors[0] ? ` · ${associate.sectors[0]}` : ""}
+                          <span className={talent.skillRow}>
+                            {associate.skills.slice(0, 3).map((skill) => (
+                              <span key={skill}>{skill}</span>
+                            ))}
                           </span>
-                          <span className={talent.cardSub}>
-                            {assignment ? `On assignment · ${assignment.client}` : associate.headline || "Available for shortlist"}
-                          </span>
+                          {assignment ? <span className={talent.cardSub}>On assignment · {assignment.client}</span> : null}
                         </button>
                         <div className={talent.cardActions}>
                           <button type="button" className={talent.iconAction} aria-label={`Quick view ${associate.name}`} onClick={() => setQuickId(associate.id)}>

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
 import { crm } from "@/lib/crm-store";
 import { isOpen, sortTasks } from "@/lib/insights";
-import { buildTessiantHomePriorities } from "@/lib/home-tessiant";
-import { firstName, greeting } from "@/lib/format";
+import { buildTessiantHomeActivity, buildTessiantHomePriorities } from "@/lib/home-tessiant";
+import { activeAssignments } from "@/lib/tessiant-insights";
+import { firstName, formatDate, greeting, timeAgo } from "@/lib/format";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import { EmptyState, PriorityChip, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
@@ -31,7 +32,18 @@ export default function HomePage() {
     );
   }
 
-  const openTasks = sortTasks(state.tasks.filter(isOpen)).slice(0, 5);
+  const openTasks = sortTasks(state.tasks.filter(isOpen)).slice(0, 4);
+  const activity = buildTessiantHomeActivity(state).slice(0, 5);
+  const openOpps = (state.opportunities ?? []).filter((item) => item.stage !== "Closed Won" && item.stage !== "Closed Lost").length;
+  const placements = activeAssignments(state).length;
+  const available =
+    state.tessiant?.associates.filter((item) => item.status === "active" && item.availability === "available" && item.verifiedAt).length ?? 0;
+  const pulse = [
+    { label: "Opportunities", value: openOpps, href: "/sales/pipeline" },
+    { label: "Active placements", value: placements, href: "/staffing/placements?view=active" },
+    { label: "Available now", value: available, href: "/staffing/associates?view=available_now" },
+    { label: "Priorities", value: priorities.length, href: "#attention" },
+  ];
 
   const ask = (event: FormEvent) => {
     event.preventDefault();
@@ -68,12 +80,18 @@ export default function HomePage() {
         </form>
       </section>
 
-      <section>
-        <div className={styles.sectionHead}>
-          <h2>Your priorities</h2>
-          <Link href="/tasks" className="link-button">
-            All tasks <Icon name="arrowRight" size={13} />
+      <section className={styles.pulseRow} aria-label="Business pulse">
+        {pulse.map((item) => (
+          <Link key={item.label} href={item.href} className={styles.pulseStat}>
+            <span>{item.label}</span>
+            <b className="tabular">{item.value}</b>
           </Link>
+        ))}
+      </section>
+
+      <section id="attention">
+        <div className={styles.sectionHead}>
+          <h2>What needs attention?</h2>
         </div>
         {priorities.length === 0 ? (
           <EmptyState
@@ -105,11 +123,11 @@ export default function HomePage() {
         )}
       </section>
 
+      <div className={styles.desk}>
       <section className={styles.panel}>
         <div className={styles.panelHead}>
           <div>
-            <h2>My work</h2>
-            <p className={styles.metaLine}>Open checklist — full board is My Tasks</p>
+            <h2>My tasks</h2>
           </div>
           <Button size="small" variant="secondary" icon="plus" onClick={() => openTaskForm()}>
             New
@@ -137,7 +155,7 @@ export default function HomePage() {
                     <b>{task.title}</b>
                     <small>
                       <PriorityChip priority={task.priority} />
-                      <span>{task.due ? `Due ${task.due}` : "No due date"}</span>
+                      <span>{task.due ? `Due ${formatDate(task.due)}` : "No due date"}</span>
                       {lead ? <span>· {lead.name}</span> : null}
                     </small>
                   </button>
@@ -153,10 +171,36 @@ export default function HomePage() {
         )}
         <div className={styles.panelHead} style={{ marginTop: 12, paddingBottom: 0 }}>
           <Link href="/tasks" className="link-button">
-            All tasks <Icon name="arrowRight" size={13} />
+            Open board <Icon name="arrowRight" size={13} />
           </Link>
         </div>
       </section>
+
+      <section className={styles.panel} aria-label="Recent activity">
+        <div className={styles.panelHead}>
+          <h2>Recent activity</h2>
+        </div>
+        {activity.length === 0 ? (
+          <EmptyState icon="clock" title="No recent activity" />
+        ) : (
+          <ul className={styles.timeline}>
+            {activity.map((item) => (
+              <li key={item.id}>
+                <span className={styles.dot} aria-hidden="true" />
+                <Link href={item.href}>
+                  <b>{item.title}</b>
+                  <span>
+                    {item.detail} · {timeAgo(item.at)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      </div>
+
+      <p className={styles.disclosure}>This workspace uses fictional demonstration data.</p>
     </div>
   );
 }
