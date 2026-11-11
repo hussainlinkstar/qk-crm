@@ -6,3 +6,4 @@ export const metadata: Metadata = { title: "Sign in" };
 export default function LoginPage() {
   return <LoginView />;
 }
+
