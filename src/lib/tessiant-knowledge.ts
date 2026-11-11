@@ -1,3 +1,4 @@
+import { networkIntelligenceView } from "./network-intelligence";
 import type { PulseStaffingSnapshot } from "./pulse-adapter";
 import type { CrmState } from "./types";
 import type { KnowledgeBlockDefinition, KnowledgeBlockId, TessiantInsight } from "./tessiant-pulse-types";
@@ -144,23 +145,26 @@ export function getKnowledgeBlockLiveMetrics(
   const tessiant = state?.tessiant;
 
   switch (blockId) {
-    case "network":
+    case "network": {
+      const view = state ? networkIntelligenceView(state) : null;
       return [
         {
-          label: "Network",
-          value: String(mix?.networkTotal ?? snapshot?.network.totalMembers ?? 0),
-          hint: `Sample ${mix?.sampleSize ?? snapshot?.network.sampleSize ?? 0}`,
-        },
-        {
           label: "Verified available",
-          value: String(mix?.verifiedAvailable ?? 0),
-          hint: "Active + verified",
+          value: String(view?.verifiedAvailable ?? mix?.verifiedAvailable ?? 0),
+          hint: `Sample ${view?.sampleSize ?? mix?.sampleSize ?? 0} · not ${view?.networkTotal ?? mix?.networkTotal ?? 524}`,
         },
         {
-          label: "Verified sample",
-          value: String(snapshot?.network.verifiedSample ?? mix?.verifiedAvailable ?? 0),
+          label: "Capacity vs demand",
+          value: `${view?.verifiedAvailable ?? 0}/${view?.openDemandHeadcount ?? 0}`,
+          hint: "Verified available / open headcount",
+        },
+        {
+          label: "Thin coverage",
+          value: String(view?.thinCoverageCount ?? 0),
+          hint: "Open reqs with <2 verified matches",
         },
       ];
+    }
     case "augmentation": {
       const sourcing = funnel?.stages.find((row) => row.stage === "Sourcing")?.count ?? 0;
       const interview = funnel?.stages.find((row) => row.stage === "Interview")?.count ?? 0;

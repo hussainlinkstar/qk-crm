@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import AddAssociateModal from "@/components/staffing/AddAssociateModal";
 import AssociateQuickPanel from "@/components/staffing/AssociateQuickPanel";
+import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import { initials } from "@/lib/format";
 import {
@@ -18,6 +19,12 @@ import {
   roleLabel,
   type TalentSavedView,
 } from "@/lib/talent-network";
+import {
+  TALENT_INTEL_FINDINGS,
+  talentIntelAssociateIds,
+  talentNetworkIntel,
+  type TalentIntelFinding,
+} from "@/lib/talent-network-intel";
 import type { AssociateRoleType, AvailabilityStatus, SeniorityLevel } from "@/lib/tessiant-types";
 import styles from "../staffing.module.css";
 import talent from "./talent.module.css";
@@ -26,6 +33,7 @@ export default function AssociatesPage() {
   const router = useRouter();
   const params = useSearchParams();
   const { state } = useWorkspaceData();
+  const { askQiko } = useWorkspace();
   const tessiant = state?.tessiant;
 
   const [q, setQ] = useState(params.get("q") ?? "");
@@ -39,8 +47,11 @@ export default function AssociatesPage() {
   );
   const [page, setPage] = useState(Number(params.get("page") || 1));
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [layout, setLayout] = useState<"cards" | "table">(params.get("layout") === "cards" ? "cards" : "table");
   const [quickId, setQuickId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(params.get("new") === "1");
+  const findingRaw = params.get("finding");
+  const finding = TALENT_INTEL_FINDINGS.includes(findingRaw as TalentIntelFinding) ? (findingRaw as TalentIntelFinding) : "";
 
   useEffect(() => {
     if (params.get("verified") === "1") setView("available_now");
@@ -56,9 +67,11 @@ export default function AssociatesPage() {
     return [...new Set(tessiant.associates.flatMap((item) => item.sectors))].sort();
   }, [tessiant]);
 
+  const intel = useMemo(() => (state ? talentNetworkIntel(state) : []), [state]);
+
   const filtered = useMemo(() => {
     if (!state) return [];
-    return filterTalentNetwork(state, {
+    const rows = filterTalentNetwork(state, {
       q,
       skill,
       sector,
@@ -69,15 +82,18 @@ export default function AssociatesPage() {
       engagement: "",
       view,
     });
-  }, [state, q, skill, sector, seniority, roleType, availability, view]);
+    if (!finding) return rows;
+    const ids = talentIntelAssociateIds(state, finding);
+    return rows.filter((associate) => ids.has(associate.id));
+  }, [state, q, skill, sector, seniority, roleType, availability, view, finding]);
 
   const paged = useMemo(() => paginateTalent(filtered, page, TALENT_PAGE_SIZE), [filtered, page]);
   const advancedFilterCount = [skill, sector, roleType, seniority].filter(Boolean).length;
-  const activeFilterCount = advancedFilterCount + (availability ? 1 : 0);
+  const activeFilterCount = advancedFilterCount + (availability ? 1 : 0) + (finding ? 1 : 0);
 
   useEffect(() => {
     setPage(1);
-  }, [q, skill, sector, seniority, roleType, availability, view]);
+  }, [q, skill, sector, seniority, roleType, availability, view, finding]);
 
   if (!state || !tessiant) {
     return (
@@ -87,9 +103,46 @@ export default function AssociatesPage() {
     );
   }
 
+  const talentSearch = (overrides: { view?: TalentSavedView; finding?: TalentIntelFinding | ""; layout?: "cards" | "table" } = {}) => {
+    const nextView = overrides.view ?? view;
+    const nextFinding = overrides.finding === undefined ? finding : overrides.finding;
+    const nextLayout = overrides.layout ?? layout;
+    const search = new URLSearchParams();
+    if (nextView !== "all") search.set("view", nextView);
+    if (nextFinding) search.set("finding", nextFinding);
+    if (nextLayout === "cards") search.set("layout", "cards");
+    return `/staffing/associates${search.size ? `?${search}` : ""}`;
+  };
+
   const applyView = (next: TalentSavedView) => {
     setView(next);
-    router.replace(next === "all" ? "/staffing/associates" : `/staffing/associates?view=${next}`);
+    router.replace(talentSearch({ view: next, finding: "" }));
+  };
+
+  const applyFinding = (next: TalentIntelFinding) => {
+    setView("all");
+    setQ("");
+    setSkill("");
+    setSector("");
+    setRoleType("");
+    setSeniority("");
+    setAvailability("");
+    router.replace(talentSearch({ view: "all", finding: next }));
+  };
+
+  const setLayoutAndUrl = (next: "cards" | "table") => {
+    setLayout(next);
+    router.replace(talentSearch({ layout: next }));
+  };
+
+  const clearFilters = () => {
+    setSkill("");
+    setSector("");
+    setRoleType("");
+    setSeniority("");
+    setAvailability("");
+    setQ("");
+    router.replace(talentSearch({ finding: "" }));
   };
 
   return (
@@ -100,13 +153,21 @@ export default function AssociatesPage() {
           <p className="subtitle">Search and shortlist associates.</p>
         </div>
         <div className="page-actions">
+          <div className="segmented" role="group" aria-label="Layout">
+            <button type="button" aria-pressed={layout === "table"} onClick={() => setLayoutAndUrl("table")}>
+              Table
+            </button>
+            <button type="button" aria-pressed={layout === "cards"} onClick={() => setLayoutAndUrl("cards")}>
+              Cards
+            </button>
+          </div>
           <Button icon="plus" onClick={() => setAddOpen(true)}>
             Add associate
           </Button>
         </div>
       </header>
 
-      <section className="card">
+      <section className={`card ${talent.filterShell}`}>
         <div className={`card-body ${talent.toolbarCard}`}>
           <div className={talent.views} role="tablist" aria-label="Saved talent views">
             {TALENT_SAVED_VIEWS.map((item) => (
@@ -123,7 +184,7 @@ export default function AssociatesPage() {
             ))}
           </div>
           <div className={talent.toolbar}>
-            <label className={`search-field ${talent.grow}`} style={{ marginBottom: 0 }}>
+            <label className={`search-field ${talent.grow}`}>
               <Icon name="search" size={15} />
               <input
                 value={q}
@@ -147,21 +208,11 @@ export default function AssociatesPage() {
             <Button variant="secondary" className={styles.controlMatch} onClick={() => setFiltersOpen((v) => !v)} aria-expanded={filtersOpen}>
               More filters{advancedFilterCount ? ` · ${advancedFilterCount}` : ""}
             </Button>
-            {activeFilterCount > 0 && (
-              <Button
-                variant="ghost"
-                className={styles.controlMatch}
-                onClick={() => {
-                  setSkill("");
-                  setSector("");
-                  setRoleType("");
-                  setSeniority("");
-                  setAvailability("");
-                }}
-              >
+            {activeFilterCount > 0 || q ? (
+              <Button variant="ghost" className={styles.controlMatch} onClick={clearFilters}>
                 Clear
               </Button>
-            )}
+            ) : null}
           </div>
           {filtersOpen && (
             <div className={talent.filterGrid} role="group" aria-label="Advanced talent filters">
@@ -201,12 +252,31 @@ export default function AssociatesPage() {
         </div>
       </section>
 
+      {intel.length > 0 ? (
+        <section className={talent.intelStrip} aria-label="Network intelligence">
+          {intel.map((item) => (
+            <article key={item.id} className={talent.intelCard} data-active={finding === item.id}>
+              <div className={talent.intelHead}>
+                <h3>{item.title}</h3>
+                <span className="chip chip-ai">Qiko</span>
+              </div>
+              <b className={talent.intelCount}>{item.count}</b>
+              <p className={talent.intelWhy}>{item.explanation}</p>
+              <button type="button" className={talent.intelAction} onClick={() => applyFinding(item.id)}>
+                {item.action}
+              </button>
+            </article>
+          ))}
+        </section>
+      ) : null}
+
       <section className="card">
         <div className="card-head">
           <div>
             <h2>Directory</h2>
             <p className="card-sub tabular">
               {paged.total} matching · page {paged.page}/{paged.pageCount}
+              {finding ? ` · ${intel.find((item) => item.id === finding)?.title ?? "Intelligence"}` : ""}
             </p>
           </div>
         </div>
@@ -217,73 +287,126 @@ export default function AssociatesPage() {
             </EmptyState>
           ) : (
             <>
-              <div className="table-wrap">
-                <table className={`table ${talent.compactTable}`}>
-                  <thead>
-                    <tr>
-                      <th>Name / role</th>
-                      <th>Type / seniority</th>
-                      <th>Skills</th>
-                      <th>Sector</th>
-                      <th>Availability</th>
-                      <th>Current assignment</th>
-                      <th>Quick action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paged.slice.map((associate) => {
-                      const assignment = currentAssignmentLabel(state, associate);
-                      const shownSkills = associate.skills.slice(0, 3);
-                      return (
-                        <tr key={associate.id} className={talent.clickRow} onClick={() => setQuickId(associate.id)}>
-                          <td>
-                            <div className={talent.person}>
-                              <span className="avatar avatar-sm">{initials(associate.name)}</span>
-                              <span className={talent.personMeta}>
-                                <b>{associate.name}</b>
-                                <div className="muted">{associate.headline || roleLabel(associate.roleType)}</div>
-                              </span>
-                            </div>
-                          </td>
-                          <td className="nowrap">
+              {layout === "cards" ? (
+                <div className={talent.cardGrid}>
+                  {paged.slice.map((associate) => {
+                    const assignment = currentAssignmentLabel(state, associate);
+                    const statusLabel = assignment ? "Deployed" : associate.verifiedAt ? "Verified" : "New";
+                    return (
+                      <article key={associate.id} className={talent.talentCard} data-availability={associate.availability}>
+                        <div className={talent.cardChrome}>
+                          <span className={talent.scoreTag} data-tone={associate.availability}>
+                            {associate.availability}
+                          </span>
+                          {associate.verifiedAt ? <span className={talent.cardMark}>Verified</span> : <span className={talent.cardMarkMuted}>Profile</span>}
+                        </div>
+                        <button type="button" className={talent.cardHit} onClick={() => setQuickId(associate.id)}>
+                          <span className={talent.cardAvatar}>{initials(associate.name)}</span>
+                          <span className={talent.statusPill}>{statusLabel}</span>
+                          <b className={talent.cardName}>{associate.name}</b>
+                          <span className={talent.cardRole}>
                             {roleLabel(associate.roleType)} · {associate.seniority}
-                          </td>
-                          <td className="nowrap">{shownSkills.join(", ") || "—"}</td>
-                          <td className="nowrap">{associate.sectors[0] ?? "—"}</td>
-                          <td className="nowrap">
-                            <span className="chip chip-dot">{associate.availability}</span>
-                          </td>
-                          <td className="nowrap">
-                            {assignment ? (
-                              <Link
-                                href={`/staffing/placements/${assignment.placementId}`}
-                                className={styles.rowLink}
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                {assignment.client}
-                              </Link>
-                            ) : (
-                              <span className="muted">Bench</span>
-                            )}
-                          </td>
-                          <td onClick={(event) => event.stopPropagation()}>
-                            <div className={styles.rowActions}>
-                              <Button size="small" variant="secondary" onClick={() => setQuickId(associate.id)}>
-                                Quick view
-                              </Button>
-                              <Link href={`/staffing/associates/${associate.id}`}>
-                                <Button size="small" variant="ghost">
-                                  Profile
+                          </span>
+                          <span className={talent.cardPlace}>
+                            {associate.location || "Location TBC"}
+                            {associate.sectors[0] ? ` · ${associate.sectors[0]}` : ""}
+                          </span>
+                          <span className={talent.cardSub}>
+                            {assignment ? `On assignment · ${assignment.client}` : associate.headline || "Available for shortlist"}
+                          </span>
+                        </button>
+                        <div className={talent.cardActions}>
+                          <button type="button" className={talent.iconAction} aria-label={`Quick view ${associate.name}`} onClick={() => setQuickId(associate.id)}>
+                            <Icon name="eye" size={15} />
+                          </button>
+                          <Link href={`/staffing/associates/${associate.id}`} className={talent.iconAction} aria-label={`Open profile for ${associate.name}`}>
+                            <Icon name="users" size={15} />
+                          </Link>
+                          <button
+                            type="button"
+                            className={talent.iconAction}
+                            aria-label={`Ask Qiko about ${associate.name}`}
+                            onClick={() => askQiko(`Summarise ${associate.name} for shortlisting: availability, skills and fit`)}
+                          >
+                            <Icon name="message" size={15} />
+                          </button>
+                          <button type="button" className={talent.iconAction} aria-label={`More actions for ${associate.name}`} onClick={() => setQuickId(associate.id)}>
+                            <Icon name="menu" size={15} />
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="table-wrap">
+                  <table className={`table ${talent.compactTable}`}>
+                    <thead>
+                      <tr>
+                        <th>Name / role</th>
+                        <th>Type / seniority</th>
+                        <th>Skills</th>
+                        <th>Sector</th>
+                        <th>Availability</th>
+                        <th>Current assignment</th>
+                        <th>Quick action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paged.slice.map((associate) => {
+                        const assignment = currentAssignmentLabel(state, associate);
+                        const shownSkills = associate.skills.slice(0, 3);
+                        return (
+                          <tr key={associate.id} className={talent.clickRow} onClick={() => setQuickId(associate.id)}>
+                            <td>
+                              <div className={talent.person}>
+                                <span className="avatar avatar-sm">{initials(associate.name)}</span>
+                                <span className={talent.personMeta}>
+                                  <b>{associate.name}</b>
+                                  <div className="muted">{associate.headline || roleLabel(associate.roleType)}</div>
+                                </span>
+                              </div>
+                            </td>
+                            <td className="nowrap">
+                              {roleLabel(associate.roleType)} · {associate.seniority}
+                            </td>
+                            <td className="nowrap">{shownSkills.join(", ") || "—"}</td>
+                            <td className="nowrap">{associate.sectors[0] ?? "—"}</td>
+                            <td className="nowrap">
+                              <span className="chip chip-dot">{associate.availability}</span>
+                            </td>
+                            <td className="nowrap">
+                              {assignment ? (
+                                <Link
+                                  href={`/staffing/placements/${assignment.placementId}`}
+                                  className={styles.rowLink}
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  {assignment.client}
+                                </Link>
+                              ) : (
+                                <span className="muted">Bench</span>
+                              )}
+                            </td>
+                            <td onClick={(event) => event.stopPropagation()}>
+                              <div className={styles.rowActions}>
+                                <Button size="small" variant="secondary" onClick={() => setQuickId(associate.id)}>
+                                  Quick view
                                 </Button>
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                                <Link href={`/staffing/associates/${associate.id}`}>
+                                  <Button size="small" variant="ghost">
+                                    Profile
+                                  </Button>
+                                </Link>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
               <div className={talent.pager}>
                 <span className="muted tabular">
                   Showing {(paged.page - 1) * TALENT_PAGE_SIZE + 1}–{Math.min(paged.page * TALENT_PAGE_SIZE, paged.total)} of {paged.total}

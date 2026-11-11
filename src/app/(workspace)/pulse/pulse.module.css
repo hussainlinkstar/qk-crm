@@ -1,6 +1,275 @@
 .pulseProduct {
   --pulse-accent: #4f46e5;
+  --pulse-accent-soft: #eef2ff;
+  --pulse-accent-ring: #c7d2fe;
+  --pulse-ink: #0f172a;
+  --pulse-muted: #64748b;
+  --pulse-subtle: #94a3b8;
+  --pulse-line: #e2e8f0;
+  --pulse-line-soft: #f1f5f9;
+  --pulse-canvas: #f8fafc;
   min-width: 0;
+  overflow-x: clip;
+}
+
+.pulsePage {
+  gap: 16px;
+}
+
+.pulseHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pulseHeadCopy h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--pulse-ink);
+}
+
+.pulseLead {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.pulseHeadTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ghostLink {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--pulse-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--pulse-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ghostLink:hover {
+  background: var(--pulse-line-soft);
+}
+
+.topGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+  gap: 16px;
+}
+
+.outcomesCard,
+.bestMove,
+.pulseCard {
+  border: 1px solid var(--pulse-line);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.outcomesCard,
+.bestMove {
+  padding: 24px;
+}
+
+.monoKicker {
+  margin: 0;
+  color: var(--pulse-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 550;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.outcomesTitle {
+  margin: 8px 0 0;
+  color: var(--pulse-ink);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.outcomesSub {
+  margin: 6px 0 0;
+  max-width: 56ch;
+  color: var(--pulse-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.outcomeKpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.outcomeKpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--pulse-line);
+  border-radius: 12px;
+  background: var(--pulse-canvas);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+
+.outcomeKpi:hover {
+  border-color: var(--pulse-accent-ring);
+  background: var(--pulse-accent-soft);
+}
+
+.outcomeKpi span {
+  color: var(--pulse-muted);
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.outcomeKpi b {
+  color: var(--pulse-ink);
+  font-size: 22px;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.outcomeKpi small {
+  color: var(--pulse-subtle);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.bestMove {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bestMove h2 {
+  margin: 0;
+  color: var(--pulse-ink);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.bestMove > p {
+  margin: 0;
+  color: var(--pulse-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.bestMoveMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.bestMoveBody {
+  margin-top: 8px;
+}
+
+.feedType {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: var(--pulse-accent-soft);
+  color: #4338ca;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sideStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.pulseChartCard {
+  overflow: hidden;
+}
+
+.pulseChartHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px 8px;
+}
+
+.pulseChartKicker {
+  margin: 0;
+  color: var(--pulse-subtle);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pulseChartTitle {
+  margin: 2px 0 0;
+  color: var(--pulse-ink);
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.pulseChartSub {
+  margin: 4px 0 0;
+  max-width: 52ch;
+  color: var(--pulse-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pulseChartTotal {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.pulseChartTotal strong {
+  display: block;
+  color: var(--pulse-ink);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.pulseChartTotal span {
+  display: block;
+  margin-top: 3px;
+  color: var(--pulse-muted);
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .context {
@@ -11,14 +280,21 @@
 }
 
 .subnav {
-  display: flex;
+  display: inline-flex;
+  max-width: 100%;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: -4px 0 14px;
-  padding: 6px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #fff;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0.25rem;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subnav::-webkit-scrollbar {
+  display: none;
 }
 
 .subnavLink {
@@ -86,6 +362,75 @@ a.kpi:hover {
   color: #94a3b8;
   font-size: 11.5px;
   line-height: 1.35;
+}
+
+.kpiOver {
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.networkDash {
+  display: grid;
+  gap: 16px;
+}
+
+.networkDash .kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.networkBanner {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.chartLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.chartLegend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+
+.insightHit {
+  cursor: default;
+}
+
+.insightTitleBtn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.insightTitleBtn:hover b {
+  color: #4338ca;
+}
+
+.insightTitleBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .split {
@@ -658,11 +1003,18 @@ a.kpi:hover {
   .charts,
   .valueGrid,
   .knowledgeGrid,
-  .valueFlow {
+  .valueFlow,
+  .outcomeKpis {
     grid-template-columns: 1fr 1fr;
   }
 
-  .split {
+  .networkDash .kpis,
+  .networkDash .charts {
+    grid-template-columns: 1fr;
+  }
+
+  .split,
+  .topGrid {
     grid-template-columns: 1fr;
   }
 
@@ -681,8 +1033,19 @@ a.kpi:hover {
   .liveMetricGrid,
   .metaGrid,
   .advancedGrid,
-  .valueFlow {
+  .valueFlow,
+  .outcomeKpis {
     grid-template-columns: 1fr;
+  }
+
+  .pulseHeadTools {
+    width: 100%;
+  }
+
+  .askLaunch,
+  .ghostLink {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .valueFlowStep::after {
@@ -700,9 +1063,11 @@ a.kpi:hover {
 }
 
 .askLaunch {
-  display: inline-flex;
+  display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 8px;
+  width: min(280px, 100%);
   height: 36px;
   padding: 0 12px;
   border: 0;
@@ -714,14 +1079,23 @@ a.kpi:hover {
   cursor: pointer;
 }
 
+.askLaunch span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
 .askLaunch:hover,
 .askLaunchOpen {
   color: #0f172a;
-  box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.45);
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.4);
 }
 
 .askLaunch kbd {
-  margin-left: 4px;
+  margin-left: auto;
   border: 1px solid #e2e8f0;
   border-radius: 5px;
   background: #fff;
@@ -847,4 +1221,1012 @@ a.kpi:hover {
   .kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* ��� Exact standalone Pulse overview (qiko-pulse-ui-standalone.html) ��� */
+
+.pulsePageExact {
+  margin: 0;
+  display: flex;
+  width: 100%;
+  max-width: none;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem 2.5rem;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .pulsePageExact {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pulsePageExact {
+    padding: 2rem;
+  }
+}
+
+.pulseHeadExact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+}
+
+.pulseHeadCopyExact {
+  min-width: min(100%, 32rem);
+  flex: 1 1 32rem;
+}
+
+.pulseHeadCopyExact h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+.pulseHeadCopyExact p {
+  margin: 0.35rem 0 0;
+  max-width: 62ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.pulseHeadToolsExact {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.pulseMetaExact {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: #64748b;
+  text-align: right;
+}
+
+.pulseHeadToolsExact > button {
+  width: 280px;
+}
+
+@media (max-width: 720px) {
+  .pulseHeadToolsExact {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .pulseMetaExact {
+    text-align: left;
+  }
+
+  .pulseHeadToolsExact > button {
+    width: 100%;
+  }
+}
+
+.cardExact {
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.monoKickerExact {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.outcomesTitleExact {
+  margin: 0.5rem 0 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+.outcomesSubExact {
+  margin: 0.35rem 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.topGridExact {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.pulseKpisExact {
+  margin-top: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.pulseKpiExact,
+.pulseKpiExactBtn {
+  border-radius: 0.85rem;
+  background: #f8fafc;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  display: block;
+}
+
+.pulseKpiExactBtn {
+  cursor: pointer;
+}
+
+.pulseKpiExactBtn:hover {
+  background: #f1f5f9;
+}
+
+.pulseKpiValue {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+.pulseKpiLinkValue {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pulseKpiLabel {
+  margin: 0.2rem 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.bestMoveExact {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  min-height: 100%;
+}
+
+.bestMoveBodyExact {
+  margin-top: 0.85rem;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.bestMoveBodyExact h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.4;
+  color: #0f172a;
+}
+
+.bestMoveBodyExact > p {
+  margin: 0.4rem 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #475569;
+}
+
+.bestMoveWho {
+  margin: 0.45rem 0 0 !important;
+  font-size: 12px !important;
+  color: #64748b !important;
+}
+
+.bestMoveActions {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 1.1rem;
+}
+
+.chartsGridExact {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.pulseChartCardExact {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pulseChartHeadExact {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1.1rem 0.55rem;
+}
+
+.pulseChartTitleExact {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+
+.pulseChartSubExact {
+  margin: 0.2rem 0 0;
+  max-width: 52ch;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.pulseChartTotalExact {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.pulseChartTotalExact strong {
+  display: block;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.pulseChartTotalExact span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.pulseChartBodyExact {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 0.2rem 0.55rem;
+}
+
+.pulseChartPlotExact {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+  border-radius: 0.875rem;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 72%);
+  border: 1px solid #f1f5f9;
+  padding: 0.75rem 0.75rem 0.5rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.pulseChartPlotExact > i {
+  flex: 1;
+  min-width: 0;
+  border-radius: 9999px 9999px 4px 4px;
+  display: block;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.pulseChartPlotExact > i:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.pulseChartFootExact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.pulseChartDeltaExact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background: #ecfdf5;
+  padding: 0.125rem 0.5rem;
+  font-size: 10px;
+  font-weight: 600;
+  color: #047857;
+  white-space: nowrap;
+}
+
+.mapGridExact {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.mapCardExact,
+.feedCardExact {
+  overflow: hidden;
+}
+
+.mapCardHeadExact,
+.feedHeadExact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 0.75rem 1.25rem;
+}
+
+.mapCardHeadExact h2,
+.feedHeadExact h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.mapCardHeadExact p,
+.feedHeadExact p {
+  margin: 0.125rem 0 0;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.mapLinkExact {
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4f46e5;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.mapLinkExact:hover {
+  color: #3730a3;
+}
+
+.mapWrapExact {
+  position: relative;
+  min-height: 420px;
+  height: 420px;
+  overflow: hidden;
+  background: rgba(248, 250, 252, 0.4);
+}
+
+.mapWrapExact canvas {
+  display: block;
+  width: 100%;
+  height: 420px;
+}
+
+.mapTipExact {
+  pointer-events: none;
+  position: absolute;
+  z-index: 20;
+  min-width: 210px;
+  max-width: 280px;
+  transform: translateX(-50%);
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 0.875rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+.mapTipAboveExact {
+  transform: translate(-50%, -100%);
+}
+
+.mapLegendExact {
+  pointer-events: none;
+  position: absolute;
+  bottom: 1rem;
+  left: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.mapLegendExact span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.mapLegendExact i {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  display: block;
+}
+
+.recentWrapExact {
+  max-height: 380px;
+  overflow: hidden;
+  position: relative;
+}
+
+.recentListExact {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recentListExact li {
+  border-top: 1px solid #f1f5f9;
+}
+
+.recentListExact li:first-child {
+  border-top: 0;
+}
+
+.recentListExact button {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 0;
+  background: transparent;
+  padding: 0.9rem 1.15rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.recentListExact button:hover {
+  background: #f8fafc;
+}
+
+.feedTypeExact {
+  display: inline-flex;
+  align-items: center;
+  height: 1.25rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+  border-radius: 0.375rem;
+  padding: 0 0.4rem;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.feedCopyExact {
+  min-width: 0;
+  flex: 1;
+}
+
+.feedSubjectExact {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.feedWhoExact {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.feedWhenExact {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4f46e5;
+  flex-shrink: 0;
+}
+
+.findingsBoxExact {
+  overflow: hidden;
+}
+
+.findingsTopExact {
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.findingsTopExact h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.findingsTopExact p {
+  margin: 0.2rem 0 0;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.findingsSplitExact {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.82fr) minmax(0, 1.5fr);
+}
+
+.findingsListExact {
+  border-right: 1px solid #f1f5f9;
+  max-height: 480px;
+  overflow: auto;
+}
+
+.findingsListHeadExact {
+  padding: 0.75rem 1rem 0.55rem;
+}
+
+.findingsListHeadExact p:last-child {
+  margin: 0.2rem 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.findingsListExact ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.findingsListExact li {
+  border-top: 1px solid #f1f5f9;
+}
+
+.findingsListExact button {
+  width: 100%;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: transparent;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.findingsListExact button:hover {
+  background: #f8fafc;
+}
+
+.findingsItemOn {
+  border-left-color: #6366f1 !important;
+  background: #f8fafc !important;
+}
+
+.findingsSignalExact {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #059669;
+}
+
+.findingsSignalExact[data-status="accepted"] {
+  color: #4338ca;
+}
+
+.findingsSignalExact[data-status="rejected"] {
+  color: #b91c1c;
+}
+
+.findingsTitleExact {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 13.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.findingsSummaryExact {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.findingsMetaExact {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.findingsDetailExact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-width: 0;
+}
+
+.findingsPaneExact {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.findingsPaneExact + .findingsPaneExact {
+  border-left: 1px solid #f1f5f9;
+}
+
+.findingsPaneHeadExact {
+  padding: 0.75rem 1rem 0.35rem;
+}
+
+.findingsPaneBodyExact {
+  padding: 0 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.findingsPaneBodyExact > p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #334155;
+}
+
+.evidenceMetricsExact {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.evidenceMetricsExact > div {
+  border-radius: 0.65rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 0.6rem 0.7rem;
+}
+
+.evidenceMetricsExact b {
+  display: block;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.evidenceMetricsExact span {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.evidenceListExact {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.evidenceListExact li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  font-size: 12.5px;
+  color: #475569;
+}
+
+.evidenceListExact span {
+  color: #94a3b8;
+}
+
+.evidenceNoteExact {
+  margin: 0.75rem 0 0 !important;
+  font-size: 11.5px !important;
+  color: #94a3b8 !important;
+}
+
+.actionTitleExact {
+  margin: 0 !important;
+  font-size: 15px !important;
+  font-weight: 650 !important;
+  line-height: 1.45 !important;
+  color: #0f172a !important;
+}
+
+.actionMetricExact {
+  margin: 0.55rem 0 0 !important;
+  font-size: 12px !important;
+  color: #64748b !important;
+}
+
+.actionRowExact {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.rejectRowExact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  align-items: center;
+}
+
+.btnPrimaryExact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 0;
+}
+
+.btnPrimaryExact:hover {
+  background: #4338ca;
+}
+
+@media (min-width: 900px) {
+  .chartsGridExact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .topGridExact,
+  .mapGridExact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .chartsGridExact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topGridExact > :first-child,
+  .mapGridExact > :first-child {
+    grid-column: span 2;
+  }
+
+  .pulseKpisExact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .findingsSplitExact,
+  .findingsDetailExact {
+    grid-template-columns: 1fr;
+  }
+
+  .findingsListExact {
+    border-right: 0;
+    border-bottom: 1px solid #f1f5f9;
+    max-height: 280px;
+  }
+
+  .findingsPaneExact + .findingsPaneExact {
+    border-left: 0;
+    border-top: 1px solid #f1f5f9;
+  }
+}
+
+/* ��� HTML-exact polish pass ��� */
+
+.pulsePageExact[data-view="pulse"] {
+  background: transparent;
+}
+
+.pulseTabsExact {
+  display: inline-flex;
+  max-width: 100%;
+  gap: 0.125rem;
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #f8fafc;
+  padding: 0.25rem;
+  scrollbar-width: none;
+}
+
+.pulseTabsExact::-webkit-scrollbar {
+  display: none;
+}
+
+.pulseTabExact {
+  display: inline-flex;
+  height: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+  background: transparent;
+  color: #64748b;
+}
+
+.pulseTabExact:hover {
+  color: #0f172a;
+}
+
+.pulseTabOn {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(226, 232, 240, 0.8);
+}
+
+.pulseChartSideExact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.liveChartExact {
+  position: relative;
+  width: 100%;
+  height: 168px;
+  max-height: 168px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.liveChartExact svg {
+  display: block;
+  width: 100%;
+  height: 168px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.chartEmptyExact {
+  display: grid;
+  min-height: 120px;
+  height: 168px;
+  place-items: center;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.chartTipExact {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-radius: 0.55rem;
+  background: #0f172a;
+  color: #fff;
+  padding: 0.35rem 0.55rem 0.4rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+  transform: translate(-50%, calc(-100% - 12px));
+  white-space: nowrap;
+}
+
+.chartTipExact[hidden] {
+  display: none !important;
+}
+
+.filterPillsExact {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.filterPillOn,
+.filterPillOff {
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 0;
+}
+
+.filterPillOn {
+  background: #0f172a;
+  color: #fff;
+}
+
+.filterPillOff {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.btnPulsePrimary,
+.btnPulseSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: auto;
+  min-height: 2.5rem;
+  border-radius: 0.75rem;
+  padding: 0 1rem;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  font: inherit;
+}
+
+.btnPulsePrimary {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.btnPulsePrimary:hover {
+  background: #4338ca;
+}
+
+.btnPulseSecondary {
+  background: #fff;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+.btnPulseSecondary:hover {
+  background: #f8fafc;
+}
+
+.feedSigExact {
+  display: inline-flex;
+  align-items: center;
+  height: 1.25rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+  border-radius: 0.375rem;
+  padding: 0 0.4rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #fffbeb;
+  color: #b45309;
+  box-shadow: inset 0 0 0 1px #fde68a;
+}
+
+.pulsePageExact .cardExact {
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }

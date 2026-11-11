@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AssignmentQuickPanel from "@/components/staffing/AssignmentQuickPanel";
+import AssignmentRecommendedActions from "@/components/staffing/AssignmentRecommendedActions";
 import { EmptyState, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import {
   assignmentDashboard,
@@ -85,6 +86,8 @@ export default function AssignmentsPage() {
           </div>
         </div>
       </header>
+
+      <AssignmentRecommendedActions state={state} compact />
 
       <section className="metric-grid metric-grid-4" aria-label="Assignment KPIs">
         <Link href="/staffing/placements?view=active" className="metric-card">

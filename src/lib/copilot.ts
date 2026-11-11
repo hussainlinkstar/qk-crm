@@ -21,6 +21,20 @@ export const SUGGESTED_QUESTIONS = [
   "What sales opportunities need follow-up?",
 ];
 
+export const ASK_INTENTS = [
+  { label: "Staffing", question: SUGGESTED_QUESTIONS[0] },
+  { label: "Availability", question: SUGGESTED_QUESTIONS[1] },
+  { label: "Assignments", question: SUGGESTED_QUESTIONS[2] },
+  { label: "Sales", question: SUGGESTED_QUESTIONS[3] },
+] as const;
+
+export const PULSE_ASK_INTENTS = [
+  { label: "Coverage", question: SUGGESTED_QUESTIONS[0] },
+  { label: "Availability", question: SUGGESTED_QUESTIONS[1] },
+  { label: "Renewals", question: SUGGESTED_QUESTIONS[2] },
+  { label: "Follow-ups", question: SUGGESTED_QUESTIONS[3] },
+] as const;
+
 function answer(question: string, data: Omit<CopilotAnswer, "id" | "question" | "at" | "grounded"> & { grounded?: boolean }): CopilotAnswer {
   return { id: uid("ans"), question, at: new Date().toISOString(), grounded: data.grounded ?? true, ...data };
 }

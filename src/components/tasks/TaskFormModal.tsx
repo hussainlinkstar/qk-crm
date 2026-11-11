@@ -20,6 +20,8 @@ export default function TaskFormModal({ request, onClose }: { request: TaskFormR
     due: initial.due === undefined ? addDays(1) : initial.due,
     ownerId: initial.ownerId === undefined ? "me" : initial.ownerId,
     leadId: initial.leadId ?? null,
+    accountId: initial.accountId ?? null,
+    opportunityId: initial.opportunityId ?? null,
   });
   const [error, setError] = useState("");
 

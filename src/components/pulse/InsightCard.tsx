@@ -31,8 +31,16 @@ function primarySource(insight: TessiantInsight) {
   );
 }
 
-export default function InsightCard({ insight, compact = false }: { insight: TessiantInsight; compact?: boolean }) {
-  const { toast } = useWorkspace();
+export default function InsightCard({
+  insight,
+  compact = false,
+  reviewOnClick = false,
+}: {
+  insight: TessiantInsight;
+  compact?: boolean;
+  reviewOnClick?: boolean;
+}) {
+  const { toast, openTask } = useWorkspace();
   const { state } = useWorkspaceData();
   const [reason, setReason] = useState<string>(REJECT_REASONS[0]);
   const [showReject, setShowReject] = useState(false);
@@ -40,15 +48,19 @@ export default function InsightCard({ insight, compact = false }: { insight: Tes
 
   const source = primarySource(insight);
   const alreadyAccepted = insight.reviewStatus === "accepted" || Boolean(insight.taskId);
+  const outcome = state?.tessiant?.pulse?.outcomes.find((item) => item.insightId === insight.id);
+  const linkedTask = insight.taskId ? state?.tasks.find((item) => item.id === insight.taskId) : null;
 
   const accept = () => {
     if (alreadyAccepted) {
+      if (insight.taskId) openTask(insight.taskId);
       toast(insight.taskId ? "Already accepted — linked to-do is ready" : "Already accepted");
       return;
     }
-    crm.acceptPulseInsight(insight);
-    toast("Insight accepted — to-do created");
+    const taskId = crm.acceptPulseInsight(insight);
+    toast("Insight accepted — to-do added to My Tasks");
     setReviewOpen(false);
+    if (taskId) openTask(taskId);
   };
 
   const reject = () => {
@@ -59,16 +71,29 @@ export default function InsightCard({ insight, compact = false }: { insight: Tes
     setReviewOpen(false);
   };
 
+  const openLinkedTask = () => {
+    if (insight.taskId) openTask(insight.taskId);
+    setReviewOpen(false);
+  };
+
   return (
     <>
-      <article className={`${styles.insight} ${compact ? styles.insightCompact : ""}`}>
+      <article className={`${styles.insight} ${compact ? styles.insightCompact : ""} ${reviewOnClick ? styles.insightHit : ""}`}>
         <div className={styles.insightHead}>
           <span className="chip chip-ai">{knowledgeBlockTitle(insight.knowledgeBlockId)}</span>
           <PriorityChip priority={insight.priority} />
+          {insight.reviewStatus !== "pending" ? <span className="chip">{insight.reviewStatus}</span> : null}
+          {outcome ? <span className="chip">{outcome.status === "completed" ? "outcome recorded" : outcome.status.replace("_", " ")}</span> : null}
         </div>
 
         <div>
-          <b>{insight.title}</b>
+          {reviewOnClick ? (
+            <button type="button" className={styles.insightTitleBtn} onClick={() => setReviewOpen(true)}>
+              <b>{insight.title}</b>
+            </button>
+          ) : (
+            <b>{insight.title}</b>
+          )}
           <p className="muted" style={{ marginTop: 4 }}>
             {insight.summary}
           </p>
@@ -94,7 +119,7 @@ export default function InsightCard({ insight, compact = false }: { insight: Tes
 
         <div className={styles.actions}>
           <Button size="small" variant="secondary" onClick={() => setReviewOpen(true)}>
-            Review
+            Review Insight
           </Button>
           {insight.reviewStatus === "pending" && !alreadyAccepted ? (
             <>
@@ -107,11 +132,16 @@ export default function InsightCard({ insight, compact = false }: { insight: Tes
             </>
           ) : null}
           {insight.reviewStatus === "accepted" && insight.taskId ? (
-            <Link href="/pulse/actions" className="text-link">
-              Open to-do
-            </Link>
+            <>
+              <Button size="small" variant="secondary" onClick={openLinkedTask}>
+                Open task
+              </Button>
+              <Link href="/tasks" className="text-link">
+                My Tasks
+              </Link>
+            </>
           ) : null}
-          {insight.reviewStatus === "rejected" ? <span className="muted">Rejected</span> : null}
+          {insight.reviewStatus === "rejected" ? <span className="muted">Rejected{insight.reviewReason ? ` · ${insight.reviewReason}` : ""}</span> : null}
         </div>
 
         {showReject && insight.reviewStatus === "pending" ? (
@@ -147,9 +177,14 @@ export default function InsightCard({ insight, compact = false }: { insight: Tes
                 </Button>
               </div>
             ) : insight.taskId ? (
-              <Link href="/pulse/actions" className="text-link" onClick={() => setReviewOpen(false)}>
-                Open linked to-do
-              </Link>
+              <div className={styles.actions}>
+                <Button variant="secondary" onClick={openLinkedTask}>
+                  Open linked task
+                </Button>
+                <Link href="/tasks" className="text-link" onClick={() => setReviewOpen(false)}>
+                  My Tasks
+                </Link>
+              </div>
             ) : null
           }
         >
@@ -157,22 +192,12 @@ export default function InsightCard({ insight, compact = false }: { insight: Tes
             <span className="chip chip-ai">{knowledgeBlockTitle(insight.knowledgeBlockId)}</span>
             <PriorityChip priority={insight.priority} />
             <span className="chip">{insight.confidence}</span>
+            {linkedTask ? <span className="chip">{linkedTask.status.replace("_", " ")}</span> : null}
+            {outcome ? <span className="chip">{outcome.status.replace("_", " ")}</span> : null}
           </div>
 
-          <h3 className={styles.panelSection}>Why this insight</h3>
+          <h3 className={styles.panelSection}>What was detected</h3>
           <p className="muted">{insight.summary}</p>
-
-          <h3 className={styles.panelSection}>Business rule</h3>
-          <p>{rulePlainLanguage(insight.ruleId)}</p>
-
-          <h3 className={styles.panelSection}>Proposed action</h3>
-          <p>{insight.recommendedAction.label}</p>
-
-          <h3 className={styles.panelSection}>Expected business benefit</h3>
-          <p>{expectedBenefit(insight)}</p>
-
-          <h3 className={styles.panelSection}>Confidence & limits</h3>
-          <p className="muted">{confidenceNote(insight)}</p>
 
           <h3 className={styles.panelSection}>Supporting records</h3>
           <ul className={styles.evidence}>
@@ -186,9 +211,32 @@ export default function InsightCard({ insight, compact = false }: { insight: Tes
                 ) : (
                   <span>{evidenceLabel(state, item)}</span>
                 )}
+                {item.field && item.observedValue != null ? (
+                  <span className="muted"> — {item.field}: {String(item.observedValue)}</span>
+                ) : null}
               </li>
             ))}
           </ul>
+
+          <h3 className={styles.panelSection}>Why it matters</h3>
+          <p>{rulePlainLanguage(insight.ruleId)}</p>
+          <p className="muted">{expectedBenefit(insight)}</p>
+
+          <h3 className={styles.panelSection}>Recommended next action</h3>
+          <p>{insight.recommendedAction.label}</p>
+
+          <h3 className={styles.panelSection}>Confidence & limits</h3>
+          <p className="muted">{confidenceNote(insight)}</p>
+
+          {outcome ? (
+            <>
+              <h3 className={styles.panelSection}>Recorded outcome</h3>
+              <p>{outcome.summary}</p>
+              <p className="muted">
+                Status {outcome.status.replace("_", " ")}. Completing the task is not realised revenue.
+              </p>
+            </>
+          ) : null}
 
           {showReject && insight.reviewStatus === "pending" ? (
             <div style={{ marginTop: 16 }}>

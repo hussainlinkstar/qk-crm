@@ -9,10 +9,11 @@ import {
   assignmentsEndingSoon,
   mapRequirementToOpsStage,
   recruitmentPipeline,
-  staffingCommandKpis,
   urgentStaffingNeeds,
   upcomingStaffingActions,
 } from "@/lib/tessiant-insights";
+import AssignmentRecommendedActions from "@/components/staffing/AssignmentRecommendedActions";
+import { staffingDeskFindings } from "@/lib/record-intelligence";
 import { daysOpen, requirementPriority } from "@/lib/requisition";
 import { formatDate, todayKey } from "@/lib/format";
 import styles from "./staffing.module.css";
@@ -32,7 +33,7 @@ export default function StaffingOverviewPage() {
   const now = useNow();
   const tessiant = state?.tessiant;
 
-  const kpis = useMemo(() => (state ? staffingCommandKpis(state, now || Date.now()) : []), [state, now]);
+  const findings = useMemo(() => (state ? staffingDeskFindings(state, now || Date.now()) : []), [state, now]);
   const pipeline = useMemo(() => (state ? recruitmentPipeline(state) : []), [state]);
   const openReqs = useMemo(() => (state ? urgentStaffingNeeds(state, now || Date.now()) : []), [state, now]);
   const allOpen = useMemo(() => {
@@ -84,7 +85,8 @@ export default function StaffingOverviewPage() {
     );
   }
 
-  const pipelineTotal = pipeline.reduce((sum, item) => sum + item.count, 0) || 1;
+  const pipelineTotal = pipeline.reduce((sum, item) => sum + item.count, 0);
+  const pipelinePeak = Math.max(...pipeline.map((item) => item.count), 1);
 
   return (
     <div className={`page ${styles.density}`}>
@@ -94,52 +96,56 @@ export default function StaffingOverviewPage() {
           <p className="subtitle">Demand, talent and deployments.</p>
         </div>
         <div className="page-actions">
-          <Link href="/staffing/associates?new=1" className="button-link">
-            <Button variant="secondary" icon="userPlus">
-              Add associate
-            </Button>
-          </Link>
           <Link href="/staffing/requirements?new=1&layout=board" className="button-link">
             <Button icon="plus">New requirement</Button>
           </Link>
         </div>
       </header>
 
-      <section className="metric-grid" aria-label="Staffing KPIs">
-        {kpis.map((metric) => (
-          <Link key={metric.key} href={metric.href} className="metric-card">
-            <span className="metric-label">{metric.label}</span>
-            <b className="tabular kpi-value">{metric.value}</b>
-            {metric.delta ? (
-              <span className={`metric-delta${metric.tone ? ` ${metric.tone}` : ""}`}>{metric.delta}</span>
-            ) : null}
-          </Link>
-        ))}
-      </section>
+      {findings.length > 0 ? (
+        <section className={styles.findingsStrip} aria-label="Staffing findings">
+          {findings.map((item) => (
+            <Link key={item.id} href={item.href} className={styles.findingsChip}>
+              {item.label}
+            </Link>
+          ))}
+        </section>
+      ) : null}
+
+      <AssignmentRecommendedActions state={state} />
 
       <section className={styles.opsSummary} aria-label="Recruitment pipeline">
         <div className={styles.opsSummaryHead}>
           <div>
             <h2>Recruitment pipeline</h2>
+            <p className={styles.opsSummarySub}>
+              <span className="tabular">{pipelineTotal}</span> requirements across stages
+            </p>
           </div>
           <Link href="/staffing/requirements?layout=board" className="text-link">
             Open board
           </Link>
         </div>
-        <div className={styles.flowTrack}>
-          {pipeline.map((item) => (
-            <Link
-              key={item.stage}
-              href={`/staffing/requirements?layout=board&opsStage=${encodeURIComponent(item.stage)}`}
-              className={styles.flowSeg}
-              style={{ flexGrow: Math.max(item.count, 0.35) }}
-            >
-              <span className={styles.flowBar} style={{ width: `${Math.max(12, (item.count / pipelineTotal) * 100)}%` }} />
-              <b className="tabular">{item.count}</b>
-              <small>{item.stage}</small>
-            </Link>
+        <ol className={styles.flowTrack}>
+          {pipeline.map((item, index) => (
+            <li key={item.stage} className={styles.flowItem}>
+              {index > 0 ? <span className={styles.flowConnector} aria-hidden="true" /> : null}
+              <Link
+                href={`/staffing/requirements?layout=board&opsStage=${encodeURIComponent(item.stage)}`}
+                className={styles.flowSeg}
+                data-empty={item.count === 0 ? "true" : undefined}
+              >
+                <b className="tabular">{item.count}</b>
+                <small>{item.stage}</small>
+                <span
+                  className={styles.flowAccent}
+                  aria-hidden="true"
+                  style={{ transform: `scaleX(${item.count === 0 ? 0.12 : Math.max(0.22, item.count / pipelinePeak)})` }}
+                />
+              </Link>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
 
       <section className={styles.opsGridThree}>
@@ -170,6 +176,9 @@ export default function StaffingOverviewPage() {
                       </span>
                       <span className={styles.reqCardFoot}>
                         <span className="chip tabular">{req?.headcount ?? "—"} pos</span>
+                        <span className={`chip tabular ${"matches" in item && item.matches === 0 ? "chip-high" : ""}`}>
+                          {item.matches} verified
+                        </span>
                         <span className="muted tabular">{req ? `${daysOpen(req)}d open` : ""}</span>
                       </span>
                     </Link>

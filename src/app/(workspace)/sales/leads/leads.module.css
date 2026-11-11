@@ -1,8 +1,8 @@
 .toolbar {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 14px;
+  padding: 16px 18px;
   border-bottom: 1px solid var(--line-soft);
 }
 
@@ -10,13 +10,13 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .search {
   flex: 1 1 260px;
   margin-bottom: 0;
-  height: 38px;
+  height: 40px;
 }
 
 .search button {
@@ -33,13 +33,13 @@
 
 .filter {
   width: auto;
-  min-width: 140px;
-  min-height: 38px;
+  min-width: 148px;
+  min-height: 40px;
   font-size: 13px;
 }
 
 .resultLine {
-  padding: 10px 16px;
+  padding: 12px 18px 4px;
   color: var(--muted);
   font-size: 12.5px;
 }
@@ -190,7 +190,7 @@
 }
 
 .empty {
-  padding: 16px;
+  padding: 20px 18px;
 }
 
 .pager {
@@ -199,7 +199,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-top: 1px solid var(--line-soft);
   color: var(--muted);
   font-size: 12.5px;
@@ -235,8 +235,10 @@
 .askStrip {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 14px 18px;
   border: 1px dashed var(--brand-ring);
   border-radius: var(--radius-xl);
   background: var(--brand-soft);
@@ -245,10 +247,15 @@
   font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+
+.askStrip svg:first-child {
+  flex-shrink: 0;
 }
 
 .askStrip svg:last-child {
+  flex-shrink: 0;
   margin-left: auto;
 }
 
@@ -258,31 +265,33 @@
 
 .leadBoard {
   display: grid;
-  grid-template-columns: repeat(5, minmax(200px, 1fr));
-  gap: 10px;
-  padding: 0 14px 14px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  padding: 12px 18px 18px;
   overflow-x: auto;
 }
 
-.leadColumn {
+.boardColumn {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 200px;
-  padding: 10px;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   background: var(--well);
 }
 
-.leadColumnHead {
+.boardColumnHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-soft);
 }
 
-.leadColumnHead b {
+.boardColumnHead b {
   font-size: 11.5px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -291,8 +300,8 @@
 .leadCard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
+  gap: 10px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -309,7 +318,7 @@
 .leadCardMeta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   font-size: 12px;
 }
 
@@ -330,7 +339,11 @@
 
 @media (max-width: 1100px) {
   .leadBoard {
-    grid-template-columns: repeat(5, minmax(200px, 220px));
+    grid-template-columns: repeat(5, minmax(210px, 1fr));
+  }
+
+  .boardColumn {
+    min-width: 210px;
   }
 }
 

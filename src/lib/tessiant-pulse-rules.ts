@@ -29,7 +29,6 @@ function isVerifiedAvailable(associate: {
 export function generateTessiantInsights(state: CrmState, now = Date.now()): TessiantInsight[] {
   const tessiant = state.tessiant;
   if (!tessiant) return [];
-  const reviews = tessiant.pulse?.reviews ?? {};
   const asOf = new Date(now).toISOString();
   const insights: TessiantInsight[] = [];
 
@@ -52,16 +51,16 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
             knowledgeBlockId: "augmentation",
             ruleId: "coverage_gap",
             title: `Coverage gap · ${req.title}`,
-            summary: `Open requirement has ${verifiedAvailable.length} verified available match(es) (threshold < ${PULSE_RULE_CONFIG.coverageGapMinVerifiedAvailable}). Review sourcing or clarify constraints.`,
+            summary: `Open requirement has ${verifiedAvailable.length} verified available match(es) (threshold < ${PULSE_RULE_CONFIG.coverageGapMinVerifiedAvailable}). Verify availability of existing candidates or expand sourcing.`,
             priority: verifiedAvailable.length === 0 ? "high" : "medium",
             evidence: [
               { entityType: "requirement", entityId: req.id, field: "stage", observedValue: req.stage, href: `/staffing/requirements/${req.id}` },
               { entityType: "requirement", entityId: req.id, field: "verifiedAvailableMatches", observedValue: verifiedAvailable.length },
-              ...verifiedAvailable.slice(0, 3).map((c) => ({
+              ...matches.slice(0, 4).map((c) => ({
                 entityType: "candidate" as const,
                 entityId: c.id,
-                field: "associateId",
-                observedValue: c.associateId,
+                field: "shortlistStatus",
+                observedValue: c.shortlistStatus,
                 href: `/staffing/associates/${c.associateId}`,
               })),
             ],
@@ -70,12 +69,12 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
             confidence: matches.length ? ("verified" as const) : ("partial" as const),
             recommendedAction: {
               type: "review_sourcing",
-              label: "Review sourcing or requirement constraints",
+              label: "Verify availability or expand sourcing",
               suggestedOwnerId: req.ownerId ?? "me",
             },
             reviewStatus: "pending",
           },
-          reviews,
+          tessiant.pulse,
         ),
       );
     }
@@ -113,7 +112,7 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
             },
             reviewStatus: "pending",
           },
-          reviews,
+          tessiant.pulse,
         ),
       );
     }
@@ -161,7 +160,7 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
           },
           reviewStatus: "pending",
         },
-        reviews,
+        tessiant.pulse,
       ),
     );
   }
@@ -198,7 +197,7 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
             },
             reviewStatus: "pending",
           },
-          reviews,
+          tessiant.pulse,
         ),
       );
     }
@@ -236,7 +235,7 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
             },
             reviewStatus: "pending",
           },
-          reviews,
+          tessiant.pulse,
         ),
       );
     }
@@ -271,7 +270,7 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
           },
           reviewStatus: "pending",
         },
-        reviews,
+        tessiant.pulse,
       ),
     );
   }
@@ -314,7 +313,7 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
           },
           reviewStatus: "pending",
         },
-        reviews,
+        tessiant.pulse,
       ),
     );
   }
@@ -351,7 +350,7 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
           },
           reviewStatus: "pending",
         },
-        reviews,
+        tessiant.pulse,
       ),
     );
   }
@@ -363,14 +362,19 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
   return [...unique.values()].sort((a, b) => rank[a.priority] - rank[b.priority] || a.title.localeCompare(b.title));
 }
 
-function applyReview(insight: TessiantInsight, reviews: Record<string, { decision: "accepted" | "rejected"; reason?: string; taskId?: string }>): TessiantInsight {
-  const review = reviews[insight.id];
-  if (!review) return insight;
+function applyReview(
+  insight: TessiantInsight,
+  pulse?: { reviews?: Record<string, { decision: "accepted" | "rejected"; reason?: string; taskId?: string }>; outcomes?: { id: string; insightId: string }[] },
+): TessiantInsight {
+  const review = pulse?.reviews?.[insight.id];
+  const outcome = pulse?.outcomes?.find((item) => item.insightId === insight.id);
+  if (!review && !outcome) return insight;
   return {
     ...insight,
-    reviewStatus: review.decision === "accepted" ? "accepted" : "rejected",
-    reviewReason: review.reason,
-    taskId: review.taskId,
+    reviewStatus: review ? (review.decision === "accepted" ? "accepted" : "rejected") : insight.reviewStatus,
+    reviewReason: review?.reason,
+    taskId: review?.taskId,
+    outcomeId: outcome?.id,
   };
 }
 

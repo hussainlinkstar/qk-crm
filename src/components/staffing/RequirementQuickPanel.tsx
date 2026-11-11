@@ -7,6 +7,7 @@ import { Drawer } from "@/components/ui/Overlay";
 import { useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { formatDate } from "@/lib/format";
+import RecordInsightChip from "@/components/pulse/RecordInsightChip";
 import { formatCandidateProgress, mapRequirementToOpsStage } from "@/lib/tessiant-insights";
 import { daysOpen, requirementPriority, requisitionCounts } from "@/lib/requisition";
 import styles from "@/components/leads/Leads.module.css";
@@ -52,6 +53,8 @@ export default function RequirementQuickPanel({
         </Link>
       }
     >
+      <RecordInsightChip requirementId={requirement.id} accountId={requirement.accountId} />
+
       <div className={styles.panelMeta}>
         <span className="chip chip-dot">{opsStage}</span>
         <span className={`chip ${priority === "high" ? "chip-ai" : ""}`}>{priority}</span>

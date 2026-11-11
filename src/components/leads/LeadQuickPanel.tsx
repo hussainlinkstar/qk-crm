@@ -12,7 +12,10 @@ import { Drawer } from "@/components/ui/Overlay";
 import { KIND_ICON } from "@/components/ui/kind-icons";
 import { EmptyState, LeadStatusChip, useWorkspaceData } from "@/components/ui/bits";
 import SuggestionCard from "@/components/tasks/SuggestionCard";
+import RecordInsightChip from "@/components/pulse/RecordInsightChip";
+import RelationshipIntelligence from "@/components/sales/RelationshipIntelligence";
 import TaskCard from "@/components/tasks/TaskCard";
+import { salesRelationshipIntel } from "@/lib/sales-relationship";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import LogInteractionModal from "./LogInteractionModal";
 import ComposeMessageModal from "./ComposeMessageModal";
@@ -36,6 +39,7 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
   const messages = (state.messages ?? []).filter((message) => message.leadId === lead.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 4);
   const journeyIndex = JOURNEY.indexOf(lead.status === "Unqualified" ? "New" : lead.status);
   const accounts = state.tessiant?.accounts ?? [];
+  const relationship = salesRelationshipIntel(state, { leadId });
 
   const advanceStatus = (status: LeadStatus) => {
     if (lead.status === status) return;
@@ -85,6 +89,8 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
         </Link>
       }
     >
+      <RecordInsightChip leadId={lead.id} accountId={lead.accountId} />
+
       <div className={styles.panelMeta}>
         <LeadStatusChip status={lead.status} />
         <span className="tag">{lead.source}</span>
@@ -110,6 +116,8 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
           </select>
         </label>
       </div>
+
+      <RelationshipIntelligence intel={relationship} />
 
       <section className={styles.journey} aria-label="Qualification journey">
         <div className={styles.journeyTrack}>

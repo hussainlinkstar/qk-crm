@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
+import Icon from "@/components/ui/Icon";
 import { Drawer } from "@/components/ui/Overlay";
 import { askPulseCatalog, type AskPulseAnswer } from "@/lib/pulse-presentation";
 import type { CrmState } from "@/lib/types";
@@ -102,9 +103,16 @@ export default function AskPulseChat({
 
   return (
     <>
-      <button type="button" className={`${styles.askLaunch} ${open ? styles.askLaunchOpen : ""}`} onClick={() => setOpen(true)} aria-label="Chat with Pulse">
-        Chat with Pulse
-        <kbd>Ask</kbd>
+      <button
+        type="button"
+        className={`${styles.askLaunch} ${open ? styles.askLaunchOpen : ""}`}
+        onClick={() => setOpen(true)}
+        aria-label="Chat with Pulse"
+        aria-expanded={open}
+      >
+        <Icon name="message" size={14} />
+        <span>Chat with Pulse</span>
+        <kbd>Ctrl K</kbd>
       </button>
       {open ? (
         <Drawer kicker="Qiko Pulse" title="Chat with Pulse" onClose={() => setOpen(false)} width={420}>

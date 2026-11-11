@@ -17,7 +17,7 @@ import { adaptLeadRecord, normalizeLeadSource, normalizeLeadStatus } from "@/lib
 import { addDays, toDateKey } from "@/lib/format";
 import { createTessiantSlice } from "./tessiant-seed";
 
-export const DATA_VERSION = 13;
+export const DATA_VERSION = 16;
 
 export function demoMessages(ago: (hours: number) => string): ConversationMessage[] {
   return [
@@ -316,19 +316,6 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
     completedHoursAgo: 18,
   });
   task({
-    id: "task_pulse_coverage_sap",
-    title: "Review sourcing or clarify constraints",
-    description:
-      "[pulse-insight:ins_coverage_req_sap]\n[requirement:req_sap]\nOpen SAP requirement has thin verified available coverage.\nRecommended: Review sourcing or clarify constraints",
-    status: "completed",
-    priority: "high",
-    due: today,
-    ownerId: "me",
-    leadId: null,
-    createdHoursAgo: 40,
-    completedHoursAgo: 8,
-  });
-  task({
     id: "task_pulse_cross_sia",
     title: "Review possible consulting/advisory opportunity (pipeline only)",
     description:
@@ -442,6 +429,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       expectedBilling: null,
       recognisedRevenue: null,
       lostReason: null,
+      source: "Website",
       createdAt: ago(48),
       updatedAt: ago(4),
       closedAt: null,
@@ -465,6 +453,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       expectedBilling: null,
       recognisedRevenue: null,
       lostReason: null,
+      source: "Existing client",
       createdAt: ago(72),
       updatedAt: ago(12),
       closedAt: null,
@@ -488,6 +477,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       expectedBilling: null,
       recognisedRevenue: null,
       lostReason: null,
+      source: "Event",
       createdAt: ago(24),
       updatedAt: ago(6),
       closedAt: null,
@@ -511,6 +501,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       expectedBilling: 125000,
       recognisedRevenue: 45000,
       lostReason: null,
+      source: "Existing client",
       createdAt: ago(90 * 24),
       updatedAt: ago(10),
       closedAt: ago(60 * 24),
@@ -534,6 +525,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       expectedBilling: null,
       recognisedRevenue: null,
       lostReason: null,
+      source: "Existing client",
       createdAt: ago(96),
       updatedAt: ago(90),
       closedAt: null,
@@ -557,6 +549,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       expectedBilling: 24000,
       recognisedRevenue: 12000,
       lostReason: null,
+      source: "Website",
       createdAt: ago(900),
       updatedAt: ago(72),
       closedAt: ago(72),
@@ -580,6 +573,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       expectedBilling: null,
       recognisedRevenue: null,
       lostReason: null,
+      source: "Existing client",
       createdAt: ago(5 * 24),
       updatedAt: ago(30),
       closedAt: null,
@@ -603,6 +597,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       expectedBilling: null,
       recognisedRevenue: null,
       lostReason: null,
+      source: "Existing client",
       createdAt: ago(2 * 24),
       updatedAt: ago(2 * 24),
       closedAt: null,

@@ -16,7 +16,6 @@ export default function SalesActivitiesPage() {
       <ActionWorkspace
         title="Sales activities"
         subtitle="Follow-ups for leads, accounts and opportunities."
-        askPrompt="What sales activities are pending?"
         scope="sales"
       />
     </Suspense>

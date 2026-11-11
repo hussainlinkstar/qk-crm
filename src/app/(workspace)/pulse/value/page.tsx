@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import Button from "@/components/ui/Button";
 import { EmptyState, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
+import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import PulseSubnav from "@/components/pulse/PulseSubnav";
+import { crm } from "@/lib/crm-store";
 import { getPulseSnapshot } from "@/lib/pulse-adapter";
 import { formatDateTime } from "@/lib/format";
+import { requirementHasConfirmedAssignment } from "@/lib/pulse-journey";
 import { generateTessiantInsights } from "@/lib/tessiant-pulse-rules";
+import type { PulseOutcome } from "@/lib/tessiant-pulse-types";
+import type { CrmState } from "@/lib/types";
 import styles from "../pulse.module.css";
 
 function money(value: number | null | undefined) {
@@ -60,36 +66,21 @@ export default function PulseValuePage() {
 
       <PulseSubnav />
 
-      <section className={styles.kpis} aria-label="Value summary">
-        <div className={styles.kpi}>
-          <span>Completed recommendations</span>
-          <b className="tabular">{accepted}</b>
-          <small>Accepted insights in Tessiant Pulse</small>
+      <p className="muted">
+        {accepted} accepted · {actionsWithOutcomes} with outcomes · {pendingValue.length} pending confirmation ·{" "}
+        {insights.filter((item) => item.reviewStatus === "pending").length} still open
+      </p>
+
+      <section className={styles.valueGrid} aria-label="Attributed Pulse value">
+        <div className={styles.valueCard} data-kind="realised">
+          <h3>Attributed realised</h3>
+          <b className="tabular">{money(realisedFromOutcomes)}</b>
+          <p className="muted">Confirmed amounts on Pulse outcomes only. SIA contribution is never booked here.</p>
         </div>
-        <div className={styles.kpi}>
-          <span>Actions with outcomes</span>
-          <b className="tabular">{actionsWithOutcomes}</b>
-          <small>To-dos with recorded outcome rows</small>
-        </div>
-        <div className={styles.kpi}>
-          <span>Verified incremental revenue</span>
-          <b className="tabular">{money(realisedFromOutcomes || null)}</b>
-          <small>From Pulse outcomes only</small>
-        </div>
-        <div className={styles.kpi}>
-          <span>Estimated savings</span>
-          <b className="tabular">{hoursSaved.toFixed(1)}h</b>
-          <small>Direct cost {money(directSavings || null)}</small>
-        </div>
-        <div className={styles.kpi}>
-          <span>Pending value confirmation</span>
-          <b className="tabular">{pendingValue.length}</b>
-          <small>Outcomes waiting for measured value</small>
-        </div>
-        <div className={styles.kpi}>
-          <span>Open insights</span>
-          <b className="tabular">{insights.filter((item) => item.reviewStatus === "pending").length}</b>
-          <small>Still awaiting accept / reject</small>
+        <div className={styles.valueCard} data-kind="pipeline">
+          <h3>Attributed pipeline</h3>
+          <b className="tabular">{money(pipelineFromOutcomes)}</b>
+          <p className="muted">Unclosed opportunity value from accepted work — including advisory, labelled pipeline only.</p>
         </div>
       </section>
 
@@ -156,22 +147,12 @@ export default function PulseValuePage() {
                   {outcomes.map((outcome) => {
                     const insight = insights.find((item) => item.id === outcome.insightId);
                     return (
-                      <tr key={outcome.id}>
-                        <td>
-                          <span className="chip">{outcome.status}</span>
-                        </td>
-                        <td>
-                          <div>{outcome.summary}</div>
-                          <div className="muted">{insight?.title ?? "Pulse recommendation"}</div>
-                          {outcome.value.qualitativeBenefit ? <div className="muted">{outcome.value.qualitativeBenefit}</div> : null}
-                        </td>
-                        <td className="tabular">{money(outcome.value.pipelinePotential)}</td>
-                        <td className="tabular">{money(outcome.value.realisedRevenue)}</td>
-                        <td className="tabular">
-                          {outcome.value.estimatedTimeSavedHours != null ? `${outcome.value.estimatedTimeSavedHours}h` : "—"}
-                        </td>
-                        <td className="muted">{formatDateTime(outcome.updatedAt)}</td>
-                      </tr>
+                      <FragmentRow
+                        key={outcome.id}
+                        outcome={outcome}
+                        insightTitle={insight?.title ?? "Pulse recommendation"}
+                        state={state}
+                      />
                     );
                   })}
                 </tbody>
@@ -185,6 +166,117 @@ export default function PulseValuePage() {
           ) : null}
         </div>
       </section>
+    </div>
+  );
+}
+
+function FragmentRow({
+  outcome,
+  insightTitle,
+  state,
+}: {
+  outcome: PulseOutcome;
+  insightTitle: string;
+  state: CrmState;
+}) {
+  return (
+    <>
+      <tr>
+        <td>
+          <span className="chip">{outcome.status}</span>
+        </td>
+        <td>
+          <div>{outcome.summary}</div>
+          <div className="muted">{insightTitle}</div>
+          {outcome.value.qualitativeBenefit ? <div className="muted">{outcome.value.qualitativeBenefit}</div> : null}
+        </td>
+        <td className="tabular">{money(outcome.value.pipelinePotential)}</td>
+        <td className="tabular">{money(outcome.value.realisedRevenue)}</td>
+        <td className="tabular">
+          {outcome.value.estimatedTimeSavedHours != null ? `${outcome.value.estimatedTimeSavedHours}h` : "—"}
+        </td>
+        <td className="muted">{formatDateTime(outcome.updatedAt)}</td>
+      </tr>
+      {outcome.status === "completed" ? (
+        <tr>
+          <td colSpan={6}>
+            <ValueRecordForm state={state} outcome={outcome} />
+          </td>
+        </tr>
+      ) : null}
+    </>
+  );
+}
+
+function ValueRecordForm({ state, outcome }: { state: CrmState; outcome: PulseOutcome }) {
+  const { toast } = useWorkspace();
+  const [hours, setHours] = useState(outcome.value.estimatedTimeSavedHours?.toString() ?? "");
+  const [pipeline, setPipeline] = useState(outcome.value.pipelinePotential?.toString() ?? "");
+  const [benefit, setBenefit] = useState(outcome.value.qualitativeBenefit ?? "");
+  const [notes, setNotes] = useState("");
+  const reqId = outcome.value.sourceEntityIds.find((id) => id.startsWith("req_")) ?? null;
+  const canRealise = requirementHasConfirmedAssignment(state, reqId);
+  const alreadyValued =
+    outcome.value.realisedRevenue != null ||
+    outcome.value.pipelinePotential != null ||
+    outcome.value.estimatedTimeSavedHours != null ||
+    Boolean(outcome.value.qualitativeBenefit);
+
+  if (alreadyValued) {
+    return (
+      <p className="muted">
+        Value already attributed for this insight. Task completion stays separate from commercial figures.
+      </p>
+    );
+  }
+
+  return (
+    <div className="form-grid" style={{ maxWidth: 720 }}>
+      <p className="muted">
+        Record measurable value only with supporting evidence. Pulse will not invent a placement or day-rate revenue.
+      </p>
+      <label className="field">
+        <span>Qualitative benefit / evidence</span>
+        <input className="input" value={benefit} onChange={(event) => setBenefit(event.target.value)} placeholder="What improved, and which records support it?" />
+      </label>
+      <div className="form-row">
+        <label className="field">
+          <span>Time saved (hours)</span>
+          <input className="input" type="number" min={0} step={0.5} value={hours} onChange={(event) => setHours(event.target.value)} />
+        </label>
+        <label className="field">
+          <span>Pipeline potential (£)</span>
+          <input className="input" type="number" min={0} value={pipeline} onChange={(event) => setPipeline(event.target.value)} />
+        </label>
+      </div>
+      {!canRealise ? (
+        <p className="muted">Realised revenue is unavailable — no confirmed assignment exists on the linked requirement.</p>
+      ) : null}
+      <label className="field">
+        <span>Attribution note</span>
+        <input className="input" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Optional note stored with the outcome" />
+      </label>
+      <Button
+        size="small"
+        onClick={() => {
+          if (!benefit.trim() && !hours && !pipeline) {
+            toast("Add evidence or a measured figure before recording value", "info");
+            return;
+          }
+          const ok = crm.recordPulseValue({
+            insightId: outcome.insightId,
+            estimatedTimeSavedHours: hours ? Number(hours) : null,
+            pipelinePotential: pipeline ? Number(pipeline) : null,
+            realisedRevenue: null,
+            qualitativeBenefit: benefit.trim() || null,
+            notes: notes.trim() || "DEMO — value recorded separately from task completion",
+            sourceEntityIds: outcome.value.sourceEntityIds,
+          });
+          toast(ok ? "Value recorded against the Pulse outcome" : "Complete the action before recording value");
+        }}
+      >
+        Record value
+      </Button>
     </div>
   );
 }

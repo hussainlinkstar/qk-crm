@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import MatchCandidateCard from "@/components/staffing/MatchCandidateCard";
+import RecommendedMatches from "@/components/staffing/RecommendedMatches";
+import RecordInsightChip from "@/components/pulse/RecordInsightChip";
 import Button from "@/components/ui/Button";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { addDays, formatDate, timeAgo } from "@/lib/format";
-import { formatRate, marginForCandidate, mapRequirementToOpsStage, requirementTasks } from "@/lib/tessiant-insights";
+import { formatRate, marginForCandidate, mapRequirementToOpsStage, requirementTasks, verifiedAvailableMatchCount } from "@/lib/tessiant-insights";
 import { buildMatchPresentation } from "@/lib/tessiant-matching";
 import {
   actionsForCandidate,
@@ -345,7 +347,7 @@ export default function RequirementDetailPage() {
           <h1>{requirement.title}</h1>
           <p className="subtitle">
             {account?.name ?? "Client"} · {requirement.category} · {requirement.sector} · {mapRequirementToOpsStage(requirement)} ·{" "}
-            {daysOpen(requirement)} days open
+            {daysOpen(requirement)} days open · {verifiedAvailableMatchCount(state, requirement.id)} verified available
           </p>
         </div>
         <div className="page-actions">
@@ -373,6 +375,10 @@ export default function RequirementDetailPage() {
           </Button>
         </div>
       </header>
+
+      <RecordInsightChip requirementId={requirement.id} accountId={requirement.accountId} />
+
+      <RecommendedMatches state={state} requirement={requirement} />
 
       {counts && (
         <div className={styles.statStrip} aria-label="Pipeline counts">
@@ -555,7 +561,21 @@ export default function RequirementDetailPage() {
               Use <b>Find Matches</b> or add a candidate below.
             </EmptyState>
           ) : (
-            <div className={styles.stack}>{matchingCandidates.map((candidate) => renderCard(candidate))}</div>
+            <div className={`kanban-board ${styles.candidateBoard}`} aria-label="Candidate pipeline">
+              {groupCandidatesByStatus(matchingCandidates).map((column) => (
+                <div key={column.status} className={`kanban-column ${styles.candidateColumn}`}>
+                  <div className={styles.boardColumnHead}>
+                    <b>{column.label}</b>
+                    <span className="chip tabular">{column.items.length}</span>
+                  </div>
+                  {column.items.length === 0 ? (
+                    <p className="muted">None</p>
+                  ) : (
+                    column.items.map((candidate) => renderCard(candidate))
+                  )}
+                </div>
+              ))}
+            </div>
           )}
 
           <div className={styles.actions} style={{ marginTop: 16 }}>

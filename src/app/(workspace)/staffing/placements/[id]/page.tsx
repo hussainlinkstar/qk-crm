@@ -6,6 +6,7 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
+import AssignmentRecommendedActions from "@/components/staffing/AssignmentRecommendedActions";
 import { crm } from "@/lib/crm-store";
 import {
   assignmentCapacity,
@@ -126,6 +127,8 @@ export default function AssignmentDetailPage() {
         <span>/</span>
         <b>{assignmentStatusLabel(status)}</b>
       </div>
+
+      <AssignmentRecommendedActions state={state} assignmentId={assignment.id} compact />
 
       <div className="segmented" role="tablist" aria-label="Assignment sections">
         {TABS.map((item) => (

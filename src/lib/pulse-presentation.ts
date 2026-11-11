@@ -82,7 +82,7 @@ export function expectedBenefit(insight: TessiantInsight): string {
 
 export function rulePlainLanguage(ruleId: string): string {
   const map: Record<string, string> = {
-    coverage_gap: "Open requirements need enough verified available matches before delivery confidence is high.",
+    coverage_gap: "Open requirements need enough verified available matches before delivery confidence is high. Completing a follow-up does not mean a placement or revenue was realised.",
     stalled_requirement: "Requirements that stay in one stage too long need an owner unblock.",
     expiring_availability: "Shortlisted associates need recent availability verification.",
     offering_mismatch: "Demand in a skill or sector exceeds verified available network capacity.",

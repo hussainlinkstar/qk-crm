@@ -51,39 +51,30 @@ export default function PulseKnowledgePage() {
         {TESSIANT_KNOWLEDGE_BLOCKS.map((block) => {
           const blockInsights = insights.filter((item) => item.knowledgeBlockId === block.id);
           const counts = summarizeBlockInsights(blockInsights);
-          const metrics = getKnowledgeBlockLiveMetrics(block.id, { mix, funnel, snapshot, state }).slice(0, 3);
-          const recent = blockInsights.filter((item) => item.reviewStatus === "pending").slice(0, 2);
+          const metric = getKnowledgeBlockLiveMetrics(block.id, { mix, funnel, snapshot, state })[0];
+          const pending = blockInsights.find((item) => item.reviewStatus === "pending");
 
           return (
             <Link key={block.id} href={`/pulse/knowledge/${block.id}`} className={styles.knowledgeCard} data-priority={block.priority}>
               <div className={styles.knowledgeCardTop}>
                 <span className={styles.knowledgeInitials}>{KNOWLEDGE_BLOCK_INITIALS[block.id] ?? "QP"}</span>
-                <span className="muted">{formatDate(block.updatedAt, true)}</span>
+                <span className="chip tabular">{counts.pending} pending</span>
               </div>
               <h2>{block.title}</h2>
               <p className={styles.knowledgePurpose}>{block.purpose}</p>
-
-              <div className={styles.knowledgeMetricStrip} aria-label={`${block.title} key metrics`}>
-                {metrics.map((metric) => (
-                  <div key={metric.label} className={styles.knowledgeMetric}>
-                    <span>{metric.label}</span>
-                    <b className="tabular">{metric.value}</b>
-                    {metric.hint ? <small>{metric.hint}</small> : null}
-                  </div>
-                ))}
-              </div>
-
-              <div className={styles.knowledgeCardFoot}>
-                <span>
-                  <b className="tabular">{counts.pending}</b> pending · <b className="tabular">{counts.total}</b> insights
-                </span>
-                <span className="muted">{block.priority}</span>
-              </div>
-              {recent.length ? (
-                <p className="muted" style={{ marginTop: 10, fontSize: 12.5 }}>
-                  Recent: {recent.map((item) => item.title).join(" · ")}
+              {metric ? (
+                <p>
+                  {metric.label}: <b className="tabular">{metric.value}</b>
+                  {metric.hint ? <span className="muted"> · {metric.hint}</span> : null}
                 </p>
               ) : null}
+              {pending ? <p className={styles.knowledgePurpose}>{pending.summary}</p> : null}
+              <div className={styles.knowledgeCardFoot}>
+                <span>
+                  <b className="tabular">{counts.total}</b> insights
+                </span>
+                <span className="muted">{formatDate(block.updatedAt, true)}</span>
+              </div>
             </Link>
           );
         })}

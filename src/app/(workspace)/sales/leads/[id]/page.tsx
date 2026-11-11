@@ -17,6 +17,8 @@ import TaskCard from "@/components/tasks/TaskCard";
 import LogInteractionModal from "@/components/leads/LogInteractionModal";
 import ComposeMessageModal from "@/components/leads/ComposeMessageModal";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
+import RelationshipIntelligence from "@/components/sales/RelationshipIntelligence";
+import { salesRelationshipIntel } from "@/lib/sales-relationship";
 import styles from "./profile.module.css";
 
 type Tab = "overview" | "activity" | "conversations" | "scans" | "tasks" | "notes";
@@ -84,6 +86,7 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
   const reports = events.filter((event) => event.kind === "report");
   const logins = events.filter((event) => event.kind === "login");
   const sources = [...new Set(events.map((event) => event.source))];
+  const relationship = salesRelationshipIntel(state, { leadId: lead.id });
   const filterKinds = ACTIVITY_GROUPS.find((group) => group.key === activityFilter)?.kinds ?? [];
   const timeline = filterKinds.length ? events.filter((event) => filterKinds.includes(event.kind)) : events;
   const grouped = timeline.reduce<{ day: string; items: typeof timeline }[]>((acc, event) => {
@@ -232,6 +235,11 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
 
           {tab === "overview" && (
             <div className={styles.stack}>
+              <section className="card">
+                <div className="card-body">
+                  <RelationshipIntelligence intel={relationship} variant="page" />
+                </div>
+              </section>
               <section className="card">
                 <div className="card-head">
                   <div>

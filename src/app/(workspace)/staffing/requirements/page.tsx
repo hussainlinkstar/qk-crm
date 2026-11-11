@@ -9,7 +9,7 @@ import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { formatDate, todayKey } from "@/lib/format";
-import { formatCandidateProgress, mapRequirementToOpsStage } from "@/lib/tessiant-insights";
+import { formatCandidateProgress, mapRequirementToOpsStage, verifiedAvailableMatchCount } from "@/lib/tessiant-insights";
 import {
   applyOpsBoardMove,
   boardColumns,
@@ -277,6 +277,7 @@ export default function RequirementsPage() {
                       const priorityValue = requirementPriority(req);
                       const overdue = req.outcome === "active" && req.stage !== "Placed" && req.startDate < todayKey();
                       const counts = requisitionCounts(state, req.id);
+                      const verified = verifiedAvailableMatchCount(state, req.id);
                       return (
                         <article
                           key={req.id}
@@ -303,6 +304,7 @@ export default function RequirementsPage() {
                           <div className={styles.boardMeta}>
                             <span className={`chip ${priorityValue === "high" ? "chip-ai" : ""}`}>{priorityValue}</span>
                             {overdue ? <span className="chip">Overdue</span> : <span className="muted tabular">{daysOpen(req)}d</span>}
+                            <span className={`chip tabular ${verified === 0 ? "chip-high" : ""}`}>{verified} verified</span>
                             <span className="muted">{formatCandidateProgress(counts)}</span>
                           </div>
                         </article>

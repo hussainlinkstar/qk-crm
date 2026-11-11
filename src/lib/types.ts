@@ -18,6 +18,10 @@ export type Priority = (typeof PRIORITIES)[number];
 
 export const LEAD_SOURCES = [
   "Referral",
+  "Associate introduction",
+  "SIA introduction",
+  "Inbound",
+  "Campaign",
   "Website",
   "Event",
   "Partner",
@@ -115,6 +119,8 @@ export interface Opportunity {
   /** Recognised / realised revenue when engagements complete. */
   recognisedRevenue: number | null;
   lostReason: string | null;
+  /** Copied from the originating lead when converted; otherwise recorded origin. */
+  source?: LeadSource | null;
   createdAt: string;
   updatedAt: string;
   closedAt: string | null;

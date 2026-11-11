@@ -38,13 +38,11 @@ function isSalesScopedTask(task: Task) {
 export function ActionWorkspace({
   title = "Activities",
   subtitle = "Follow-ups and ownership.",
-  askPrompt = "What activities are pending?",
   defaultOwnerMine = false,
   scope = "all",
 }: {
   title?: string;
   subtitle?: string;
-  askPrompt?: string;
   defaultOwnerMine?: boolean;
   /** When "sales", only tasks linked to leads/accounts/opportunities/contacts. */
   scope?: "all" | "sales";
@@ -53,7 +51,7 @@ export function ActionWorkspace({
   const pathname = usePathname();
   const params = useSearchParams();
   const { state, workspace } = useWorkspaceData();
-  const { openTaskForm, openTask, toast, askQiko } = useWorkspace();
+  const { openTaskForm, openTask, toast } = useWorkspace();
   const [layout, setLayout] = useState<"board" | "list">("board");
   const [owner, setOwner] = useState(defaultOwnerMine ? "me" : "");
   const [priority, setPriority] = useState<Priority | "">("");
@@ -123,6 +121,13 @@ export function ActionWorkspace({
   const useBoard = layout === "board" && view !== "dismissed";
 
   const relatedFor = (task: Task) => {
+    const reqMatch = task.description.match(/\[requirement:([^\]]+)\]/);
+    if (reqMatch) {
+      const requirement = state.tessiant?.requirements.find((item) => item.id === reqMatch[1]);
+      if (requirement) {
+        return task.description.includes("[pulse-insight:") ? `${requirement.title} · Pulse` : requirement.title;
+      }
+    }
     if (task.leadId) return workspace.leadById.get(task.leadId)?.name ?? null;
     if (task.opportunityId) {
       return (state.opportunities ?? []).find((item) => item.id === task.opportunityId)?.name ?? null;
@@ -153,9 +158,6 @@ export function ActionWorkspace({
           <p className="subtitle">{subtitle}</p>
         </div>
         <div className="page-actions">
-          <Button variant="secondary" icon="sparkles" className="mobile-icon-button" aria-label="Ask about tasks" onClick={() => askQiko(askPrompt)}>
-            <span className="mobile-icon-label">Ask Qiko</span>
-          </Button>
           <Button icon="plus" className="mobile-icon-button mobile-main-button" aria-label="New task" onClick={() => openTaskForm()}>
             <span className="mobile-icon-label">New task</span>
           </Button>
@@ -169,12 +171,19 @@ export function ActionWorkspace({
         <button type="button" className={view === "overdue" ? styles.summaryActive : undefined} onClick={() => setView(view === "overdue" ? "all" : "overdue")}>
           Overdue <b className={`tabular ${counts.overdue ? styles.overdueText : ""}`}>{counts.overdue}</b>
         </button>
-        <button type="button" className={view === "completed" ? styles.summaryActive : undefined} onClick={() => setView(view === "completed" ? "all" : "completed")}>
-          Done <b className="tabular">{counts.completed}</b>
-        </button>
-        <button type="button" className={view === "dismissed" ? styles.summaryActive : undefined} onClick={() => setView(view === "dismissed" ? "all" : "dismissed")}>
-          Dismissed <b className="tabular">{counts.dismissed}</b>
-        </button>
+        <select
+          className={`select ${styles.filter}`}
+          value={view === "completed" || view === "dismissed" ? view : ""}
+          onChange={(event) => {
+            const next = event.target.value as View | "";
+            setView(next === "completed" || next === "dismissed" ? next : "all");
+          }}
+          aria-label="Closed tasks"
+        >
+          <option value="">Closed…</option>
+          <option value="completed">Done ({counts.completed})</option>
+          <option value="dismissed">Dismissed ({counts.dismissed})</option>
+        </select>
       </section>
 
       <section className={styles.toolbar}>

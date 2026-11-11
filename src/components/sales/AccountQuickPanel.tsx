@@ -7,6 +7,7 @@ import { Drawer } from "@/components/ui/Overlay";
 import { EmptyState, useWorkspaceData } from "@/components/ui/bits";
 import { liveAssignments, resolveAssignmentAccountId } from "@/lib/assignments";
 import { opportunitiesForAccount } from "@/lib/sales-crm";
+import RecordInsightChip from "@/components/pulse/RecordInsightChip";
 import styles from "@/components/leads/Leads.module.css";
 
 export default function AccountQuickPanel({ accountId, onClose }: { accountId: string; onClose: () => void }) {
@@ -47,6 +48,8 @@ export default function AccountQuickPanel({ accountId, onClose }: { accountId: s
         </Link>
       }
     >
+      <RecordInsightChip accountId={account.id} />
+
       <div className={styles.panelMeta}>
         <span className="chip tabular">{openOpps.length} open opps</span>
         <span className="chip tabular">£{pipelineValue.toLocaleString("en-GB")}</span>

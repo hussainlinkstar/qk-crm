@@ -6,6 +6,8 @@ import { useMemo, useState } from "react";
 import { EmptyState, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import InsightCard from "@/components/pulse/InsightCard";
 import KnowledgeFlow from "@/components/pulse/KnowledgeFlow";
+import NetworkIntelligenceDashboard from "@/components/pulse/NetworkIntelligenceDashboard";
+import PulseShell from "@/components/pulse/PulseShell";
 import PulseSubnav from "@/components/pulse/PulseSubnav";
 import { formatDate } from "@/lib/format";
 import { getPulseSnapshot } from "@/lib/pulse-adapter";
@@ -45,19 +47,23 @@ export default function PulseKnowledgeDetailPage() {
 
   if (!state) {
     return (
-      <div className="page">
-        <SkeletonRows rows={4} height={80} />
-      </div>
+      <PulseShell>
+        <div className="page">
+          <SkeletonRows rows={4} height={80} />
+        </div>
+      </PulseShell>
     );
   }
 
   if (!block) {
     return (
-      <div className="page">
-        <EmptyState title="Unknown knowledge block">
-          <Link href="/pulse/knowledge">Back</Link>
-        </EmptyState>
-      </div>
+      <PulseShell>
+        <div className="page">
+          <EmptyState title="Unknown knowledge block">
+            <Link href="/pulse/knowledge">Back</Link>
+          </EmptyState>
+        </div>
+      </PulseShell>
     );
   }
 
@@ -69,8 +75,11 @@ export default function PulseKnowledgeDetailPage() {
   const showFunnelTrends = block.id === "augmentation" || block.id === "capability";
   const showCommercialTrends = block.id === "commercial";
 
+  const isNetwork = block.id === "network";
+
   return (
-    <div className="page">
+    <PulseShell>
+    <div className={`page ${styles.pulsePage}`}>
       <header className="page-head">
         <div>
           <p className="kicker">
@@ -89,6 +98,10 @@ export default function PulseKnowledgeDetailPage() {
 
       <PulseSubnav />
 
+      {isNetwork ? <NetworkIntelligenceDashboard state={state} insights={insights} block={block} /> : null}
+
+      {!isNetwork ? (
+      <>
       <div className={styles.tabs} role="tablist" aria-label="Knowledge block sections">
         {TABS.map((item) => (
           <button
@@ -422,7 +435,10 @@ export default function PulseKnowledgeDetailPage() {
           </div>
         </section>
       )}
+      </>
+      ) : null}
 
+      {!isNetwork ? (
       <details className={styles.advanced}>
         <summary>Advanced configuration</summary>
         <div className={styles.advancedBody}>
@@ -464,6 +480,8 @@ export default function PulseKnowledgeDetailPage() {
           </div>
         </div>
       </details>
+      ) : null}
     </div>
+    </PulseShell>
   );
 }

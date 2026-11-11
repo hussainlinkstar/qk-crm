@@ -8,10 +8,17 @@ import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { assignmentRoleTitle, assignmentStatusLabel, deriveAssignmentStatus } from "@/lib/assignments";
-import { formatDate, timeAgo } from "@/lib/format";
+import { addDays, formatDate, timeAgo } from "@/lib/format";
+import {
+  accountRelationshipStrip,
+  opportunityTypeFromInterest,
+  unpurchasedInterests,
+} from "@/lib/record-intelligence";
 import { client360 } from "@/lib/sales-crm";
 import OpportunityQuickPanel from "@/components/sales/OpportunityQuickPanel";
 import ContactQuickPanel from "@/components/sales/ContactQuickPanel";
+import RecordInsightChip from "@/components/pulse/RecordInsightChip";
+import salesStyles from "@/app/(workspace)/sales/sales.module.css";
 
 const TABS = [
   { key: "overview", label: "Overview" },
@@ -55,6 +62,8 @@ export default function Client360Page() {
 
   const { account, commercial } = view;
   const openOpps = view.openPipeline;
+  const people = accountRelationshipStrip(state, account.id);
+  const expansion = unpurchasedInterests(state, account.id);
 
   return (
     <div className="page">
@@ -93,11 +102,66 @@ export default function Client360Page() {
         </div>
       </header>
 
+      <RecordInsightChip accountId={account.id} />
+
       {view.founderDependency && (
         <div className="notice-banner" role="status">
           <div>
             <b>Relationship concentration</b>
             <div>Only a primary owner is set. Add a secondary owner to reduce single-person dependency.</div>
+          </div>
+        </div>
+      )}
+
+      {people.length > 0 && (
+        <div className={salesStyles.peopleStrip} aria-label="People Tessiant already has on this account">
+          {people.map((person) => (
+            <Link key={person.id} href={person.href} className={salesStyles.peopleChip}>
+              {person.label}
+              <small>{person.role}</small>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {expansion.length > 0 && (
+        <div className="notice-banner" role="status">
+          <div>
+            <b>Interest not purchased</b>
+            <div>Create a pipeline opportunity from a recorded offering interest. This is not realised revenue.</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+              {expansion.map((interest) => (
+                <Button
+                  key={interest}
+                  size="small"
+                  variant="secondary"
+                  onClick={() => {
+                    crm.createOpportunity({
+                      name: `${account.name} · ${interest}`,
+                      accountId: account.id,
+                      contactId: view.contacts[0]?.id ?? null,
+                      leadId: account.linkedLeadId ?? null,
+                      type: opportunityTypeFromInterest(interest),
+                      stage: "Qualification",
+                      amount: 0,
+                      currency: "GBP",
+                      expectedCloseDate: addDays(30),
+                      ownerId: account.primaryOwnerId,
+                      services: [interest],
+                      nextStep: "Qualify expansion (pipeline only)",
+                      source: "Existing client",
+                      agreedContractValue: null,
+                      expectedBilling: null,
+                      recognisedRevenue: null,
+                      lostReason: null,
+                    });
+                    toast("Pipeline opportunity created — not realised revenue", "success");
+                  }}
+                >
+                  Originate {interest}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       )}

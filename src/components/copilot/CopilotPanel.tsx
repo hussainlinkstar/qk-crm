@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { answerQuestion, SUGGESTED_QUESTIONS } from "@/lib/copilot";
+import { ASK_INTENTS, PULSE_ASK_INTENTS, answerQuestion, SUGGESTED_QUESTIONS } from "@/lib/copilot";
 import { crm } from "@/lib/crm-store";
 import { formatDateTime, initials } from "@/lib/format";
 import type { CopilotAnswer, Execution } from "@/lib/types";
@@ -23,18 +23,13 @@ export default function CopilotPanel({ initialQuestion, contextLeadId, onClose }
   const { state, workspace } = useWorkspaceData();
   const { session, openTaskForm, toast } = useWorkspace();
   const [leadContext, setLeadContext] = useState<string | null>(contextLeadId);
-  const [entries, setEntries] = useState<Entry[]>(() => (initialQuestion?.trim() && state ? [{ answer: answerQuestion(state, initialQuestion, contextLeadId), revealed: false }] : []));
+  const pathname = usePathname();
+  const [entries, setEntries] = useState<Entry[]>(() =>
+    initialQuestion?.trim() && state ? [{ answer: answerQuestion(state, initialQuestion, contextLeadId), revealed: true }] : [],
+  );
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Execution | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
-
-  const thinking = entries.some((entry) => !entry.revealed);
-
-  useEffect(() => {
-    if (!thinking) return;
-    const timer = window.setTimeout(() => setEntries((current) => current.map((entry) => ({ ...entry, revealed: true }))), 650);
-    return () => window.clearTimeout(timer);
-  }, [thinking]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -45,8 +40,8 @@ export default function CopilotPanel({ initialQuestion, contextLeadId, onClose }
 
   const ask = (question: string) => {
     const text = question.trim();
-    if (!text || thinking) return;
-    setEntries((current) => [...current, { answer: answerQuestion(state, text, leadContext), revealed: false }]);
+    if (!text) return;
+    setEntries((current) => [...current, { answer: answerQuestion(state, text, leadContext), revealed: true }]);
     setInput("");
   };
 
@@ -68,7 +63,11 @@ export default function CopilotPanel({ initialQuestion, contextLeadId, onClose }
     setPending(execution);
   };
 
-  const suggestions = contextLead ? [`Tell me everything about ${contextLead.name}`, ...SUGGESTED_QUESTIONS.slice(3)] : SUGGESTED_QUESTIONS;
+  const intents = contextLead
+    ? [{ label: "This record", question: `Tell me everything about ${contextLead.name}` }, ...(pathname.startsWith("/pulse") ? PULSE_ASK_INTENTS : ASK_INTENTS).slice(0, 3)]
+    : pathname.startsWith("/pulse")
+      ? PULSE_ASK_INTENTS
+      : ASK_INTENTS;
 
   return (
     <Drawer
@@ -93,32 +92,24 @@ export default function CopilotPanel({ initialQuestion, contextLeadId, onClose }
                 <Icon name="sparkles" size={22} />
               </span>
               <h3>How can I help, {session.name.split(" ")[0]}?</h3>
-              <p>I answer from your Qiko Core workspace only — leads, activity, scans and tasks. Facts are marked <b className="evidence-fact">Confirmed</b>; recommendations are marked <b className="evidence-ai">AI inference</b>.</p>
+              <p>I answer from Tessiant records in this workspace. Facts are marked <b className="evidence-fact">Confirmed</b>; recommendations are marked <b className="evidence-ai">AI inference</b>.</p>
               <div className={styles.starters}>
-                {suggestions.map((question) => (
-                  <button type="button" key={question} onClick={() => ask(question)}>
-                    <Icon name="sparkles" size={13} />
-                    {question}
+                {intents.map((intent) => (
+                  <button type="button" key={intent.label} onClick={() => ask(intent.question)}>
+                    {intent.label}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {entries.map(({ answer, revealed }) => (
+          {entries.map(({ answer }) => (
             <div key={answer.id} className={styles.turn}>
               <div className={styles.question}>
                 <span>{answer.question}</span>
                 <span className="avatar avatar-sm">{initials(session.name)}</span>
               </div>
-              {!revealed ? (
-                <div className={styles.thinking} aria-label="Qiko is thinking">
-                  <span className={styles.orbSmall}><Icon name="sparkles" size={12} /></span>
-                  <i /><i /><i />
-                  <small>Checking leads, activity and tasks…</small>
-                </div>
-              ) : (
-                <article className={styles.answer}>
+              <article className={styles.answer}>
                   <section>
                     <p className="kicker">Answer</p>
                     <p className={styles.answerText}>{answer.answer}</p>
@@ -158,7 +149,6 @@ export default function CopilotPanel({ initialQuestion, contextLeadId, onClose }
                   )}
                   <p className={styles.footnote}>Grounded in demo workspace data · {formatDateTime(answer.at)}</p>
                 </article>
-              )}
             </div>
           ))}
         </div>
@@ -174,7 +164,7 @@ export default function CopilotPanel({ initialQuestion, contextLeadId, onClose }
           )}
           <div className={styles.inputRow}>
             <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask about leads, scans, follow-ups…" aria-label="Ask Qiko a question" data-autofocus />
-            <Button type="submit" size="small" icon="arrowUp" aria-label="Send question" disabled={!input.trim() || thinking} />
+            <Button type="submit" size="small" icon="arrowUp" aria-label="Send question" disabled={!input.trim()} />
           </div>
         </form>
       </div>

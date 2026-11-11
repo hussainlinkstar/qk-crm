@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { crm, type TaskInput } from "@/lib/crm-store";
+import { insightIdFromTask, requirementIdFromTask } from "@/lib/pulse-journey";
 import { dueLabel, formatDateTime, timeAgo } from "@/lib/format";
 import { PRIORITIES, type Priority, type Task, type TaskStatus } from "@/lib/types";
 import Button from "@/components/ui/Button";
@@ -31,6 +32,8 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
   const { toast, askQiko } = useWorkspace();
   const [draft, setDraft] = useState<TaskInput>({ title: task.title, description: task.description, priority: task.priority, due: task.due, ownerId: task.ownerId, leadId: task.leadId });
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [resultNote, setResultNote] = useState("");
+  const [awaitingResult, setAwaitingResult] = useState(false);
   if (!state || !workspace) return null;
 
   const lead = task.leadId ? workspace.leadById.get(task.leadId) : undefined;
@@ -38,6 +41,12 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
   const dirty = (Object.keys(draft) as (keyof TaskInput)[]).some((key) => draft[key] !== task[key as keyof Task]);
   const due = dueLabel(task.due, task.status);
   const closed = task.status === "completed" || task.status === "dismissed";
+  const pulseInsightId = insightIdFromTask(task.description);
+  const requirementId = requirementIdFromTask(task.description);
+  const requirement = requirementId ? state.tessiant?.requirements.find((item) => item.id === requirementId) : null;
+  const pulseOutcome = pulseInsightId
+    ? state.tessiant?.pulse?.outcomes.find((item) => item.insightId === pulseInsightId)
+    : null;
 
   const setStatus = (status: TaskStatus, message: string) => {
     crm.setTaskStatus(task.id, status);
@@ -68,8 +77,38 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
             </Button>
           )}
           {task.status === "pending" && <Button variant="secondary" icon="zap" onClick={() => setStatus("in_progress", "Task started")}>Start</Button>}
-          {!closed && <Button variant="ghost" onClick={() => setStatus("dismissed", "Task dismissed")}>Dismiss</Button>}
-          {!closed && <Button icon="checkCircle" onClick={() => { if (dirty) crm.updateTask(task.id, draft); setStatus("completed", "Task completed"); }}>Mark completed</Button>}
+          {!closed && <Button variant="ghost" onClick={() => setStatus("dismissed", pulseInsightId ? "Recommendation dismissed and recorded" : "Task dismissed")}>Dismiss</Button>}
+          {!closed && (
+            <Button
+              icon="checkCircle"
+              onClick={() => {
+                if (dirty) crm.updateTask(task.id, draft);
+                if (pulseInsightId) {
+                  if (!resultNote.trim()) {
+                    setAwaitingResult(true);
+                    toast("Record the result before completing — this is not commercial value", "info");
+                    return;
+                  }
+                  crm.recordPulseOutcome({
+                    insightId: pulseInsightId,
+                    taskId: task.id,
+                    status: "completed",
+                    summary: resultNote.trim(),
+                    realisedRevenue: null,
+                    pipelinePotential: null,
+                    estimatedTimeSavedHours: null,
+                    qualitativeBenefit: null,
+                    sourceEntityIds: requirementId ? [requirementId] : [],
+                  });
+                  toast("Result recorded in Pulse. Value can be added separately if evidence exists.");
+                  return;
+                }
+                setStatus("completed", "Task completed");
+              }}
+            >
+              Mark completed
+            </Button>
+          )}
           {closed && <Button variant="secondary" icon="undo" onClick={() => setStatus("pending", "Task reopened")}>Reopen</Button>}
         </>
       }
@@ -82,6 +121,32 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
         </span>
         {task.origin === "suggestion" && <AiChip />}
       </div>
+
+      {(requirement || pulseInsightId) && (
+        <section className={styles.section}>
+          <h3 className="kicker">Linked records</h3>
+          {requirement ? (
+            <Link href={`/staffing/requirements/${requirement.id}`} className={styles.leadCard} onClick={onClose}>
+              <span className="avatar">RQ</span>
+              <span className={styles.leadCardText}>
+                <b>{requirement.title}</b>
+                <small>Client requirement · {requirement.stage}</small>
+              </span>
+              <Icon name="chevronRight" size={16} />
+            </Link>
+          ) : null}
+          {pulseInsightId ? (
+            <Link href="/pulse/insights" className={styles.leadCard} onClick={onClose}>
+              <span className="avatar">P</span>
+              <span className={styles.leadCardText}>
+                <b>Pulse insight</b>
+                <small>{pulseInsightId}{pulseOutcome ? ` · ${pulseOutcome.status.replace("_", " ")}` : ""}</small>
+              </span>
+              <Icon name="chevronRight" size={16} />
+            </Link>
+          ) : null}
+        </section>
+      )}
 
       {lead && (
         <Link href={`/sales/leads/${lead.id}`} className={styles.leadCard} onClick={onClose}>
@@ -145,6 +210,44 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
           <EvidenceList items={task.evidence} />
         </section>
       )}
+
+      {pulseInsightId && !closed ? (
+        <section className={styles.section}>
+          <h3 className="kicker">Record result</h3>
+          <p className={styles.historyNote}>
+            Completing this Pulse action records an operational result. It does not book placement or revenue.
+          </p>
+          <label className="field">
+            <span>What did you do?</span>
+            <textarea
+              className="textarea"
+              rows={3}
+              value={resultNote}
+              onChange={(event) => setResultNote(event.target.value)}
+              placeholder="e.g. Re-verified Jonas Berg (limited) and opened sourcing to two additional SAP architects."
+            />
+          </label>
+          {awaitingResult && !resultNote.trim() ? <p className="muted">Add a short result before completing.</p> : null}
+        </section>
+      ) : null}
+
+      {pulseOutcome ? (
+        <section className={styles.section}>
+          <h3 className="kicker">Pulse outcome</h3>
+          <p>{pulseOutcome.summary}</p>
+          <p className={styles.historyNote}>
+            {pulseOutcome.status.replace("_", " ")}
+            {pulseOutcome.value.realisedRevenue != null
+              ? ` · realised £${pulseOutcome.value.realisedRevenue.toLocaleString("en-GB")}`
+              : " · no commercial value recorded"}
+          </p>
+          {pulseOutcome.status === "completed" ? (
+            <Link href="/pulse/value" className="text-link" onClick={onClose}>
+              Record value separately if evidence exists
+            </Link>
+          ) : null}
+        </section>
+      ) : null}
 
       {lead && (
         <section className={styles.section}>

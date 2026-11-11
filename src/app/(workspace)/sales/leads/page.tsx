@@ -257,8 +257,8 @@ function LeadsView() {
             {LEAD_STATUSES.map((columnStatus) => {
               const items = filtered.filter((lead) => lead.status === columnStatus);
               return (
-                <div key={columnStatus} className={styles.leadColumn}>
-                  <div className={styles.leadColumnHead}>
+                <div key={columnStatus} className={styles.boardColumn}>
+                  <div className={styles.boardColumnHead}>
                     <b>{columnStatus}</b>
                     <span className="chip tabular">{items.length}</span>
                   </div>

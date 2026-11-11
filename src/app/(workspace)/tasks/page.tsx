@@ -13,12 +13,7 @@ export default function MyTasksPage() {
         </div>
       }
     >
-      <ActionWorkspace
-        title="My Tasks"
-        subtitle="Board-first task management."
-        askPrompt="What tasks need my attention?"
-        defaultOwnerMine
-      />
+      <ActionWorkspace title="My Tasks" subtitle="Board-first task management." defaultOwnerMine />
     </Suspense>
   );
 }

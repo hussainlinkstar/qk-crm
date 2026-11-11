@@ -1,0 +1,137 @@
+.block {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--well);
+}
+
+.blockCard {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.head h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.blockCard .head h3 {
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.why {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.facts {
+  display: grid;
+  gap: 8px;
+}
+
+.facts dt {
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.facts dd {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.link {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.link:hover {
+  border-color: var(--brand);
+}
+
+.link small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.rec {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  background: var(--surface);
+}
+
+.recHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.rec p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.recSource {
+  margin: 6px 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.toneStrong {
+  color: var(--brand-ink, var(--brand));
+}
+
+.toneDeveloping {
+  color: var(--ink);
+}
+
+.toneLimited,
+.toneUnknown {
+  color: var(--muted);
+}

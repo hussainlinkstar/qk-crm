@@ -43,6 +43,7 @@ import type {
   ShortlistStatus,
   TessiantStateSlice,
 } from "./tessiant-types";
+import { findTaskForInsight, insightIdFromTask } from "./pulse-journey";
 import { addDays, todayKey, uid } from "./format";
 
 const STORAGE_KEY = "qiko-core-crm";
@@ -317,6 +318,8 @@ export interface TaskInput {
   due: string | null;
   ownerId: string | null;
   leadId: string | null;
+  accountId?: string | null;
+  opportunityId?: string | null;
   status?: TaskStatus;
 }
 
@@ -652,6 +655,7 @@ export const crm = {
       ownerId: lead.ownerId,
       services: input.services ?? (lead.serviceInterest ? [lead.serviceInterest] : []),
       nextStep: "Qualify scope and stakeholders",
+      source: lead.source,
       agreedContractValue: null,
       expectedBilling: null,
       recognisedRevenue: null,
@@ -799,6 +803,8 @@ export const crm = {
         due: input.due,
         ownerId: input.ownerId,
         leadId: input.leadId,
+        accountId: input.accountId ?? null,
+        opportunityId: input.opportunityId ?? null,
         origin,
         evidence,
         history: [{ at, actorId: "me", action: origin === "suggestion" ? "Accepted Qiko suggestion" : origin === "copilot" ? "Created from Ask Qiko" : "Created task" }],
@@ -846,6 +852,36 @@ export const crm = {
 
   setTaskStatus(taskId: string, status: TaskStatus) {
     crm.updateTask(taskId, { status });
+    const task = readCrm()?.tasks.find((item) => item.id === taskId);
+    const insightId = task ? insightIdFromTask(task.description) : null;
+    if (!task || !insightId) return;
+    const existing = readCrm()?.tessiant?.pulse?.outcomes.find((item) => item.insightId === insightId);
+    if (status === "completed" && (!existing || existing.status === "pending")) {
+      crm.recordPulseOutcome({
+        insightId,
+        taskId,
+        status: "completed",
+        summary: existing?.summary?.trim() || "Operational follow-up completed. Commercial value not recorded.",
+        realisedRevenue: null,
+        pipelinePotential: null,
+        estimatedTimeSavedHours: null,
+        qualitativeBenefit: existing?.value.qualitativeBenefit ?? null,
+        sourceEntityIds: existing?.value.sourceEntityIds ?? [],
+      });
+    }
+    if (status === "dismissed" && (!existing || existing.status === "pending")) {
+      crm.recordPulseOutcome({
+        insightId,
+        taskId,
+        status: "not_pursued",
+        summary: existing?.summary?.trim() || "Recommendation dismissed. No commercial value assumed.",
+        realisedRevenue: null,
+        pipelinePotential: null,
+        estimatedTimeSavedHours: null,
+        qualitativeBenefit: null,
+        sourceEntityIds: existing?.value.sourceEntityIds ?? [],
+      });
+    }
   },
 
   deleteTask(taskId: string) {
@@ -1313,6 +1349,85 @@ export const crm = {
       }),
     );
     return added;
+  },
+
+  /** User-approved shortlist from a recommended network associate. Never auto-contacts. */
+  shortlistAssociate(requirementId: string, associateId: string): { ok: true; already?: boolean } | { ok: false; error: string } {
+    const current = readCrm();
+    const slice = current?.tessiant;
+    const requirement = slice?.requirements.find((item) => item.id === requirementId);
+    const associate = slice?.associates.find((item) => item.id === associateId);
+    if (!slice || !requirement || !associate) return { ok: false, error: "Associate or requirement not found" };
+
+    const existing = slice.candidates.find((item) => item.requirementId === requirementId && item.associateId === associateId);
+    const progressed = new Set<ShortlistStatus>([
+      "availability_confirmed",
+      "shortlisted",
+      "submitted_to_client",
+      "interview",
+      "offer",
+      "placed",
+    ]);
+    if (existing && progressed.has(existing.shortlistStatus)) {
+      return { ok: true, already: true };
+    }
+    if (existing) {
+      this.setCandidateStatus(existing.id, "shortlisted");
+      return { ok: true };
+    }
+
+    const at = nowIso();
+    const match = matchAssociateToRequirement(associate, requirement, {
+      placements: slice.placements,
+      requirements: slice.requirements,
+    });
+    update((s) =>
+      withTessiant(s, (draft) => {
+        const candidate: RequirementCandidate = {
+          id: uid("cand"),
+          requirementId,
+          associateId,
+          matchScore: match.matchScore,
+          matchReasons: match.matchReasons,
+          matchGaps: match.matchGaps,
+          matchFlags: match.matchFlags,
+          shortlistStatus: "shortlisted",
+          rankOverride: null,
+          overrideReason: null,
+          sourcedExternally: false,
+          validation: {
+            availabilityConfirmed: false,
+            costConfirmed: false,
+            indicativeCost: associate.rate ?? null,
+            notes: "",
+            verifiedAt: null,
+          },
+          interview: { heldAt: null, outcome: "pending", summary: "" },
+          quotedClientRate: null,
+          createdAt: at,
+          updatedAt: at,
+        };
+        return pushDomainEvent(
+          { ...draft, candidates: [candidate, ...draft.candidates] },
+          createDomainEvent({
+            eventId: `de_cand_short_${candidate.id}`,
+            eventType: "candidate.shortlisted",
+            entityType: "candidate",
+            entityId: candidate.id,
+            timestamp: at,
+            actor: "You",
+            payload: {
+              requirementId,
+              associateId,
+              matchScore: match.matchScore,
+              accountId: requirement.accountId,
+              summary: `Shortlisted · ${associate.name}`,
+            },
+          }),
+        );
+      }),
+    );
+    return { ok: true };
   },
 
   setCandidateStatus(candidateId: string, shortlistStatus: ShortlistStatus, extras?: Partial<RequirementCandidate>) {
@@ -2595,15 +2710,45 @@ export const crm = {
     recommendedAction: { label: string; suggestedOwnerId?: string };
     evidence: { entityType: string; entityId: string; href?: string }[];
   }): string {
-    const existingReview = readCrm()?.tessiant?.pulse?.reviews?.[insight.id];
+    const current = readCrm();
+    const existingReview = current?.tessiant?.pulse?.reviews?.[insight.id];
     if (existingReview?.decision === "accepted" && existingReview.taskId) {
-      return existingReview.taskId;
+      const linked = current?.tasks.find((task) => task.id === existingReview.taskId);
+      if (linked) return existingReview.taskId;
     }
+    const reused = current ? findTaskForInsight(current, insight.id) : undefined;
     const accountEvidenceId = insight.evidence.find((item) => item.entityType === "account")?.entityId;
-    const leadId = accountEvidenceId
-      ? readCrm()?.tessiant?.accounts.find((account) => account.id === accountEvidenceId)?.linkedLeadId ?? null
-      : null;
     const reqEvidence = insight.evidence.find((item) => item.entityType === "requirement");
+    const requirement = reqEvidence
+      ? current?.tessiant?.requirements.find((item) => item.id === reqEvidence.entityId)
+      : undefined;
+    const accountId =
+      requirement?.accountId ??
+      accountEvidenceId ??
+      null;
+    const leadId = accountId
+      ? current?.tessiant?.accounts.find((account) => account.id === accountId)?.linkedLeadId ?? null
+      : null;
+    const writeReview = (taskId: string) => {
+      const at = nowIso();
+      update((s) =>
+        withTessiant(s, (slice) => ({
+          ...slice,
+          pulse: {
+            reviews: {
+              ...(slice.pulse?.reviews ?? {}),
+              [insight.id]: { insightId: insight.id, decision: "accepted", at, reviewerId: "me", taskId },
+            },
+            outcomes: slice.pulse?.outcomes ?? [],
+            attributedSourceKeys: slice.pulse?.attributedSourceKeys ?? [],
+          },
+        })),
+      );
+    };
+    if (reused) {
+      writeReview(reused.id);
+      return reused.id;
+    }
     const description = [
       `[pulse-insight:${insight.id}]`,
       reqEvidence ? `[requirement:${reqEvidence.entityId}]` : "",
@@ -2623,31 +2768,20 @@ export const crm = {
           d.setDate(d.getDate() + 2);
           return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
         })(),
-        ownerId: insight.recommendedAction.suggestedOwnerId ?? "me",
+        ownerId: "me",
         leadId: leadId ?? null,
+        accountId,
+        opportunityId: requirement?.linkedOpportunityId ?? null,
       },
       "suggestion",
       insight.evidence.slice(0, 6).map((item) => ({
-        label: `${item.entityType}:${item.entityId}`,
-        detail: item.href,
+        label: item.href ? `${item.entityType}` : `${item.entityType}:${item.entityId}`,
+        detail: item.href ?? (item.entityId !== "none" ? item.entityId : undefined),
         source: "Tessiant Pulse",
         kind: "fact" as const,
       })),
     );
-    const at = nowIso();
-    update((s) =>
-      withTessiant(s, (slice) => ({
-        ...slice,
-        pulse: {
-          reviews: {
-            ...(slice.pulse?.reviews ?? {}),
-            [insight.id]: { insightId: insight.id, decision: "accepted", at, reviewerId: "me", taskId },
-          },
-          outcomes: slice.pulse?.outcomes ?? [],
-          attributedSourceKeys: slice.pulse?.attributedSourceKeys ?? [],
-        },
-      })),
-    );
+    writeReview(taskId);
     return taskId;
   },
 
@@ -2745,7 +2879,75 @@ export const crm = {
     );
     if (input.taskId && input.status === "completed") {
       const task = readCrm()?.tasks.find((item) => item.id === input.taskId);
-      if (task && task.status !== "completed") crm.setTaskStatus(input.taskId, "completed");
+      if (task && task.status !== "completed") crm.updateTask(input.taskId, { status: "completed" });
     }
+    if (input.taskId && input.status === "not_pursued") {
+      const task = readCrm()?.tasks.find((item) => item.id === input.taskId);
+      if (task && task.status !== "dismissed" && task.status !== "completed") {
+        crm.updateTask(input.taskId, { status: "dismissed" });
+      }
+    }
+  },
+
+  recordPulseValue(input: {
+    insightId: string;
+    realisedRevenue?: number | null;
+    pipelinePotential?: number | null;
+    estimatedTimeSavedHours?: number | null;
+    qualitativeBenefit?: string | null;
+    notes?: string;
+    sourceEntityIds?: string[];
+  }): boolean {
+    const pulse = readCrm()?.tessiant?.pulse;
+    const outcome = pulse?.outcomes.find((item) => item.insightId === input.insightId);
+    if (!outcome || outcome.status !== "completed") return false;
+    const requirementId =
+      outcome.value.sourceEntityIds.find((id) => id.startsWith("req_")) ??
+      input.sourceEntityIds?.find((id) => id.startsWith("req_")) ??
+      null;
+    const hasPlacement = requirementId
+      ? (readCrm()?.tessiant?.placements ?? []).some(
+          (placement) =>
+            placement.requirementId === requirementId &&
+            placement.status !== "closed" &&
+            (placement.status === "confirmed" || placement.status === "agreed"),
+        )
+      : false;
+    crm.recordPulseOutcome({
+      insightId: input.insightId,
+      taskId: outcome.taskId,
+      status: "completed",
+      summary: outcome.summary,
+      realisedRevenue: hasPlacement ? input.realisedRevenue ?? null : null,
+      pipelinePotential: input.pipelinePotential ?? null,
+      estimatedTimeSavedHours: input.estimatedTimeSavedHours ?? null,
+      qualitativeBenefit: input.qualitativeBenefit ?? outcome.value.qualitativeBenefit,
+      sourceEntityIds: input.sourceEntityIds ?? outcome.value.sourceEntityIds,
+    });
+    if (input.notes?.trim()) {
+      update((s) =>
+        withTessiant(s, (slice) => {
+          const current = slice.pulse ?? emptyPulse();
+          return {
+            ...slice,
+            pulse: {
+              ...current,
+              outcomes: current.outcomes.map((item) =>
+                item.insightId === input.insightId
+                  ? {
+                      ...item,
+                      value: {
+                        ...item.value,
+                        notes: input.notes!.trim(),
+                      },
+                    }
+                  : item,
+              ),
+            },
+          };
+        }),
+      );
+    }
+    return true;
   },
 };

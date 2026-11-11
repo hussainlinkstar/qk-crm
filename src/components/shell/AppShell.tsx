@@ -39,7 +39,7 @@ const NAV: NavItem[] = [
     icon: "home",
     match: (path) => path === "/" || path.startsWith("/tasks"),
     children: [
-      { href: "/", label: "Overview", match: (path) => path === "/" },
+      { href: "/", label: "Home", match: (path) => path === "/" },
       { href: "/tasks", label: "My Tasks", match: (path) => path.startsWith("/tasks") },
     ],
   },
@@ -71,7 +71,7 @@ const NAV: NavItem[] = [
 ];
 
 function pageTitle(pathname: string): string {
-  if (pathname === "/") return "Overview";
+  if (pathname === "/") return "Home";
   if (pathname.startsWith("/tasks")) return "My Tasks";
   if (pathname.startsWith("/pulse/knowledge")) return "Knowledge";
   if (pathname.startsWith("/pulse/insights")) return "Insights";
@@ -403,10 +403,6 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
           </header>
           <main className={styles.content}>{children}</main>
         </div>
-
-        <button type="button" className={styles.fab} onClick={() => api.askQiko()} aria-label="Ask Qiko">
-          <Icon name="sparkles" size={20} />
-        </button>
 
         <div className={styles.toasts} aria-live="polite">
           {toasts.map((item) => (

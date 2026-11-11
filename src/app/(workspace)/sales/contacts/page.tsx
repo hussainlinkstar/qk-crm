@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import ContactQuickPanel from "@/components/sales/ContactQuickPanel";
 import { isOpen, sortTasks } from "@/lib/insights";
@@ -9,8 +10,29 @@ import { initials, timeAgo } from "@/lib/format";
 import styles from "../leads/leads.module.css";
 
 export default function ContactsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="page">
+          <SkeletonRows rows={4} height={56} />
+        </div>
+      }
+    >
+      <ContactsView />
+    </Suspense>
+  );
+}
+
+function ContactsView() {
   const { state } = useWorkspaceData();
-  const [previewId, setPreviewId] = useState<string | null>(null);
+  const router = useRouter();
+  const params = useSearchParams();
+  const contactParam = params.get("contact");
+  const [previewId, setPreviewId] = useState<string | null>(contactParam);
+
+  useEffect(() => {
+    if (contactParam) setPreviewId(contactParam);
+  }, [contactParam]);
 
   const rows = useMemo(() => {
     if (!state) return [];
@@ -118,7 +140,19 @@ export default function ContactsPage() {
         </div>
       </section>
 
-      {previewId && <ContactQuickPanel contactId={previewId} onClose={() => setPreviewId(null)} />}
+      {previewId && (
+        <ContactQuickPanel
+          contactId={previewId}
+          onClose={() => {
+            setPreviewId(null);
+            if (contactParam) {
+              const next = new URLSearchParams(params.toString());
+              next.delete("contact");
+              router.replace(`/sales/contacts${next.size ? `?${next}` : ""}`, { scroll: false });
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { EmptyState, MemberAvatar, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
@@ -27,11 +27,16 @@ export default function OpportunitiesPipelinePage() {
   const router = useRouter();
   const params = useSearchParams();
   const accountFilter = params.get("account");
+  const opportunityParam = params.get("opportunity");
   const [layout, setLayout] = useState<"board" | "list">("board");
   const [dragOver, setDragOver] = useState<OpportunityStage | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [pending, setPending] = useState<{ opportunity: Opportunity; stage: OpportunityStage } | null>(null);
-  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(opportunityParam);
+
+  useEffect(() => {
+    if (opportunityParam) setPreviewId(opportunityParam);
+  }, [opportunityParam]);
   const [createRequirement, setCreateRequirement] = useState(true);
 
   const opportunities = useMemo(() => {
@@ -292,7 +297,19 @@ export default function OpportunitiesPipelinePage() {
         </div>
       )}
 
-      {previewId && <OpportunityQuickPanel opportunityId={previewId} onClose={() => setPreviewId(null)} />}
+      {previewId && (
+        <OpportunityQuickPanel
+          opportunityId={previewId}
+          onClose={() => {
+            setPreviewId(null);
+            if (opportunityParam) {
+              const next = new URLSearchParams(params.toString());
+              next.delete("opportunity");
+              router.replace(`/sales/pipeline${next.size ? `?${next}` : ""}`, { scroll: false });
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

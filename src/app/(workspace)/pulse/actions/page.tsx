@@ -8,19 +8,10 @@ import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { formatDate } from "@/lib/format";
 import PulseSubnav from "@/components/pulse/PulseSubnav";
+import { insightIdFromTask, requirementIdFromTask } from "@/lib/pulse-journey";
 import { generateTessiantInsights } from "@/lib/tessiant-pulse-rules";
 import type { InsightEvidence, TessiantInsight } from "@/lib/tessiant-pulse-types";
 import styles from "../pulse.module.css";
-
-function insightIdFromTask(description: string) {
-  const match = description.match(/\[pulse-insight:([^\]]+)\]/);
-  return match?.[1] ?? null;
-}
-
-function requirementIdFromTask(description: string) {
-  const match = description.match(/\[requirement:([^\]]+)\]/);
-  return match?.[1] ?? null;
-}
 
 function entityLinks(insight: TessiantInsight | undefined, requirementId: string | null) {
   const links: { label: string; href: string }[] = [];
@@ -84,7 +75,7 @@ export default function PulseActionsPage() {
             <span className="chip">To-dos</span>
           </div>
           <h1>Pulse to-dos</h1>
-          <p className="subtitle">Tasks created from accepted insights — status, owner, due date, and source records.</p>
+          <p className="subtitle">Tasks created from accepted insights — complete the action, then record value separately if evidence exists.</p>
         </div>
         <div className="page-actions">
           <Link href="/pulse/insights">
@@ -189,29 +180,41 @@ export default function PulseActionsPage() {
                             <Button size="small" variant="secondary" onClick={() => openTask(task.id)}>
                               Open
                             </Button>
-                            {task.status !== "completed" && (
+                            <Link href="/tasks" className="text-link">
+                              My Tasks
+                            </Link>
+                            {task.status !== "completed" && task.status !== "dismissed" && (
                               <Button
                                 size="small"
                                 icon="check"
                                 onClick={() => {
-                                  const text = summary[task.id]?.trim() || "Follow-up completed from Pulse";
+                                  const text = summary[task.id]?.trim();
+                                  if (!text) {
+                                    toast("Record what you did before completing", "info");
+                                    return;
+                                  }
                                   crm.recordPulseOutcome({
                                     insightId: insightId ?? `orphan_${task.id}`,
                                     taskId: task.id,
                                     status: "completed",
                                     summary: text,
                                     realisedRevenue: null,
-                                    pipelinePotential: insight?.ruleId === "possible_cross_sell" ? 2500 : null,
-                                    estimatedTimeSavedHours: 1.5,
-                                    qualitativeBenefit: "Resource manager follow-up completed",
+                                    pipelinePotential: null,
+                                    estimatedTimeSavedHours: null,
+                                    qualitativeBenefit: null,
                                     sourceEntityIds: insight?.evidence.map((e) => e.entityId) ?? [],
                                   });
-                                  toast("Outcome recorded — value categories kept separate");
+                                  toast("Operational result recorded — commercial value not assumed");
                                 }}
                               >
                                 Complete
                               </Button>
                             )}
+                            {outcome?.status === "completed" ? (
+                              <Link href="/pulse/value" className="text-link">
+                                Record value
+                              </Link>
+                            ) : null}
                           </div>
                           {task.status !== "completed" && (
                             <input
