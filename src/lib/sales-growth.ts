@@ -2,7 +2,6 @@
 // No inferred personal ties, no invented prospects, no external research.
 
 import { liveAssignments, resolveAssignmentAccountId } from "./assignments";
-import { DEMO_RELATIONSHIP_EXAMPLE } from "./sales-relationship";
 import { addDays, todayKey } from "./format";
 import type { CrmState, LeadSource, Opportunity } from "./types";
 import type { Placement } from "./tessiant-types";
@@ -174,19 +173,12 @@ function networkConnectionInsight(state: CrmState, accountId: string, today: str
   );
   if (open.length === 0) return null;
 
-  const labelled = placements.find(
-    (item) =>
-      item.id === DEMO_RELATIONSHIP_EXAMPLE.placementId &&
-      accountId === DEMO_RELATIONSHIP_EXAMPLE.accountId,
-  );
-  const placement = labelled ?? placements.find((item) => liveAssignments(state, today).some((live) => live.id === item.id)) ?? placements[0];
+  const placement = placements.find((item) => liveAssignments(state, today).some((live) => live.id === item.id)) ?? placements[0];
   const associate = associateName(state, placement.associateId);
   if (!associate) return null;
   const opportunity =
-    open.find((item) => item.id === DEMO_RELATIONSHIP_EXAMPLE.opportunityId) ??
     open.find((item) => item.id !== placement.requirementId) ??
     open[0];
-  const demo = Boolean(labelled);
   return {
     id: `growth:network:${accountId}:${placement.id}`,
     kind: "network_connection",
@@ -194,9 +186,7 @@ function networkConnectionInsight(state: CrmState, accountId: string, today: str
     accountName: accountName(state, accountId),
     detected: `${associate} has a recorded connection to ${accountName(state, accountId)}.`,
     risk: `Use the recorded assignment as context for ${opportunity.name} — not an inferred personal introduction.`,
-    evidence: demo
-      ? `Demo example: ${associate} ↔ ${accountName(state, accountId)} ↔ ${opportunity.name}. Recorded assignment only.`
-      : `${associate} assignment on record. Open opportunity: ${opportunity.name}.`,
+    evidence: `${associate} assignment on record. Open opportunity: ${opportunity.name}.`,
     actionLabel: "Assign follow-up",
     actions: ["review", "followup"],
     opportunityId: opportunity.id,
@@ -211,8 +201,6 @@ function preferredInsightForAccount(state: CrmState, accountId: string, today: s
   const owner = singleOwnerInsight(state, accountId);
   const network = networkConnectionInsight(state, accountId, today);
   const staffing = staffingWithoutConsultingInsight(state, accountId, today);
-  const labelled = network?.assignmentId === DEMO_RELATIONSHIP_EXAMPLE.placementId;
-  if (labelled) return network;
   if (owner) return owner;
   if (staffing) return staffing;
   return network;
@@ -224,16 +212,13 @@ export function salesGrowthInsights(state: CrmState, today = todayKey()): Growth
     .map((account) => preferredInsightForAccount(state, account.id, today))
     .filter((item): item is GrowthInsight => Boolean(item));
 
-  const labelled = candidates.filter((item) => item.assignmentId === DEMO_RELATIONSHIP_EXAMPLE.placementId);
   const owners = candidates.filter((item) => item.kind === "single_owner");
   const staffing = candidates.filter((item) => item.kind === "staffing_no_consulting");
-  const other = candidates.filter(
-    (item) => item.kind === "network_connection" && item.assignmentId !== DEMO_RELATIONSHIP_EXAMPLE.placementId,
-  );
+  const network = candidates.filter((item) => item.kind === "network_connection");
 
   const recs: GrowthInsight[] = [];
   const used = new Set<string>();
-  for (const list of [owners, labelled, staffing, other]) {
+  for (const list of [owners, staffing, network]) {
     for (const item of list) {
       if (used.has(item.accountId)) continue;
       used.add(item.accountId);

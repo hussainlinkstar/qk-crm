@@ -81,8 +81,27 @@ export default function SupplyDemand({ state }: { state: CrmState }) {
         })}
       </ul>
       {selected ? (
-        <Drawer kicker="Qiko" title={selected.sector} onClose={() => setOpenSector(null)} width={440}>
+        <Drawer
+          kicker="Qiko"
+          title={selected.sector}
+          onClose={() => setOpenSector(null)}
+          width={460}
+          footer={
+            <div className={styles.supplyDrawerFooter}>
+              <Button onClick={() => saveBrief(selected)}>Build sourcing shortlist</Button>
+              <Button variant="secondary" onClick={() => preparedSearch(selected)}>
+                Open prepared search
+              </Button>
+            </div>
+          }
+        >
           <div className={styles.supplyDrawer}>
+            <div className={styles.supplyDrawerIntro}>
+              <span className={styles.supplyGapBadge} data-covered={selected.gapHeadcount <= 0 ? "true" : undefined}>
+                {selected.gapHeadcount > 0 ? `${selected.gapHeadcount} role gap` : "Indicative capacity"}
+              </span>
+              <p>Current sector-level demand and verified availability snapshot.</p>
+            </div>
             <div className={styles.supplyStats}>
               <div>
                 <span>Open requirements</span>
@@ -101,35 +120,46 @@ export default function SupplyDemand({ state }: { state: CrmState }) {
                 <b className="tabular">{selected.verifiedAvailable}</b>
               </div>
             </div>
-            <div className={styles.supplyCoverage}>
-              <span className={styles.meter} aria-hidden="true">
+            <section className={styles.supplyCoverage}>
+              <div className={styles.supplyCoverageHead}>
+                <span>Indicative sector coverage</span>
+                <b className="tabular">{selected.coveragePct}%</b>
+              </div>
+              <span className={`${styles.meter} ${styles.supplyDrawerMeter}`} aria-hidden="true">
                 <span className={styles.meterFill} style={{ width: `${Math.min(100, Math.max(0, selected.coveragePct))}%` }} />
               </span>
               <p>
                 {selected.verifiedAvailable} verified available associates against {selected.demandHeadcount} open headcount ({selected.coveragePct}%
                 indicative sector supply). Gap {Math.max(selected.gapHeadcount, 0)}.
               </p>
-            </div>
-            <dl className={styles.supplyFacts}>
-              <div>
-                <dt>Seniority on these requirements</dt>
-                <dd>{selected.seniority}</dd>
+            </section>
+            <section className={styles.supplyDetailCard}>
+              <div className={styles.supplySectionHead}>
+                <span>Requirements profile</span>
+                <small>{selected.demandRequirements} open</small>
               </div>
-              <div>
-                <dt>Skills named</dt>
-                <dd>{selected.skills.length ? selected.skills.join(", ") : "None recorded"}</dd>
-              </div>
-            </dl>
-            <div className={styles.supplyActions}>
-              <Button onClick={() => saveBrief(selected)}>Build sourcing shortlist</Button>
-              <Button variant="secondary" onClick={() => preparedSearch(selected)}>
-                Open prepared search
-              </Button>
-            </div>
-            <p className={styles.supplyNote}>
-              Sector supply is not a confirmed requirement match; skills, seniority, rate, working mode and dated availability still need review.
-              Prepared search is a web query. LinkedIn is not connected.
-            </p>
+              <dl className={styles.supplyFacts}>
+                <div>
+                  <dt>Seniority</dt>
+                  <dd>{selected.seniority}</dd>
+                </div>
+                <div>
+                  <dt>Skills named</dt>
+                  <dd>{selected.skills.length ? selected.skills.join(", ") : "None recorded"}</dd>
+                </div>
+              </dl>
+            </section>
+            <section className={styles.supplyActionPrompt}>
+              <span>Recommended next step</span>
+              <h3>Build a qualified sourcing shortlist</h3>
+              <p>Save this demand context as a task, then validate skills, rate, working mode and dated availability.</p>
+            </section>
+            <aside className={styles.supplyNote}>
+              <b>Data quality note</b>
+              <span>
+                Sector supply is indicative, not a confirmed requirement match. Prepared search opens a web query; LinkedIn is not connected.
+              </span>
+            </aside>
           </div>
         </Drawer>
       ) : null}

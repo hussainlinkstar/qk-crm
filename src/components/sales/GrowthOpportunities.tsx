@@ -219,17 +219,49 @@ function GrowthDrawer({
   const associate = insight.associateId ? state.tessiant?.associates.find((item) => item.id === insight.associateId) : null;
   const opportunity = insight.opportunityId ? state.opportunities.find((item) => item.id === insight.opportunityId) : null;
   const showMap = insight.kind === "network_connection" && Boolean(associate);
+  const nextStep =
+    insight.kind === "single_owner"
+      ? "Add a second senior relationship owner to reduce account dependency."
+      : insight.kind === "staffing_no_consulting"
+        ? "Review the recorded delivery context before qualifying a consulting follow-on."
+        : "Use the recorded assignment as context for a careful client follow-up.";
 
   return (
-    <Drawer kicker="Qiko" title={insight.accountName} onClose={onClose} width={480}>
-      <div className={styles.insightDrawer}>
-        <div className={styles.insightCopy}>
-          <p className={styles.growthKind}>{KIND_LABEL[insight.kind]}</p>
-          <p className={styles.growthDetected}>{insight.detected}</p>
-          <p className={styles.growthRisk}>{insight.risk}</p>
+    <Drawer
+      kicker="Qiko"
+      title={insight.accountName}
+      onClose={onClose}
+      width={480}
+      footer={
+        <div className={styles.insightFooter}>
+          {insight.actions.includes("review") ? (
+            <Link href={insight.accountHref} className={styles.insightSecondary}>
+              Review account
+            </Link>
+          ) : null}
+          {insight.actions.includes("followup") ? <Button onClick={onFollowUp}>Assign follow-up</Button> : null}
+          {insight.actions.includes("opportunity") ? (
+            <Button variant="secondary" onClick={onOpportunity}>
+              Create opportunity
+            </Button>
+          ) : null}
         </div>
+      }
+    >
+      <div className={styles.insightDrawer}>
+        <section className={styles.insightHero}>
+          <div className={styles.insightKindRow}>
+            <span className={styles.insightKindBadge}>{KIND_LABEL[insight.kind]}</span>
+            <span className={styles.insightSignal}>Recorded signal</span>
+          </div>
+          <h3>{insight.detected}</h3>
+          <p>{insight.risk}</p>
+        </section>
 
-        <p className={styles.insightNote}>{insight.evidence}</p>
+        <section className={styles.insightEvidence}>
+          <span>Recorded evidence</span>
+          <p>{insight.evidence}</p>
+        </section>
 
         {showMap && associate ? (
           <section className={styles.path} aria-label="Documented connections">
@@ -277,25 +309,13 @@ function GrowthDrawer({
           </div>
         )}
 
-        {status ? <p className={styles.growthStatus}>{status}</p> : null}
+        <section className={styles.insightNextStep}>
+          <span>Recommended next step</span>
+          <h3>{insight.actionLabel}</h3>
+          <p>{nextStep}</p>
+        </section>
 
-        <div className={styles.growthActions}>
-          {insight.actions.includes("review") ? (
-            <Link href={insight.accountHref} className={styles.insightSecondary}>
-              Review account
-            </Link>
-          ) : null}
-          {insight.actions.includes("followup") ? (
-            <Button size="small" onClick={onFollowUp}>
-              Assign follow-up
-            </Button>
-          ) : null}
-          {insight.actions.includes("opportunity") ? (
-            <Button size="small" variant="secondary" onClick={onOpportunity}>
-              Create opportunity
-            </Button>
-          ) : null}
-        </div>
+        {status ? <p className={styles.growthStatus}>{status}</p> : null}
       </div>
     </Drawer>
   );

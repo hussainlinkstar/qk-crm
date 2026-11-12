@@ -165,26 +165,44 @@ export default function StaffingOverviewPage() {
 
       <section className={styles.opsSummary} aria-label="Recruitment pipeline">
         <div className={styles.opsSummaryHead}>
-          <div>
-            <h2>Recruitment pipeline</h2>
-            <p className={styles.opsSummarySub}>
-              <span className="tabular">{pipelineTotal}</span> requirements across stages
-            </p>
+          <div className={styles.opsSummaryTitle}>
+            <span className={styles.opsSummaryIcon}>
+              <Icon name="flag" size={16} />
+            </span>
+            <div>
+              <h2>Recruitment pipeline</h2>
+              <p className={styles.opsSummarySub}>
+                <span className="tabular">{pipelineTotal}</span> requirements across {pipeline.length} stages
+              </p>
+            </div>
           </div>
-          <Link href="/staffing/requirements?layout=board" className="text-link">
-            Open board
+          <Link href="/staffing/requirements?layout=board" className={styles.pipelineBoardLink}>
+            View board <Icon name="arrowRight" size={14} />
           </Link>
         </div>
         <ol className={styles.pipe}>
-          {pipeline.map((item) => (
+          {pipeline.map((item, index) => (
             <li key={item.stage}>
               <Link
                 href={`/staffing/requirements?layout=board&opsStage=${encodeURIComponent(item.stage)}`}
                 className={styles.pipeCard}
                 data-empty={item.count === 0 ? "true" : undefined}
+                data-complete={item.stage === "Filled" ? "true" : undefined}
+                aria-label={`${item.stage}: ${item.count} requirement${item.count === 1 ? "" : "s"}`}
               >
-                <b className="tabular">{item.count}</b>
-                <span>{item.stage}</span>
+                <span className={styles.pipeCardTop}>
+                  <span className={styles.pipeStep}>{String(index + 1).padStart(2, "0")}</span>
+                  <b className="tabular">{item.count}</b>
+                </span>
+                <span className={styles.pipeStageLabel}>{item.stage}</span>
+                <span className={styles.pipeCardMeta}>
+                  {item.count > 0 && pipelineTotal > 0
+                    ? `${Math.round((item.count / pipelineTotal) * 100)}% of pipeline`
+                    : "No requirements"}
+                </span>
+                <span className={styles.pipeProgress} aria-hidden="true">
+                  <span style={{ width: `${pipelineTotal > 0 ? Math.max(0, (item.count / pipelineTotal) * 100) : 0}%` }} />
+                </span>
               </Link>
             </li>
           ))}

@@ -95,7 +95,6 @@ export default function RelationshipIntelligence({
       {intel.recommendation ? (
         <div className={styles.rec}>
           <div className={styles.recHead}>
-            {intel.recommendation.demo ? <span className="chip">Demo example</span> : null}
             <span className="chip chip-dot">Recommendation</span>
           </div>
           <p>{intel.recommendation.text}</p>

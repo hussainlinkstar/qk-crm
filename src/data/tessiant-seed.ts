@@ -276,7 +276,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       offeringInterests: ["Staff augmentation", "Programme leadership"],
       servicesPurchased: ["Programme leadership", "Staff augmentation"],
       linkedLeadId: "l_amelia",
-      notes: "DEMO client — retail transformation request. Demo example: Nina Forsberg’s live PMO assignment is the labelled Tessiant network connection for the open retail transformation opportunity (not an inferred personal introduction).",
+      notes: "Retail transformation request. Nina Forsberg has a recorded PMO assignment with this client.",
       status: "active",
       website: "https://northbridge.example",
       billingCurrency: "GBP",
@@ -1096,7 +1096,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
         },
         {
           id: "anote_nina_demo_rel",
-          body: "Demo example — labelled relationship: Nina Forsberg (associate) ↔ Northbridge Retail Group (client) ↔ open Northbridge retail transformation PM opportunity. Recorded assignment only; not an invented introduction.",
+          body: "Nina Forsberg has a recorded PMO assignment with Northbridge Retail Group.",
           authorId: "me",
           createdAt: ago(4),
           kind: "note",

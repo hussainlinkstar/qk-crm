@@ -5,17 +5,6 @@ import { deriveAssignmentStatus, isLiveAssignment, resolveAssignmentAccountId } 
 import { todayKey } from "./format";
 import type { ActivityEvent, ActivityKind, CrmState, Lead, Opportunity } from "./types";
 
-/** One labelled fictional example: associate ↔ client account ↔ open opportunity. */
-export const DEMO_RELATIONSHIP_EXAMPLE = {
-  label: "Demo example",
-  associateId: "as_nina",
-  accountId: "acc_northbridge",
-  opportunityId: "opp_northbridge_retail",
-  leadId: "l_amelia",
-  placementId: "plc_nina_pmo",
-  contactId: "ct_amelia",
-} as const;
-
 const MEANINGFUL_KINDS = new Set<ActivityKind>([
   "interaction",
   "note",
@@ -41,7 +30,6 @@ export interface RelationshipLink {
 export interface RelationshipRecommendation {
   text: string;
   source: string;
-  demo: boolean;
   links: RelationshipLink[];
 }
 
@@ -61,13 +49,6 @@ export interface SalesRelationshipIntel {
 function memberName(state: CrmState, id: string | null | undefined) {
   if (!id) return null;
   return state.members.find((item) => item.id === id)?.name ?? null;
-}
-
-function isDemoRecord(leadId?: string | null, opportunityId?: string | null, accountId?: string | null) {
-  if (accountId !== DEMO_RELATIONSHIP_EXAMPLE.accountId) return false;
-  if (opportunityId === DEMO_RELATIONSHIP_EXAMPLE.opportunityId) return true;
-  if (leadId === DEMO_RELATIONSHIP_EXAMPLE.leadId) return true;
-  return false;
 }
 
 function lastMeaningfulInteraction(
@@ -303,8 +284,6 @@ export function salesRelationshipIntel(
   const contactId = linkedOpp?.contactId ?? lead?.convertedContactId ?? accountContact?.id ?? null;
   const ownerId = linkedOpp?.ownerId ?? lead?.ownerId ?? account?.primaryOwnerId ?? null;
   const ownerName = memberName(state, ownerId) ?? "Unassigned";
-  const contact = contactId ? (state.contacts ?? []).find((item) => item.id === contactId) : null;
-
   const network = accountId ? networkOnAccount(state, accountId) : [];
   const liveAssociates = network.filter((item) => item.detail.startsWith("Associate on") || item.detail.startsWith("SIA on")).length;
   const pastAssociates = network.length - liveAssociates;
@@ -357,47 +336,6 @@ export function salesRelationshipIntel(
         ? "Assign a relationship owner"
         : "Log the next client conversation");
 
-  let recommendation: RelationshipRecommendation | null = null;
-  const demo = isDemoRecord(lead?.id, linkedOpp?.id, accountId);
-  if (demo) {
-    const associate = state.tessiant?.associates.find((item) => item.id === DEMO_RELATIONSHIP_EXAMPLE.associateId);
-    const placement = state.tessiant?.placements.find((item) => item.id === DEMO_RELATIONSHIP_EXAMPLE.placementId);
-    if (associate && account && placement) {
-      recommendation = {
-        demo: true,
-        text: `An associate in your network has previously worked with this client. Review potential introduction.`,
-        source: `${DEMO_RELATIONSHIP_EXAMPLE.label}: ${associate.name} is on a recorded ${placement.roleTitle} assignment at ${account.name} (placement ${placement.id}). This is a labelled demo link — not an inferred personal introduction.`,
-        links: [
-          {
-            id: associate.id,
-            name: associate.name,
-            detail: placement.roleTitle || "Assignment",
-            href: `/staffing/associates/${associate.id}`,
-            kind: "associate",
-          },
-          {
-            id: account.id,
-            name: account.name,
-            detail: "Client account",
-            href: `/sales/accounts/${account.id}`,
-            kind: "account",
-          },
-          ...(contact
-            ? [
-                {
-                  id: contact.id,
-                  name: contact.name,
-                  detail: contact.role || "Contact",
-                  href: `/sales/contacts?contact=${contact.id}`,
-                  kind: "contact" as const,
-                },
-              ]
-            : []),
-        ],
-      };
-    }
-  }
-
   return {
     strength,
     strengthWhy: why,
@@ -408,6 +346,6 @@ export function salesRelationshipIntel(
     missing,
     coverageLabel,
     nextAction,
-    recommendation,
+    recommendation: null,
   };
 }

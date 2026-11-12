@@ -266,9 +266,9 @@ export default function Client360Page() {
             <article className="card">
               <div className="card-head">
                 <h2>Priority opportunities</h2>
-                <button type="button" className="text-link" onClick={() => setTab("opportunities")}>
+                <Button type="button" size="small" variant="secondary" onClick={() => setTab("opportunities")}>
                   View all
-                </button>
+                </Button>
               </div>
               <div className="card-body">
                 {openOpps.length === 0 ? (
@@ -293,9 +293,9 @@ export default function Client360Page() {
             <article className="card">
               <div className="card-head">
                 <h2>Upcoming actions</h2>
-                <button type="button" className="text-link" onClick={() => setTab("activity")}>
+                <Button type="button" size="small" variant="secondary" onClick={() => setTab("activity")}>
                   Activity
-                </button>
+                </Button>
               </div>
               <div className="card-body">
                 {view.tasks.length === 0 ? (
