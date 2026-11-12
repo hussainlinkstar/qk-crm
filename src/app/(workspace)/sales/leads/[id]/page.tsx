@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { crm } from "@/lib/crm-store";
@@ -131,6 +132,26 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
   };
 
   const newTask = () => openTaskForm({ initial: { title: `Follow up with ${lead.name}`, leadId: lead.id, ownerId: lead.ownerId ?? "me", due: addDays(1) } });
+  const convert = () => {
+    const accountId = lead.accountId ?? state.tessiant?.accounts[0]?.id;
+    if (!accountId) {
+      toast("Create an account before converting", "error");
+      return;
+    }
+    const result = crm.convertLead(lead.id, {
+      accountId,
+      opportunityName: `${lead.company ?? lead.name} · ${lead.serviceInterest ?? "engagement"}`,
+      opportunityType: (lead.serviceInterest as "augmentation" | "advisory" | "consultancy" | "project team" | "mixed") || "augmentation",
+      amount: 120000,
+      services: lead.serviceInterest ? [lead.serviceInterest] : ["Staff augmentation"],
+    });
+    if (!result.ok) {
+      toast(result.error, "error");
+      return;
+    }
+    toast("Lead converted to contact + opportunity", "success");
+    router.push(`/sales/accounts/${accountId}`);
+  };
 
   return (
     <div className="page">
@@ -173,16 +194,33 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
         <div className={styles.controls}>
           <label className={styles.control}>
             <span>Status</span>
-            <select className="select" value={lead.status} onChange={(event) => setPending({ field: "status", value: event.target.value })}>
-              {LEAD_STATUSES.map((status) => <option key={status}>{status}</option>)}
-            </select>
+            <Select
+              className="select"
+              value={lead.status}
+              disabled={lead.status === "Converted"}
+              onChange={(event) => {
+                const next = event.target.value as LeadStatus;
+                if (next === "Converted" && !lead.convertedOpportunityId) {
+                  if (lead.status === "Qualified") convert();
+                  else toast("Mark the lead qualified before converting", "info");
+                  return;
+                }
+                setPending({ field: "status", value: next });
+              }}
+            >
+              {LEAD_STATUSES.map((status) => (
+                <option key={status} disabled={status === "Converted" && lead.status !== "Qualified" && lead.status !== "Converted"}>
+                  {status}
+                </option>
+              ))}
+            </Select>
           </label>
           <label className={styles.control}>
             <span>Owner</span>
-            <select className="select" value={lead.ownerId ?? ""} onChange={(event) => setPending({ field: "owner", value: event.target.value })}>
+            <Select className="select" value={lead.ownerId ?? ""} disabled={lead.status === "Converted"} onChange={(event) => setPending({ field: "owner", value: event.target.value })}>
               <option value="">Unassigned</option>
               {state.members.map((member) => <option key={member.id} value={member.id}>{member.id === "me" ? `${member.name} (you)` : member.name}</option>)}
-            </select>
+            </Select>
           </label>
         </div>
         <div className={styles.actions}>
@@ -193,22 +231,7 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
           {lead.status !== "Converted" && (state.tessiant?.accounts.length ?? 0) > 0 && (
             <Button
               variant="secondary"
-              onClick={() => {
-                const accountId = lead.accountId ?? state.tessiant!.accounts[0].id;
-                const result = crm.convertLead(lead.id, {
-                  accountId,
-                  opportunityName: `${lead.company ?? lead.name} · ${lead.serviceInterest ?? "engagement"}`,
-                  opportunityType: (lead.serviceInterest as "augmentation" | "advisory" | "consultancy" | "project team" | "mixed") || "augmentation",
-                  amount: 120000,
-                  services: lead.serviceInterest ? [lead.serviceInterest] : ["Staff augmentation"],
-                });
-                if (!result.ok) {
-                  toast(result.error, "error");
-                  return;
-                }
-                toast("Lead converted to contact + opportunity", "success");
-                router.push(`/sales/accounts/${accountId}`);
-              }}
+              onClick={convert}
             >
               Convert to opportunity
             </Button>

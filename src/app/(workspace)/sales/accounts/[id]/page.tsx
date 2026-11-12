@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
@@ -17,6 +18,7 @@ import {
 import { client360 } from "@/lib/sales-crm";
 import OpportunityQuickPanel from "@/components/sales/OpportunityQuickPanel";
 import ContactQuickPanel from "@/components/sales/ContactQuickPanel";
+import { engagementInsights } from "@/lib/commercial-intelligence";
 import RecordInsightChip from "@/components/pulse/RecordInsightChip";
 import salesStyles from "@/app/(workspace)/sales/sales.module.css";
 
@@ -64,6 +66,7 @@ export default function Client360Page() {
   const openOpps = view.openPipeline;
   const people = accountRelationshipStrip(state, account.id);
   const expansion = unpurchasedInterests(state, account.id);
+  const ending = engagementInsights(state).find((item) => item.accountId === account.id) ?? null;
 
   return (
     <div className="page">
@@ -103,6 +106,15 @@ export default function Client360Page() {
       </header>
 
       <RecordInsightChip accountId={account.id} />
+
+      {ending ? (
+        <div className="notice-banner" role="status">
+          <div>
+            <b>{ending.title}</b>
+            <div>{ending.detail}</div>
+          </div>
+        </div>
+      ) : null}
 
       {view.founderDependency && (
         <div className="notice-banner" role="status">
@@ -201,13 +213,13 @@ export default function Client360Page() {
                 <span className="chip">Secondary: {view.secondary?.name ?? "None"}</span>
                 {!account.secondaryOwnerId && (
                   <>
-                    <select className="input" style={{ maxWidth: 180 }} value={secondaryId} onChange={(e) => setSecondaryId(e.target.value)}>
+                    <Select className="input" style={{ maxWidth: 180 }} value={secondaryId} onChange={(e) => setSecondaryId(e.target.value)}>
                       {state.members.map((member) => (
                         <option key={member.id} value={member.id}>
                           {member.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                     <Button
                       size="small"
                       onClick={() => {

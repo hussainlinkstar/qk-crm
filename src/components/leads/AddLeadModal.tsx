@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { crm } from "@/lib/crm-store";
@@ -135,12 +136,12 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
           </label>
           <label className="field">
             <span>Service interest</span>
-            <select className="select" value={form.serviceInterest} onChange={(event) => set("serviceInterest", event.target.value)}>
+            <Select className="select" value={form.serviceInterest} onChange={(event) => set("serviceInterest", event.target.value)}>
               <option value="augmentation">Augmentation</option>
               <option value="project team">Project team</option>
               <option value="advisory">Advisory</option>
               <option value="consultancy">Consultancy</option>
-            </select>
+            </Select>
           </label>
         </div>
         <div className="form-row">
@@ -150,45 +151,45 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
           </label>
           <label className="field">
             <span>Lead source</span>
-            <select className="select" value={form.source} onChange={(event) => set("source", event.target.value)}>
+            <Select className="select" value={form.source} onChange={(event) => set("source", event.target.value)}>
               {LEAD_SOURCES.map((source) => (
                 <option key={source}>{source}</option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
         <div className="form-row">
           <label className="field">
             <span>Link account (optional)</span>
-            <select className="select" value={form.accountId} onChange={(event) => set("accountId", event.target.value)}>
+            <Select className="select" value={form.accountId} onChange={(event) => set("accountId", event.target.value)}>
               <option value="">None yet</option>
               {(state.tessiant?.accounts ?? []).map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="field">
             <span>Status</span>
-            <select className="select" value={form.status} onChange={(event) => set("status", event.target.value)}>
+            <Select className="select" value={form.status} onChange={(event) => set("status", event.target.value)}>
               {LEAD_STATUSES.map((status) => (
                 <option key={status}>{status}</option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
         <div className="form-row">
           <label className="field">
             <span>Owner</span>
-            <select className="select" value={form.ownerId} onChange={(event) => set("ownerId", event.target.value)}>
+            <Select className="select" value={form.ownerId} onChange={(event) => set("ownerId", event.target.value)}>
               <option value="">Unassigned</option>
               {state.members.map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.id === "me" ? `${member.name} (you)` : member.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
         <label className="field">

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import AddAssociateModal from "@/components/staffing/AddAssociateModal";
 import AssociateQuickPanel from "@/components/staffing/AssociateQuickPanel";
-import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import { initials } from "@/lib/format";
 import {
@@ -33,7 +33,6 @@ export default function AssociatesPage() {
   const router = useRouter();
   const params = useSearchParams();
   const { state } = useWorkspaceData();
-  const { askQiko } = useWorkspace();
   const tessiant = state?.tessiant;
 
   const [q, setQ] = useState(params.get("q") ?? "");
@@ -193,7 +192,7 @@ export default function AssociatesPage() {
                 aria-label="Search talent network"
               />
             </label>
-            <select
+            <Select
               className={`input ${talent.toolbarSelect}`}
               value={availability}
               onChange={(e) => setAvailability(e.target.value as AvailabilityStatus | "")}
@@ -204,7 +203,7 @@ export default function AssociatesPage() {
               <option value="limited">Limited</option>
               <option value="unavailable">Unavailable</option>
               <option value="unknown">Unknown</option>
-            </select>
+            </Select>
             <Button variant="secondary" className={styles.controlMatch} onClick={() => setFiltersOpen((v) => !v)} aria-expanded={filtersOpen}>
               More filters{advancedFilterCount ? ` · ${advancedFilterCount}` : ""}
             </Button>
@@ -216,37 +215,37 @@ export default function AssociatesPage() {
           </div>
           {filtersOpen && (
             <div className={talent.filterGrid} role="group" aria-label="Advanced talent filters">
-              <select className="input" value={skill} onChange={(e) => setSkill(e.target.value)} aria-label="Filter skill">
+              <Select className="input" value={skill} onChange={(e) => setSkill(e.target.value)} aria-label="Filter skill">
                 <option value="">All skills</option>
                 {skills.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
-              </select>
-              <select className="input" value={sector} onChange={(e) => setSector(e.target.value)} aria-label="Filter sector">
+              </Select>
+              <Select className="input" value={sector} onChange={(e) => setSector(e.target.value)} aria-label="Filter sector">
                 <option value="">All sectors</option>
                 {sectors.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
-              </select>
-              <select className="input" value={roleType} onChange={(e) => setRoleType(e.target.value as AssociateRoleType | "")} aria-label="Filter type">
+              </Select>
+              <Select className="input" value={roleType} onChange={(e) => setRoleType(e.target.value as AssociateRoleType | "")} aria-label="Filter type">
                 <option value="">All types</option>
                 <option value="specialist">Specialist</option>
                 <option value="consultant">Consultant</option>
                 <option value="programme_manager">Programme manager</option>
                 <option value="SIA">SIA</option>
                 <option value="executive_advisor">Executive advisor</option>
-              </select>
-              <select className="input" value={seniority} onChange={(e) => setSeniority(e.target.value as SeniorityLevel | "")} aria-label="Filter seniority">
+              </Select>
+              <Select className="input" value={seniority} onChange={(e) => setSeniority(e.target.value as SeniorityLevel | "")} aria-label="Filter seniority">
                 <option value="">All seniority</option>
                 <option value="mid">Mid</option>
                 <option value="senior">Senior</option>
                 <option value="principal">Principal</option>
                 <option value="executive">Executive</option>
-              </select>
+              </Select>
             </div>
           )}
         </div>
@@ -321,14 +320,13 @@ export default function AssociatesPage() {
                           <Link href={`/staffing/associates/${associate.id}`} className={talent.iconAction} aria-label={`Open profile for ${associate.name}`}>
                             <Icon name="users" size={15} />
                           </Link>
-                          <button
-                            type="button"
+                          <a
+                            href={`mailto:${associate.email}`}
                             className={talent.iconAction}
-                            aria-label={`Ask Qiko about ${associate.name}`}
-                            onClick={() => askQiko(`Summarise ${associate.name} for shortlisting: availability, skills and fit`)}
+                            aria-label={`Email ${associate.name}`}
                           >
-                            <Icon name="message" size={15} />
-                          </button>
+                            <Icon name="mail" size={15} />
+                          </a>
                           <button type="button" className={talent.iconAction} aria-label={`More actions for ${associate.name}`} onClick={() => setQuickId(associate.id)}>
                             <Icon name="menu" size={15} />
                           </button>

@@ -51,26 +51,29 @@ export default function SupplyDemand({ state }: { state: CrmState }) {
           <p className={styles.supplyKicker}>Qiko</p>
           <h2>Talent supply vs client demand</h2>
           <p>
-            Verified available associates in a sector, divided by open requirement headcount in that sector.
+            The track is open headcount. The fill is indicative sector supply from verified available associates.
             {largest ? ` Largest gap: ${largest.sector}.` : ""}
           </p>
         </div>
       </div>
       <ul className={styles.supplyList}>
         {rows.map((row) => {
-          const demandWidth = 100;
-          const supplyWidth = Math.min(100, row.coveragePct);
           const hot = largest?.sector === row.sector && row.gapHeadcount > 0;
+          const fill = Math.min(100, Math.max(0, row.coveragePct));
           return (
             <li key={row.sector}>
               <button type="button" className={styles.supplyRow} data-hot={hot ? "true" : undefined} onClick={() => setOpenSector(row.sector)}>
-                <span className={styles.supplyName}>{row.sector}</span>
-                <span className={styles.supplyBars} aria-hidden="true">
-                  <i style={{ width: `${demandWidth}%` }} />
-                  <i style={{ width: `${supplyWidth}%` }} />
+                <span className={styles.supplyTop}>
+                  <span className={styles.supplyName}>{row.sector}</span>
+                  <span className={styles.supplyMeta} data-gap={row.gapHeadcount > 0 ? "true" : undefined}>
+                    {row.gapHeadcount > 0 ? `Gap ${row.gapHeadcount}` : "Indicative capacity"}
+                  </span>
                 </span>
-                <span className={styles.supplyMeta}>
-                  {row.verifiedAvailable}/{row.demandHeadcount} · {row.coveragePct}%
+                <span className={styles.meter} aria-hidden="true">
+                  <span className={styles.meterFill} style={{ width: `${fill}%` }} />
+                </span>
+                <span className={styles.supplyCaption}>
+                  {row.verifiedAvailable} verified available · {row.demandHeadcount} open headcount · {row.coveragePct}%
                 </span>
               </button>
             </li>
@@ -79,23 +82,55 @@ export default function SupplyDemand({ state }: { state: CrmState }) {
       </ul>
       {selected ? (
         <Drawer kicker="Qiko" title={selected.sector} onClose={() => setOpenSector(null)} width={440}>
-          <p>
-            {selected.demandRequirements} open requirements · {selected.demandHeadcount} headcount. {selected.associatesInSector} active
-            associates list this sector, {selected.verifiedAvailable} verified and available.
-          </p>
-          <p>
-            Coverage is {selected.verifiedAvailable} ÷ {selected.demandHeadcount} open headcount ({selected.coveragePct}%). Gap{" "}
-            {Math.max(selected.gapHeadcount, 0)} headcount.
-          </p>
-          <p>Typical seniority on these requirements: {selected.seniority}.</p>
-          {selected.skills.length ? <p>Skills named on the requirements: {selected.skills.join(", ")}.</p> : null}
-          <div className={styles.supplyActions}>
-            <Button onClick={() => saveBrief(selected)}>Build sourcing shortlist</Button>
-            <Button variant="secondary" onClick={() => preparedSearch(selected)}>
-              Open prepared search
-            </Button>
+          <div className={styles.supplyDrawer}>
+            <div className={styles.supplyStats}>
+              <div>
+                <span>Open requirements</span>
+                <b className="tabular">{selected.demandRequirements}</b>
+              </div>
+              <div>
+                <span>Headcount</span>
+                <b className="tabular">{selected.demandHeadcount}</b>
+              </div>
+              <div>
+                <span>In this sector</span>
+                <b className="tabular">{selected.associatesInSector}</b>
+              </div>
+              <div>
+                <span>Verified available</span>
+                <b className="tabular">{selected.verifiedAvailable}</b>
+              </div>
+            </div>
+            <div className={styles.supplyCoverage}>
+              <span className={styles.meter} aria-hidden="true">
+                <span className={styles.meterFill} style={{ width: `${Math.min(100, Math.max(0, selected.coveragePct))}%` }} />
+              </span>
+              <p>
+                {selected.verifiedAvailable} verified available associates against {selected.demandHeadcount} open headcount ({selected.coveragePct}%
+                indicative sector supply). Gap {Math.max(selected.gapHeadcount, 0)}.
+              </p>
+            </div>
+            <dl className={styles.supplyFacts}>
+              <div>
+                <dt>Seniority on these requirements</dt>
+                <dd>{selected.seniority}</dd>
+              </div>
+              <div>
+                <dt>Skills named</dt>
+                <dd>{selected.skills.length ? selected.skills.join(", ") : "None recorded"}</dd>
+              </div>
+            </dl>
+            <div className={styles.supplyActions}>
+              <Button onClick={() => saveBrief(selected)}>Build sourcing shortlist</Button>
+              <Button variant="secondary" onClick={() => preparedSearch(selected)}>
+                Open prepared search
+              </Button>
+            </div>
+            <p className={styles.supplyNote}>
+              Sector supply is not a confirmed requirement match; skills, seniority, rate, working mode and dated availability still need review.
+              Prepared search is a web query. LinkedIn is not connected.
+            </p>
           </div>
-          <p className={styles.supplyNote}>Prepared search is a web query. LinkedIn is not connected.</p>
         </Drawer>
       ) : null}
     </section>

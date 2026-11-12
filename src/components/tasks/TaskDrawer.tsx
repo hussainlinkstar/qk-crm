@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useState } from "react";
 import { crm, type TaskInput } from "@/lib/crm-store";
 import { insightIdFromTask, requirementIdFromTask } from "@/lib/pulse-journey";
@@ -174,18 +175,18 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
           <div className="form-row">
             <label className="field">
               <span>Owner</span>
-              <select className="select" value={draft.ownerId ?? ""} onChange={(event) => setDraft({ ...draft, ownerId: event.target.value || null })}>
+              <Select className="select" value={draft.ownerId ?? ""} onChange={(event) => setDraft({ ...draft, ownerId: event.target.value || null })}>
                 <option value="">Unassigned</option>
                 {state.members.map((member) => (
                   <option key={member.id} value={member.id}>{member.id === "me" ? `${member.name} (you)` : member.name}</option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label className="field">
               <span>Priority</span>
-              <select className="select" value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value as Priority })}>
+              <Select className="select" value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value as Priority })}>
                 {PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority[0].toUpperCase() + priority.slice(1)}</option>)}
-              </select>
+              </Select>
             </label>
           </div>
           <div className="form-row">
@@ -195,10 +196,10 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
             </label>
             <label className="field">
               <span>Linked lead</span>
-              <select className="select" value={draft.leadId ?? ""} onChange={(event) => setDraft({ ...draft, leadId: event.target.value || null })}>
+              <Select className="select" value={draft.leadId ?? ""} onChange={(event) => setDraft({ ...draft, leadId: event.target.value || null })}>
                 <option value="">None</option>
                 {[...state.leads].sort((a, b) => a.name.localeCompare(b.name)).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-              </select>
+              </Select>
             </label>
           </div>
         </div>

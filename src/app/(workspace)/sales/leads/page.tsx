@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import Select from "@/components/ui/Select";
+import { Suspense, useMemo, useState, type DragEvent } from "react";
 import { crm } from "@/lib/crm-store";
 import { initials, timeAgo } from "@/lib/format";
 import type { LeadView } from "@/lib/insights";
@@ -25,6 +26,8 @@ const SORTS = [
   ["newest", "Newest leads"],
   ["name", "Name A–Z"],
 ] as const;
+const RELATIONSHIP_SOURCES = new Set(["Referral", "Associate introduction", "SIA introduction", "Partner", "Existing client"]);
+const NEW_CONNECTION_SOURCES = new Set(["Inbound", "Campaign", "Website", "Event", "Outbound"]);
 
 export default function LeadsPage() {
   return (
@@ -51,6 +54,8 @@ function LeadsView() {
   const [panelLead, setPanelLead] = useState<string | null>(null);
   const [layout, setLayout] = useState<"table" | "board">("table");
   const [flashId, setFlashId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<LeadStatus | null>(null);
 
   const q = params.get("q") ?? "";
   const status = params.get("status") ?? "";
@@ -105,6 +110,47 @@ function LeadsView() {
   const memberById = new Map(state.members.map((member) => [member.id, member]));
   const statusCount = (value: string) => workspace.leads.filter((lead) => lead.status === value).length;
   const activeFilters = [source, owner, activity, q].filter(Boolean).length + (sort !== "recent" ? 1 : 0);
+  const leadInsights = (() => {
+    const total = workspace.leads.length || 1;
+    const percent = (count: number) => Math.round((count / total) * 100);
+    const websiteCount = workspace.leads.filter((lead) => lead.source === "Website").length;
+    const relationshipCount = workspace.leads.filter((lead) => RELATIONSHIP_SOURCES.has(lead.source)).length;
+    const newConnectionCount = workspace.leads.filter((lead) => NEW_CONNECTION_SOURCES.has(lead.source)).length;
+    const sectors = workspace.leads.reduce<Map<string, number>>((counts, lead) => {
+      const sectorName = lead.sector?.trim();
+      if (sectorName) counts.set(sectorName, (counts.get(sectorName) ?? 0) + 1);
+      return counts;
+    }, new Map());
+    const topSector = [...sectors.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
+    return [
+      {
+        value: `${percent(websiteCount)}%`,
+        text: "of leads came through the website.",
+        detail: `${websiteCount} of ${workspace.leads.length} leads`,
+      },
+      {
+        value: `${percent(relationshipCount)}%`,
+        text: "of leads came through a recorded relationship source.",
+        detail: `${relationshipCount} of ${workspace.leads.length} leads`,
+      },
+      {
+        value: `${percent(newConnectionCount)}%`,
+        text: "came through new outreach or inbound channels.",
+        detail: `${newConnectionCount} of ${workspace.leads.length} leads`,
+      },
+      topSector
+        ? {
+            value: `${percent(topSector[1])}%`,
+            text: `of all leads are recorded in ${topSector[0]}.`,
+            detail: `${topSector[1]} of ${workspace.leads.length} leads`,
+          }
+        : {
+            value: "0%",
+            text: "of leads have a recorded sector.",
+            detail: "Add sector data to unlock this insight",
+          },
+    ];
+  })();
 
   const flash = (leadId: string) => {
     setFlashId(leadId);
@@ -113,6 +159,11 @@ function LeadsView() {
 
   const updateStatus = (lead: LeadView, value: LeadStatus) => {
     if (lead.status === value) return;
+    if (value === "Converted" && !lead.convertedOpportunityId) {
+      setPanelLead(lead.id);
+      toast("Open the lead and use Convert to opportunity.");
+      return;
+    }
     crm.updateLead(lead.id, { status: value });
     toast(`Status → ${value}`);
     flash(lead.id);
@@ -124,6 +175,21 @@ function LeadsView() {
     crm.updateLead(lead.id, { ownerId: nextOwner });
     toast(nextOwner ? `Owner → ${memberById.get(nextOwner)?.name ?? "Updated"}` : "Owner cleared");
     flash(lead.id);
+  };
+
+  const moveLead = (event: DragEvent, nextStatus: LeadStatus) => {
+    event.preventDefault();
+    const id = event.dataTransfer.getData("text/lead-id");
+    const lead = workspace.leads.find((item) => item.id === id);
+    setDraggingId(null);
+    setDragOver(null);
+    if (!lead || lead.status === nextStatus) return;
+    if (nextStatus === "Converted" && !lead.convertedOpportunityId) {
+      setPanelLead(lead.id);
+      toast("Open the lead and use Convert to opportunity.");
+      return;
+    }
+    updateStatus(lead, nextStatus);
   };
 
   return (
@@ -148,6 +214,16 @@ function LeadsView() {
         </div>
       </header>
 
+      <section className={styles.insightStrip} aria-label="Lead insights">
+        {leadInsights.map((insight) => (
+          <div key={insight.text} className={styles.insightCard}>
+            <b className="tabular">{insight.value}</b>
+            <span>{insight.text}</span>
+            <small>{insight.detail}</small>
+          </div>
+        ))}
+      </section>
+
       <section className="card">
         <div className={styles.toolbar}>
           <div className="segmented" role="group" aria-label="Filter by status">
@@ -170,13 +246,13 @@ function LeadsView() {
                 </button>
               )}
             </label>
-            <select className={`select ${styles.filter}`} value={source} onChange={(event) => setParam("source", event.target.value)} aria-label="Source">
+            <Select className={`select ${styles.filter}`} value={source} onChange={(event) => setParam("source", event.target.value)} aria-label="Source">
               <option value="">All sources</option>
               {LEAD_SOURCES.map((item) => (
                 <option key={item}>{item}</option>
               ))}
-            </select>
-            <select className={`select ${styles.filter}`} value={owner} onChange={(event) => setParam("owner", event.target.value)} aria-label="Owner">
+            </Select>
+            <Select className={`select ${styles.filter}`} value={owner} onChange={(event) => setParam("owner", event.target.value)} aria-label="Owner">
               <option value="">All owners</option>
               <option value="none">Unassigned</option>
               {state.members.map((member) => (
@@ -184,15 +260,15 @@ function LeadsView() {
                   {member.id === "me" ? "Me" : member.name}
                 </option>
               ))}
-            </select>
-            <select className={`select ${styles.filter}`} value={activity} onChange={(event) => setParam("activity", event.target.value)} aria-label="Activity">
+            </Select>
+            <Select className={`select ${styles.filter}`} value={activity} onChange={(event) => setParam("activity", event.target.value)} aria-label="Activity">
               {ACTIVITY_FILTERS.map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>
               ))}
-            </select>
-            <select
+            </Select>
+            <Select
               className={`select ${styles.filter}`}
               value={sort}
               onChange={(event) => setParam("sort", event.target.value === "recent" ? "" : event.target.value)}
@@ -203,7 +279,7 @@ function LeadsView() {
                   Sort: {label}
                 </option>
               ))}
-            </select>
+            </Select>
             {activeFilters > 0 && (
               <Button
                 size="small"
@@ -257,7 +333,17 @@ function LeadsView() {
             {LEAD_STATUSES.map((columnStatus) => {
               const items = filtered.filter((lead) => lead.status === columnStatus);
               return (
-                <div key={columnStatus} className={styles.boardColumn}>
+                <div
+                  key={columnStatus}
+                  className={`${styles.boardColumn} ${dragOver === columnStatus ? styles.boardColumnOver : ""}`}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                    setDragOver(columnStatus);
+                  }}
+                  onDragLeave={() => setDragOver((currentStatus) => (currentStatus === columnStatus ? null : currentStatus))}
+                  onDrop={(event) => moveLead(event, columnStatus)}
+                >
                   <div className={styles.boardColumnHead}>
                     <b>{columnStatus}</b>
                     <span className="chip tabular">{items.length}</span>
@@ -266,8 +352,18 @@ function LeadsView() {
                     <button
                       key={lead.id}
                       type="button"
-                      className={`${styles.leadCard} ${flashId === lead.id ? styles.flash : ""}`}
+                      draggable
+                      className={`${styles.leadCard} ${flashId === lead.id ? styles.flash : ""} ${draggingId === lead.id ? styles.leadCardDragging : ""}`}
                       onClick={() => setPanelLead(lead.id)}
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData("text/lead-id", lead.id);
+                        event.dataTransfer.effectAllowed = "move";
+                        setDraggingId(lead.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggingId(null);
+                        setDragOver(null);
+                      }}
                     >
                       <span className={styles.person}>
                         <span className="avatar avatar-sm">{initials(lead.name)}</span>
@@ -321,19 +417,20 @@ function LeadsView() {
                       <span className="tag">{lead.source}</span>
                     </td>
                     <td onClick={(event) => event.stopPropagation()}>
-                      <select
+                      <Select
                         className={`${styles.inlineSelect} chip-${lead.status.toLowerCase()}`}
                         value={lead.status}
+                        disabled={lead.status === "Converted"}
                         aria-label={`Status for ${lead.name}`}
                         onChange={(event) => updateStatus(lead, event.target.value as LeadStatus)}
                       >
                         {LEAD_STATUSES.map((item) => (
                           <option key={item}>{item}</option>
                         ))}
-                      </select>
+                      </Select>
                     </td>
                     <td onClick={(event) => event.stopPropagation()}>
-                      <select
+                      <Select
                         className={styles.ownerSelect}
                         value={lead.ownerId ?? ""}
                         aria-label={`Owner for ${lead.name}`}
@@ -345,7 +442,7 @@ function LeadsView() {
                             {member.name}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </td>
                     <td className={styles.next}>{lead.nextActionLabel}</td>
                     <td>

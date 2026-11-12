@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Overlay";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
@@ -121,7 +122,7 @@ export default function CreateRequirementModal({
           <div className={staffing.formGrid}>
             <div className={staffing.field}>
               <label htmlFor="req-accountId">Client company</label>
-              <select
+              <Select
                 id="req-accountId"
                 className="input"
                 value={form.accountId}
@@ -143,12 +144,12 @@ export default function CreateRequirementModal({
                     {account.name}
                   </option>
                 ))}
-              </select>
+              </Select>
               {errors.accountId && <span className={staffing.error}>{errors.accountId}</span>}
             </div>
             <div className={staffing.field}>
               <label htmlFor="req-linkedOpportunityId">Linked sales opportunity</label>
-              <select
+              <Select
                 id="req-linkedOpportunityId"
                 className="input"
                 value={form.linkedOpportunityId}
@@ -160,7 +161,7 @@ export default function CreateRequirementModal({
                     {opportunity.name} · {opportunity.stage}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className={`${staffing.field} ${staffing.full}`}>
               <label htmlFor="req-title">Role / requirement title</label>
@@ -180,7 +181,7 @@ export default function CreateRequirementModal({
             </div>
             <div className={staffing.field}>
               <label htmlFor="req-category">Requirement type</label>
-              <select
+              <Select
                 id="req-category"
                 className="input"
                 value={form.category}
@@ -189,7 +190,7 @@ export default function CreateRequirementModal({
                 <option value="augmentation">Augmentation</option>
                 <option value="project team">Project team</option>
                 <option value="advisory">Advisory</option>
-              </select>
+              </Select>
             </div>
             <div className={staffing.field}>
               <label htmlFor="req-headcount">Number of resources</label>
@@ -234,7 +235,7 @@ export default function CreateRequirementModal({
             </div>
             <div className={staffing.field}>
               <label htmlFor="req-seniority">Seniority</label>
-              <select
+              <Select
                 id="req-seniority"
                 className="input"
                 value={form.seniority}
@@ -244,7 +245,7 @@ export default function CreateRequirementModal({
                 <option value="senior">Senior</option>
                 <option value="principal">Principal</option>
                 <option value="executive">Executive</option>
-              </select>
+              </Select>
             </div>
             <div className={staffing.field}>
               <label htmlFor="req-location">Location</label>
@@ -252,7 +253,7 @@ export default function CreateRequirementModal({
             </div>
             <div className={staffing.field}>
               <label htmlFor="req-workingMode">Remote / on-site</label>
-              <select
+              <Select
                 id="req-workingMode"
                 className="input"
                 value={form.workingMode}
@@ -262,7 +263,7 @@ export default function CreateRequirementModal({
                 <option value="hybrid">Hybrid</option>
                 <option value="onsite">On-site</option>
                 <option value="flexible">Flexible</option>
-              </select>
+              </Select>
             </div>
           </div>
         </section>
@@ -315,17 +316,17 @@ export default function CreateRequirementModal({
             </div>
             <div className={staffing.field}>
               <label htmlFor="req-ownerId">Internal owner / resource manager</label>
-              <select id="req-ownerId" className="input" value={form.ownerId} onChange={(e) => setForm({ ...form, ownerId: e.target.value })}>
+              <Select id="req-ownerId" className="input" value={form.ownerId} onChange={(e) => setForm({ ...form, ownerId: e.target.value })}>
                 {state.members.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className={staffing.field}>
               <label htmlFor="req-priority">Urgency</label>
-              <select
+              <Select
                 id="req-priority"
                 className="input"
                 value={form.priority}
@@ -336,7 +337,7 @@ export default function CreateRequirementModal({
                     {item}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className={`${staffing.field} ${staffing.full}`}>
               <label htmlFor="req-notes">Notes</label>

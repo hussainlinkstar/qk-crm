@@ -9,6 +9,7 @@ import {
   assignmentsEndingSoon,
   mapRequirementToOpsStage,
   recruitmentPipeline,
+  staffingCommandKpis,
   urgentStaffingNeeds,
   upcomingStaffingActions,
 } from "@/lib/tessiant-insights";
@@ -16,8 +17,11 @@ import AssignmentRecommendedActions from "@/components/staffing/AssignmentRecomm
 import SupplyDemand from "@/components/staffing/SupplyDemand";
 import { staffingDeskFindings } from "@/lib/record-intelligence";
 import { daysOpen, requirementPriority } from "@/lib/requisition";
+import { recommendedMatches } from "@/lib/requirement-recommendations";
 import { formatDate, todayKey } from "@/lib/format";
 import styles from "./staffing.module.css";
+
+const INITIAL_NOW = Date.now();
 
 const ACTION_LABEL: Record<string, string> = {
   interview: "Interview",
@@ -34,9 +38,10 @@ export default function StaffingOverviewPage() {
   const now = useNow();
   const tessiant = state?.tessiant;
 
-  const findings = useMemo(() => (state ? staffingDeskFindings(state, now || Date.now()) : []), [state, now]);
+  const findings = useMemo(() => (state ? staffingDeskFindings(state, now || INITIAL_NOW) : []), [state, now]);
+  const kpis = useMemo(() => (state ? staffingCommandKpis(state, now || INITIAL_NOW) : []), [state, now]);
   const pipeline = useMemo(() => (state ? recruitmentPipeline(state) : []), [state]);
-  const openReqs = useMemo(() => (state ? urgentStaffingNeeds(state, now || Date.now()) : []), [state, now]);
+  const openReqs = useMemo(() => (state ? urgentStaffingNeeds(state, now || INITIAL_NOW) : []), [state, now]);
   const allOpen = useMemo(() => {
     if (!state || !tessiant) return [];
     return tessiant.requirements
@@ -61,6 +66,22 @@ export default function StaffingOverviewPage() {
     });
   }, [state, tessiant]);
   const actions = useMemo(() => (state ? upcomingStaffingActions(state) : []), [state]);
+  const namedMatch = (() => {
+    if (!state || !tessiant) return null;
+    const rankedRequirements = [...tessiant.requirements]
+      .filter((req) => !req.archived && req.outcome === "active" && req.stage !== "Placed")
+      .sort((a, b) => {
+        const rank = { high: 0, medium: 1, low: 2 };
+        return rank[requirementPriority(a)] - rank[requirementPriority(b)] || a.startDate.localeCompare(b.startDate);
+      });
+    for (const requirement of rankedRequirements) {
+      const match = recommendedMatches(state, requirement, 1).items[0];
+      if (!match || match.presentation.suitabilityBand === "weak") continue;
+      const account = tessiant.accounts.find((item) => item.id === requirement.accountId);
+      return { requirement, match, accountName: account?.name ?? "Client" };
+    }
+    return null;
+  })();
   const openRows = openReqs.length
     ? openReqs
     : allOpen.slice(0, 6).map((req) => {
@@ -87,7 +108,6 @@ export default function StaffingOverviewPage() {
   }
 
   const pipelineTotal = pipeline.reduce((sum, item) => sum + item.count, 0);
-  const pipelinePeak = Math.max(...pipeline.map((item) => item.count), 1);
 
   return (
     <div className={`page ${styles.density}`}>
@@ -103,6 +123,16 @@ export default function StaffingOverviewPage() {
         </div>
       </header>
 
+      <section className={styles.kpis} aria-label="Staffing summary">
+        {kpis.map((item) => (
+          <Link key={item.key} href={item.href} className="metric-card">
+            <b className="tabular">{item.value}</b>
+            <span className="metric-label">{item.label}</span>
+            {item.delta ? <small className="metric-delta">{item.delta}</small> : null}
+          </Link>
+        ))}
+      </section>
+
       {findings.length > 0 ? (
         <section className={styles.findingsStrip} aria-label="Staffing findings">
           {findings.map((item) => (
@@ -111,6 +141,22 @@ export default function StaffingOverviewPage() {
             </Link>
           ))}
         </section>
+      ) : null}
+
+      {namedMatch ? (
+        <Link href={`/staffing/requirements/${namedMatch.requirement.id}`} className={styles.fitInsight}>
+          <span>
+            <small>Recorded talent match</small>
+            <b>
+              {namedMatch.match.associate.name} may fit {namedMatch.requirement.title}
+            </b>
+          </span>
+          <span>
+            {namedMatch.match.reason} {namedMatch.accountName} · {namedMatch.match.associate.availability}
+            {namedMatch.match.unverified ? " · verification needed" : " · verified profile"}
+          </span>
+          <Icon name="arrowRight" size={15} />
+        </Link>
       ) : null}
 
       <AssignmentRecommendedActions state={state} />
@@ -129,22 +175,16 @@ export default function StaffingOverviewPage() {
             Open board
           </Link>
         </div>
-        <ol className={styles.flowTrack}>
-          {pipeline.map((item, index) => (
-            <li key={item.stage} className={styles.flowItem}>
-              {index > 0 ? <span className={styles.flowConnector} aria-hidden="true" /> : null}
+        <ol className={styles.pipe}>
+          {pipeline.map((item) => (
+            <li key={item.stage}>
               <Link
                 href={`/staffing/requirements?layout=board&opsStage=${encodeURIComponent(item.stage)}`}
-                className={styles.flowSeg}
+                className={styles.pipeCard}
                 data-empty={item.count === 0 ? "true" : undefined}
               >
                 <b className="tabular">{item.count}</b>
-                <small>{item.stage}</small>
-                <span
-                  className={styles.flowAccent}
-                  aria-hidden="true"
-                  style={{ transform: `scaleX(${item.count === 0 ? 0.12 : Math.max(0.22, item.count / pipelinePeak)})` }}
-                />
+                <span>{item.stage}</span>
               </Link>
             </li>
           ))}

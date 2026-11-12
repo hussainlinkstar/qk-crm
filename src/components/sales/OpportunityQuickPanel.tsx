@@ -56,7 +56,7 @@ export default function OpportunityQuickPanel({
           <span>
             {opportunity.name}
             <small>
-              {account?.name ?? "Account"} · {opportunity.type}
+              {account?.name ?? "Account"} · <span className={salesStyles.oppType}>{opportunity.type}</span>
             </small>
           </span>
         </span>
@@ -69,139 +69,156 @@ export default function OpportunityQuickPanel({
         </Link>
       }
     >
-      <div className={styles.panelMeta}>
-        <span className="chip chip-dot">{opportunity.stage}</span>
-        <span className="chip">{opportunity.type}</span>
-        <span className="chip tabular">£{opportunity.amount.toLocaleString("en-GB")}</span>
-        <span className="chip tabular">{opportunity.probability}% · £{weightedPipelineValue(opportunity).toLocaleString("en-GB")} weighted</span>
-        <span className="tag">Close {formatDate(opportunity.expectedCloseDate)}</span>
-      </div>
-
-      <RecordInsightChip opportunityId={opportunity.id} accountId={opportunity.accountId} />
-
-      <p className="muted">
-        <b>Why</b> {brief.why}
-        {" · "}
-        <b>Missing</b> {brief.missing}
-        {" · "}
-        <b>Next</b> {brief.next}
-      </p>
-
-      <RelationshipIntelligence intel={relationship} />
-
-      {linkedRequirement ? (
-        <RecommendedMatches state={state} requirement={linkedRequirement} compact />
-      ) : (
-        <>
-          <p className="muted">{coverage.sentence}</p>
-          {coverage.associates.length > 0 ? (
-            <ul className={salesStyles.coverageList}>
-              {coverage.associates.map((associate) => (
-                <li key={associate.id}>
-                  <Link href={associate.href} onClick={onClose}>
-                    {associate.name}
-                  </Link>
-                  <span className="muted">
-                    {" "}
-                    · {associate.band} · {associate.availability}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </>
-      )}
-
-      <div className={styles.quickActions}>
-        {canGenerateRequirement && (
-          <Button
-            size="small"
-            onClick={() => {
-              const result = crm.createRequirementFromOpportunity(opportunity.id);
-              if (!result.ok) {
-                toast(result.error, "error");
-                return;
-              }
-              toast("Staffing requirement created from opportunity", "success");
-              onClose();
-              router.push(`/staffing/requirements/${result.requirementId}`);
-            }}
-          >
-            Generate requirement
-          </Button>
-        )}
-        <Button size="small" variant="secondary" onClick={() => router.push(`/sales/accounts/${opportunity.accountId}`)}>
-          View account
-        </Button>
-        <Button
-          size="small"
-          variant="soft"
-          icon="sparkles"
-          onClick={() => askQiko(`Summarise opportunity ${opportunity.name} and recommend the next sales step`)}
-        >
-          Ask Qiko
-        </Button>
-      </div>
-
-      <dl className={styles.facts}>
-        <div>
-          <dt>Next step</dt>
-          <dd>
-            <div className={styles.quickActions} style={{ marginTop: 0 }}>
-              <input
-                className="input"
-                style={{ flex: 1, minWidth: 0 }}
-                value={nextStep}
-                onChange={(event) => setNextStep(event.target.value)}
-                placeholder="What should happen next?"
-                aria-label="Opportunity next step"
-              />
-              <Button
-                size="small"
-                variant="secondary"
-                disabled={(nextStep.trim() || "") === (opportunity.nextStep ?? "")}
-                onClick={() => {
-                  const value = nextStep.trim();
-                  crm.updateOpportunity(opportunity.id, { nextStep: value || null });
-                  toast(value ? "Next step updated" : "Next step cleared", "success");
-                }}
-              >
-                Save
-              </Button>
-            </div>
-          </dd>
+      <div className={salesStyles.oppPanel}>
+        <div className={salesStyles.oppStats}>
+          <div className={salesStyles.oppStat}>
+            <span>Stage</span>
+            <b>{opportunity.stage}</b>
+          </div>
+          <div className={salesStyles.oppStat}>
+            <span>Close</span>
+            <b>{formatDate(opportunity.expectedCloseDate)}</b>
+          </div>
+          <div className={salesStyles.oppStat}>
+            <span>Value</span>
+            <b className="tabular">£{opportunity.amount.toLocaleString("en-GB")}</b>
+          </div>
+          <div className={salesStyles.oppStat}>
+            <span>Weighted</span>
+            <b className="tabular">
+              {opportunity.probability}% · £{weightedPipelineValue(opportunity).toLocaleString("en-GB")}
+            </b>
+          </div>
         </div>
-        <div>
-          <dt>Owner</dt>
-          <dd>{owner?.name ?? "Unassigned"}</dd>
-        </div>
-        <div>
-          <dt>Contact</dt>
-          <dd>{contact?.name ?? "—"}</dd>
-        </div>
-        <div>
-          <dt>Services</dt>
-          <dd>{opportunity.services.length ? opportunity.services.join(", ") : "—"}</dd>
-        </div>
-        {opportunity.stage === "Closed Won" && (
-          <>
-            <div>
-              <dt>Agreed contract</dt>
-              <dd className="tabular">£{(opportunity.agreedContractValue ?? opportunity.amount).toLocaleString("en-GB")}</dd>
-            </div>
-            <div>
-              <dt>Expected billing</dt>
-              <dd className="tabular">£{(opportunity.expectedBilling ?? 0).toLocaleString("en-GB")}</dd>
-            </div>
-          </>
-        )}
-        {opportunity.lostReason && (
+
+        <RecordInsightChip opportunityId={opportunity.id} accountId={opportunity.accountId} />
+
+        <dl className={salesStyles.oppBrief}>
           <div>
-            <dt>Lost reason</dt>
-            <dd>{opportunity.lostReason}</dd>
+            <dt>Why</dt>
+            <dd>{brief.why}</dd>
+          </div>
+          <div>
+            <dt>Missing</dt>
+            <dd>{brief.missing}</dd>
+          </div>
+          <div>
+            <dt>Next</dt>
+            <dd>{brief.next}</dd>
+          </div>
+        </dl>
+
+        <div className={salesStyles.oppStep}>
+          <label htmlFor="opp-next-step">Update next step</label>
+          <div className={salesStyles.oppStepRow}>
+            <input
+              id="opp-next-step"
+              className="input"
+              value={nextStep}
+              onChange={(event) => setNextStep(event.target.value)}
+              placeholder="What should happen next?"
+            />
+            <Button
+              size="small"
+              variant="secondary"
+              disabled={(nextStep.trim() || "") === (opportunity.nextStep ?? "")}
+              onClick={() => {
+                const value = nextStep.trim();
+                crm.updateOpportunity(opportunity.id, { nextStep: value || null });
+                toast(value ? "Next step updated" : "Next step cleared", "success");
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+
+        <RelationshipIntelligence intel={relationship} />
+
+        {linkedRequirement ? (
+          <RecommendedMatches state={state} requirement={linkedRequirement} compact />
+        ) : (
+          <div className={salesStyles.oppCoverage}>
+            <p>{coverage.sentence}</p>
+            {coverage.associates.length > 0 ? (
+              <ul className={salesStyles.coverageList}>
+                {coverage.associates.map((associate) => (
+                  <li key={associate.id}>
+                    <Link href={associate.href} onClick={onClose}>
+                      {associate.name}
+                    </Link>
+                    <span className="muted">
+                      {" "}
+                      · {associate.band} · {associate.availability}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         )}
-      </dl>
+
+        <dl className={salesStyles.oppPeople}>
+          <div>
+            <dt>Owner</dt>
+            <dd>{owner?.name ?? "Unassigned"}</dd>
+          </div>
+          <div>
+            <dt>Contact</dt>
+            <dd>{contact?.name ?? "—"}</dd>
+          </div>
+          <div className={salesStyles.oppWide}>
+            <dt>Services</dt>
+            <dd>{opportunity.services.length ? opportunity.services.join(", ") : "—"}</dd>
+          </div>
+          {opportunity.stage === "Closed Won" ? (
+            <>
+              <div>
+                <dt>Agreed contract</dt>
+                <dd className="tabular">£{(opportunity.agreedContractValue ?? opportunity.amount).toLocaleString("en-GB")}</dd>
+              </div>
+              <div>
+                <dt>Expected billing</dt>
+                <dd className="tabular">£{(opportunity.expectedBilling ?? 0).toLocaleString("en-GB")}</dd>
+              </div>
+            </>
+          ) : null}
+          {opportunity.lostReason ? (
+            <div className={salesStyles.oppWide}>
+              <dt>Lost reason</dt>
+              <dd>{opportunity.lostReason}</dd>
+            </div>
+          ) : null}
+        </dl>
+
+        <div className={salesStyles.oppActions}>
+          {canGenerateRequirement ? (
+            <Button
+              size="small"
+              onClick={() => {
+                const result = crm.createRequirementFromOpportunity(opportunity.id);
+                if (!result.ok) {
+                  toast(result.error, "error");
+                  return;
+                }
+                toast("Staffing requirement created from opportunity", "success");
+                onClose();
+                router.push(`/staffing/requirements/${result.requirementId}`);
+              }}
+            >
+              Generate requirement
+            </Button>
+          ) : null}
+          <Button
+            size="small"
+            variant="soft"
+            icon="sparkles"
+            onClick={() => askQiko(`Summarise opportunity ${opportunity.name} and recommend the next sales step`)}
+          >
+            Ask Qiko
+          </Button>
+        </div>
+      </div>
     </Drawer>
   );
 }

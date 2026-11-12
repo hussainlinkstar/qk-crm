@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
 import TagMultiSelect from "@/components/ui/TagMultiSelect";
 import { Modal } from "@/components/ui/Overlay";
@@ -131,22 +132,22 @@ export default function AddAssociateModal({
             </div>
             <div className={staffing.field}>
               <label htmlFor="as-type">Type</label>
-              <select id="as-type" className="input" value={form.roleType} onChange={(e) => setForm({ ...form, roleType: e.target.value as AssociateRoleType })}>
+              <Select id="as-type" className="input" value={form.roleType} onChange={(e) => setForm({ ...form, roleType: e.target.value as AssociateRoleType })}>
                 <option value="specialist">Specialist</option>
                 <option value="consultant">Consultant</option>
                 <option value="programme_manager">Programme manager</option>
                 <option value="SIA">SIA</option>
                 <option value="executive_advisor">Executive advisor</option>
-              </select>
+              </Select>
             </div>
             <div className={staffing.field}>
               <label htmlFor="as-seniority">Seniority</label>
-              <select id="as-seniority" className="input" value={form.seniority} onChange={(e) => setForm({ ...form, seniority: e.target.value as SeniorityLevel })}>
+              <Select id="as-seniority" className="input" value={form.seniority} onChange={(e) => setForm({ ...form, seniority: e.target.value as SeniorityLevel })}>
                 <option value="mid">Mid</option>
                 <option value="senior">Senior</option>
                 <option value="principal">Principal</option>
                 <option value="executive">Executive</option>
-              </select>
+              </Select>
             </div>
             <div className={staffing.field}>
               <label htmlFor="as-email">Email</label>
@@ -224,7 +225,7 @@ export default function AddAssociateModal({
           <div className={staffing.formGrid}>
             <div className={staffing.field}>
               <label htmlFor="as-availability">Status</label>
-              <select
+              <Select
                 id="as-availability"
                 className="input"
                 value={form.availability}
@@ -234,7 +235,7 @@ export default function AddAssociateModal({
                 <option value="limited">Limited</option>
                 <option value="unavailable">Unavailable</option>
                 <option value="unknown">Unknown</option>
-              </select>
+              </Select>
             </div>
             <div className={staffing.field}>
               <label htmlFor="as-next">Next available date</label>
@@ -252,11 +253,11 @@ export default function AddAssociateModal({
             </div>
             <div className={staffing.field}>
               <label htmlFor="as-mode">Working mode</label>
-              <select id="as-mode" className="input" value={form.workingMode} onChange={(e) => setForm({ ...form, workingMode: e.target.value as WorkingMode })}>
+              <Select id="as-mode" className="input" value={form.workingMode} onChange={(e) => setForm({ ...form, workingMode: e.target.value as WorkingMode })}>
                 <option value="remote">Remote</option>
                 <option value="hybrid">Hybrid</option>
                 <option value="onsite">Onsite</option>
-              </select>
+              </Select>
             </div>
           </div>
         </section>

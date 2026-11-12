@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Select from "@/components/ui/Select";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import CreateRequirementModal from "@/components/staffing/CreateRequirementModal";
@@ -88,6 +89,32 @@ export default function RequirementsPage() {
   const filterActive = Boolean(
     view || stageFilter || skill || sector || clientId || ownerId || priority || category || q || from || to,
   );
+  const openRequirements =
+    tessiant?.requirements.filter((item) => !item.archived && item.outcome === "active" && item.stage !== "Placed") ?? [];
+  const verifiedAvailableTalent =
+    tessiant?.associates.filter(
+      (item) => item.status === "active" && item.availability === "available" && Boolean(item.verifiedAt),
+    ) ?? [];
+  const uncoveredRequirements = state
+    ? openRequirements.filter((item) => verifiedAvailableMatchCount(state, item.id) === 0)
+    : [];
+  const totalOpenPositions = openRequirements.reduce((sum, item) => sum + Math.max(1, item.headcount), 0);
+  const topSectorDemand = [
+    ...openRequirements
+      .reduce<Map<string, number>>((counts, item) => {
+        counts.set(item.sector, (counts.get(item.sector) ?? 0) + Math.max(1, item.headcount));
+        return counts;
+      }, new Map())
+      .entries(),
+  ].sort((a, b) => b[1] - a[1])[0] ?? null;
+  const topSeniorityDemand = [
+    ...openRequirements
+      .reduce<Map<string, number>>((counts, item) => {
+        counts.set(item.seniority, (counts.get(item.seniority) ?? 0) + Math.max(1, item.headcount));
+        return counts;
+      }, new Map())
+      .entries(),
+  ].sort((a, b) => b[1] - a[1])[0] ?? null;
 
   if (!state || !tessiant) {
     return (
@@ -173,6 +200,57 @@ export default function RequirementsPage() {
         </div>
       </header>
 
+      <section className={styles.requirementMetrics} aria-label="Requirement intelligence">
+        <div>
+          <b className="tabular">{openRequirements.length}</b>
+          <span>Open requirements</span>
+          <small>{openRequirements.reduce((sum, item) => sum + Math.max(1, item.headcount), 0)} open positions</small>
+        </div>
+        <div>
+          <b className="tabular">{verifiedAvailableTalent.length}</b>
+          <span>Verified talent available</span>
+          <small>Recorded as active and available</small>
+        </div>
+        <div data-alert={uncoveredRequirements.length > 0 ? "true" : undefined}>
+          <b className="tabular">{uncoveredRequirements.length}</b>
+          <span>Requirements without coverage</span>
+          <small>No verified available match recorded</small>
+        </div>
+        <div>
+          <b className="tabular">
+            {topSectorDemand && totalOpenPositions ? Math.round((topSectorDemand[1] / totalOpenPositions) * 100) : 0}%
+          </b>
+          <span>{topSectorDemand ? `${topSectorDemand[0]} demand` : "Sector demand"}</span>
+          <small>
+            {topSeniorityDemand && totalOpenPositions
+              ? `${Math.round((topSeniorityDemand[1] / totalOpenPositions) * 100)}% ${topSeniorityDemand[0]} · current snapshot`
+              : "No open-position mix recorded"}
+          </small>
+        </div>
+      </section>
+
+      <button
+        type="button"
+        className={styles.requirementInsight}
+        disabled={uncoveredRequirements.length === 0}
+        onClick={() => uncoveredRequirements[0] && setPreviewId(uncoveredRequirements[0].id)}
+      >
+        <span>
+          <small>Requirement insight</small>
+          <b>
+            {uncoveredRequirements.length > 0
+              ? `${uncoveredRequirements.length} open ${uncoveredRequirements.length === 1 ? "requirement has" : "requirements have"} no verified available match`
+              : "Every open requirement has verified available coverage"}
+          </b>
+        </span>
+        <span>
+          {uncoveredRequirements[0]
+            ? `Review ${uncoveredRequirements[0].title} and start a focused talent search.`
+            : "Coverage is based on currently recorded availability."}
+        </span>
+        <span aria-hidden="true">{uncoveredRequirements.length > 0 ? "→" : "✓"}</span>
+      </button>
+
       <section className="card">
         <div className="card-head">
           <div>
@@ -183,37 +261,37 @@ export default function RequirementsPage() {
         <div className="card-body">
           <div className={styles.compactFilters}>
             <input className="input" placeholder="Search title, client, skills…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search requirements" />
-            <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Filter by client">
+            <Select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Filter by client">
               <option value="">All clients</option>
               {tessiant.accounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name}
                 </option>
               ))}
-            </select>
-            <select className="input" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} aria-label="Filter by stage">
+            </Select>
+            <Select className="input" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} aria-label="Filter by stage">
               <option value="">All stages</option>
               {OPS_PIPELINE_STAGES.map((stage) => (
                 <option key={stage} value={stage}>
                   {stage}
                 </option>
               ))}
-            </select>
-            <select className="input" value={priority} onChange={(e) => setPriority(e.target.value)} aria-label="Filter by priority">
+            </Select>
+            <Select className="input" value={priority} onChange={(e) => setPriority(e.target.value)} aria-label="Filter by priority">
               <option value="">All priorities</option>
               {REQUIREMENT_PRIORITIES.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
               ))}
-            </select>
+            </Select>
             <Button variant="secondary" className={styles.controlMatch} onClick={() => setMoreFilters((value) => !value)} aria-expanded={moreFilters}>
               More
             </Button>
           </div>
           {moreFilters && (
             <div className={styles.moreFilters}>
-              <select className="input" value={ownerId} onChange={(e) => setOwnerId(e.target.value)} aria-label="Filter by owner">
+              <Select className="input" value={ownerId} onChange={(e) => setOwnerId(e.target.value)} aria-label="Filter by owner">
                 <option value="">All owners</option>
                 <option value="none">Unassigned</option>
                 {state.members.map((member) => (
@@ -221,21 +299,21 @@ export default function RequirementsPage() {
                     {member.name}
                   </option>
                 ))}
-              </select>
-              <select className="input" value={sector} onChange={(e) => setSector(e.target.value)} aria-label="Filter by sector">
+              </Select>
+              <Select className="input" value={sector} onChange={(e) => setSector(e.target.value)} aria-label="Filter by sector">
                 <option value="">All sectors</option>
                 {sectors.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
-              </select>
-              <select className="input" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filter by requirement type">
+              </Select>
+              <Select className="input" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filter by requirement type">
                 <option value="">All types</option>
                 <option value="augmentation">Augmentation</option>
                 <option value="project team">Project team</option>
                 <option value="advisory">Advisory</option>
-              </select>
+              </Select>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 <input type="date" className="input" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="From date" />
                 <input type="date" className="input" value={to} onChange={(e) => setTo(e.target.value)} aria-label="To date" />
@@ -274,6 +352,7 @@ export default function RequirementsPage() {
                   ) : (
                     column.items.map((req) => {
                       const account = tessiant.accounts.find((item) => item.id === req.accountId);
+                      const owner = state.members.find((item) => item.id === req.ownerId);
                       const priorityValue = requirementPriority(req);
                       const overdue = req.outcome === "active" && req.stage !== "Placed" && req.startDate < todayKey();
                       const counts = requisitionCounts(state, req.id);
@@ -301,11 +380,14 @@ export default function RequirementsPage() {
                         >
                           <div className={styles.boardCardTitle}>{req.title}</div>
                           <div className={styles.boardCardClient}>{account?.name ?? "—"}</div>
+                          <div className={styles.boardProgress}>
+                            {req.headcount} {req.headcount === 1 ? "position" : "positions"} · {formatCandidateProgress(counts)}
+                          </div>
+                          <div className={styles.boardOwner}>Owner · {owner?.name ?? "Unassigned"}</div>
                           <div className={styles.boardMeta}>
                             <span className={`chip ${priorityValue === "high" ? "chip-ai" : ""}`}>{priorityValue}</span>
                             {overdue ? <span className="chip">Overdue</span> : <span className="muted tabular">{daysOpen(req)}d</span>}
                             <span className={`chip tabular ${verified === 0 ? "chip-high" : ""}`}>{verified} verified</span>
-                            <span className="muted">{formatCandidateProgress(counts)}</span>
                           </div>
                         </article>
                       );

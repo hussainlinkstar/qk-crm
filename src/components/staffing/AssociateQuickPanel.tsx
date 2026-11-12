@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
@@ -135,7 +136,7 @@ export default function AssociateQuickPanel({
         <div>
           <dt>Availability</dt>
           <dd>
-            <select
+            <Select
               className="input"
               value={associate.availability}
               aria-label="Update availability"
@@ -150,7 +151,7 @@ export default function AssociateQuickPanel({
                   {status}
                 </option>
               ))}
-            </select>
+            </Select>
             {associate.nextAvailableDate ? (
               <span className="muted" style={{ display: "block", marginTop: 6 }}>
                 From {formatDate(associate.nextAvailableDate)}
@@ -209,7 +210,7 @@ export default function AssociateQuickPanel({
 
       <h3 className={`kicker ${styles.panelSection}`}>Shortlist</h3>
       <div className={styles.quickActions}>
-        <select
+        <Select
           className="input"
           style={{ flex: 1, minWidth: 180 }}
           value={shortlistReqId}
@@ -225,7 +226,7 @@ export default function AssociateQuickPanel({
               </option>
             );
           })}
-        </select>
+        </Select>
         <Button size="small" onClick={shortlist} disabled={!shortlistReqId}>
           Shortlist
         </Button>

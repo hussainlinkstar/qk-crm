@@ -6,6 +6,7 @@ import { crm } from "@/lib/crm-store";
 import { isOpen, sortTasks } from "@/lib/insights";
 import { buildTessiantHomeActivity, buildTessiantHomePriorities } from "@/lib/home-tessiant";
 import { activeAssignments } from "@/lib/tessiant-insights";
+import { SUGGESTED_QUESTIONS } from "@/lib/copilot";
 import { firstName, formatDate, greeting, timeAgo } from "@/lib/format";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
@@ -78,6 +79,13 @@ export default function HomePage() {
             Ask
           </Button>
         </form>
+        <div className={styles.prompts}>
+          {SUGGESTED_QUESTIONS.map((prompt) => (
+            <button key={prompt} type="button" onClick={() => askQiko(prompt)}>
+              {prompt}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className={styles.pulseRow} aria-label="Business pulse">

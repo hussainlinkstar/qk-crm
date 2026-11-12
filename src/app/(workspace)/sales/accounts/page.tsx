@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import Icon from "@/components/ui/Icon";
 import AccountQuickPanel from "@/components/sales/AccountQuickPanel";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
+import CommercialInsights from "@/components/sales/CommercialInsights";
+import { engagementInsights } from "@/lib/commercial-intelligence";
 import { opportunitiesForAccount } from "@/lib/sales-crm";
 import { liveAssignments, resolveAssignmentAccountId } from "@/lib/assignments";
 import { isOpen, sortTasks } from "@/lib/insights";
@@ -17,6 +19,8 @@ export default function SalesAccountsPage() {
   const tessiant = state?.tessiant;
   const [q, setQ] = useState("");
   const [previewId, setPreviewId] = useState<string | null>(null);
+
+  const insights = useMemo(() => (state ? engagementInsights(state) : []), [state]);
 
   const rows = useMemo(() => {
     if (!state || !tessiant) return [];
@@ -64,6 +68,18 @@ export default function SalesAccountsPage() {
           <p className="subtitle">Client organisations — open Client 360 for the full relationship.</p>
         </div>
       </header>
+
+      <CommercialInsights
+        label="Account intelligence"
+        title="Account intelligence"
+        summary={
+          insights.length === 1
+            ? "1 account has an engagement ending within 30 days."
+            : `${insights.length} accounts have an engagement ending within 30 days.`
+        }
+        insights={insights}
+        onOpen={(insight) => setPreviewId(insight.accountId)}
+      />
 
       <section className="card">
         <div className="card-body">

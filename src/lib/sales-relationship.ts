@@ -276,7 +276,7 @@ function scoreStrength(input: {
 
 export function salesRelationshipIntel(
   state: CrmState,
-  scope: { leadId?: string | null; opportunityId?: string | null },
+  scope: { leadId?: string | null; opportunityId?: string | null; accountId?: string | null },
   now = Date.now(),
 ): SalesRelationshipIntel {
   const opportunity = scope.opportunityId
@@ -293,9 +293,14 @@ export function salesRelationshipIntel(
       ? (state.opportunities ?? []).find((item) => item.id === lead.convertedOpportunityId) ?? null
       : (state.opportunities ?? []).find((item) => item.leadId === lead?.id) ?? null);
 
-  const accountId = linkedOpp?.accountId ?? lead?.accountId ?? null;
+  const accountId = scope.accountId ?? linkedOpp?.accountId ?? lead?.accountId ?? null;
   const account = accountId ? state.tessiant?.accounts.find((item) => item.id === accountId) : null;
-  const contactId = linkedOpp?.contactId ?? lead?.convertedContactId ?? null;
+  const accountContact = accountId
+    ? (state.contacts ?? []).find((item) => item.accountId === accountId && item.isPrimary) ??
+      (state.contacts ?? []).find((item) => item.accountId === accountId) ??
+      null
+    : null;
+  const contactId = linkedOpp?.contactId ?? lead?.convertedContactId ?? accountContact?.id ?? null;
   const ownerId = linkedOpp?.ownerId ?? lead?.ownerId ?? account?.primaryOwnerId ?? null;
   const ownerName = memberName(state, ownerId) ?? "Unassigned";
   const contact = contactId ? (state.contacts ?? []).find((item) => item.id === contactId) : null;

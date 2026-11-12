@@ -1,0 +1,88 @@
+/* Sales pages only. Signal lavender canvas + Pulse indigo, slightly more saturated. */
+
+.surface {
+  --brand: #4f46e5;
+  --brand-strong: #4338ca;
+  --brand-ink: #312e81;
+  --brand-soft: #eef2ff;
+  --brand-ring: #c7d2fe;
+  --brand-blue: #6366f1;
+  --brand-violet: #7c3aed;
+  --brand-gradient: linear-gradient(135deg, #818cf8 0%, #4f46e5 46%, #7c3aed 100%);
+  --qiko-accent: #4f46e5;
+  --qiko-accent-soft: #eef2ff;
+  --ink: #0f172a;
+  --ink-2: #1e293b;
+  --ink-3: #334155;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+  --line: #e0e7ff;
+  --line-soft: #eef2ff;
+  --line-strong: #c7d2fe;
+  --well: #eef2ff;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --shadow-xs: 0 1px 2px rgba(49, 46, 129, 0.05);
+  --shadow-sm: 0 1px 2px rgba(49, 46, 129, 0.05), 0 8px 20px -16px rgba(79, 70, 229, 0.45);
+  --shadow-hover: 0 14px 28px -18px rgba(79, 70, 229, 0.48);
+  --focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.28);
+  min-height: calc(100dvh - 60px);
+  background:
+    radial-gradient(820px 360px at 0% -8%, rgba(124, 58, 237, 0.16), transparent 62%),
+    radial-gradient(640px 320px at 100% 0%, rgba(99, 102, 241, 0.14), transparent 58%),
+    linear-gradient(180deg, #f7f5ff 0%, #f8fafc 42%, #f8fafc 100%);
+  color: var(--ink);
+}
+
+.surface :global(.page) {
+  background: transparent;
+}
+
+.surface :global(::selection) {
+  background: #ddd6fe;
+}
+
+.surface :global(.page-head h1) {
+  color: #1e1b4b;
+}
+
+.surface :global(.kicker) {
+  color: #6d28d9;
+}
+
+.surface :global(.card),
+.surface :global(.kanban-column) {
+  border-color: #e0e7ff;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(49, 46, 129, 0.04), 0 16px 36px -28px rgba(79, 70, 229, 0.55);
+  transition:
+    border-color var(--duration) var(--ease-out),
+    box-shadow var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-out);
+}
+
+.surface :global(.card) {
+  transition: none;
+}
+
+.surface :global(.kanban-card) {
+  background: #fff;
+}
+
+.surface :global(.kanban-card:hover),
+.surface :global(.interactive:hover),
+.surface :global(.lift:hover) {
+  border-color: #a5b4fc;
+  box-shadow: 0 12px 24px -16px rgba(79, 70, 229, 0.55);
+}
+
+.surface :global(a:hover) {
+  color: var(--brand-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface :global(.card:hover),
+  .surface :global(.kanban-card:hover) {
+    transform: none;
+  }
+}

@@ -8,13 +8,14 @@ import { Drawer } from "@/components/ui/Overlay";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { addDays, todayKey } from "@/lib/format";
+import { opportunityBrief } from "@/lib/record-intelligence";
 import {
   consultingFollowOnDraft,
   leadSourceSummary,
   salesGrowthInsights,
   type GrowthInsight,
 } from "@/lib/sales-growth";
-import type { CrmState } from "@/lib/types";
+import type { CrmState, Opportunity } from "@/lib/types";
 import styles from "@/app/(workspace)/sales/sales.module.css";
 
 const KIND_LABEL: Record<GrowthInsight["kind"], string> = {
@@ -23,11 +24,64 @@ const KIND_LABEL: Record<GrowthInsight["kind"], string> = {
   network_connection: "Network connection",
 };
 
-export default function GrowthOpportunities({ state }: { state: CrmState }) {
+const MAX_DEAL_INSIGHTS = 3;
+
+function dealSignal(why: string) {
+  if (why.startsWith("Coverage")) return "Coverage";
+  if (why.startsWith("Stalled")) return "Stalled";
+  if (why.startsWith("Closing")) return "Closing";
+  if (why.startsWith("Advisory")) return "Advisory";
+  return "Deal";
+}
+
+function dealInsightScore(why: string, missing: string) {
+  return (
+    (why.startsWith("Coverage") ? 4 : 0) +
+    (why.startsWith("Stalled") ? 3 : 0) +
+    (why.startsWith("Closing") ? 2 : 0) +
+    (missing !== "Nothing blocking" ? 1 : 0)
+  );
+}
+
+function isDealSignal(why: string, missing: string) {
+  return (
+    why.startsWith("Coverage") ||
+    why.startsWith("Stalled") ||
+    why.startsWith("Closing") ||
+    why.startsWith("Advisory") ||
+    missing !== "Nothing blocking"
+  );
+}
+
+function openDealInsights(state: CrmState) {
+  const open = (state.opportunities ?? []).filter(
+    (item) => item.stage !== "Closed Won" && item.stage !== "Closed Lost",
+  );
+  return open
+    .map((opportunity) => {
+      const brief = opportunityBrief(state, opportunity);
+      return { opportunity, brief, score: dealInsightScore(brief.why, brief.missing) };
+    })
+    .filter((item) => isDealSignal(item.brief.why, item.brief.missing))
+    .sort(
+      (a, b) =>
+        b.score - a.score || a.opportunity.expectedCloseDate.localeCompare(b.opportunity.expectedCloseDate),
+    )
+    .slice(0, MAX_DEAL_INSIGHTS);
+}
+
+export default function GrowthOpportunities({
+  state,
+  onOpenOpportunity,
+}: {
+  state: CrmState;
+  onOpenOpportunity?: (opportunity: Opportunity) => void;
+}) {
   const router = useRouter();
   const { toast, openTaskForm } = useWorkspace();
   const today = todayKey();
   const insights = useMemo(() => salesGrowthInsights(state, today), [state, today]);
+  const dealInsights = useMemo(() => openDealInsights(state), [state]);
   const sources = useMemo(() => leadSourceSummary(state), [state]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [acted, setActed] = useState<Record<string, string>>({});
@@ -67,19 +121,40 @@ export default function GrowthOpportunities({ state }: { state: CrmState }) {
     router.push(`/sales/pipeline?opportunity=${id}`);
   };
 
-  if (insights.length === 0 && sources.every((item) => item.count === 0)) return null;
+  const accountName = (accountId: string) =>
+    state.tessiant?.accounts.find((item) => item.id === accountId)?.name ?? "Account";
+
+  if (insights.length === 0 && dealInsights.length === 0 && sources.every((item) => item.count === 0)) return null;
 
   return (
     <>
-      {insights.length > 0 ? (
-        <section className={styles.growthSection} aria-label="Growth opportunities">
+      {insights.length > 0 || dealInsights.length > 0 ? (
+        <section className={styles.growthSection} aria-label="Insights">
           <div className={styles.growthHead}>
             <div>
               <p className="kicker">Qiko</p>
-              <h2>Growth opportunities</h2>
+              <h2>Insights</h2>
+              <p className={styles.sourceSub}>Signals on open deals and recorded relationships.</p>
             </div>
           </div>
           <div className={styles.growthGrid}>
+            {dealInsights.map(({ opportunity, brief }) => (
+              <button
+                key={opportunity.id}
+                type="button"
+                className={styles.growthCard}
+                onClick={() => onOpenOpportunity?.(opportunity)}
+              >
+                <span className={styles.growthKind}>{dealSignal(brief.why)}</span>
+                <p className={styles.growthDetected}>{opportunity.name}</p>
+                <p className={styles.growthRisk}>{brief.why}</p>
+                <p className={styles.growthEvidence}>
+                  {accountName(opportunity.accountId)}
+                  {brief.missing !== "Nothing blocking" ? ` · ${brief.missing}` : ""}
+                </p>
+                <p className={styles.growthActionLine}>{brief.next}</p>
+              </button>
+            ))}
             {insights.map((insight) => (
               <button key={insight.id} type="button" className={styles.growthCard} onClick={() => setOpenId(insight.id)}>
                 <span className={styles.growthKind}>{KIND_LABEL[insight.kind]}</span>
@@ -146,62 +221,81 @@ function GrowthDrawer({
   const showMap = insight.kind === "network_connection" && Boolean(associate);
 
   return (
-    <Drawer kicker="Qiko" title={insight.accountName} onClose={onClose} width={440}>
-      <p className={styles.growthKind}>{KIND_LABEL[insight.kind]}</p>
-      <p className={styles.growthDetected}>{insight.detected}</p>
-      <p className={styles.growthRisk}>{insight.risk}</p>
-      <p className={styles.growthEvidence}>{insight.evidence}</p>
-      <p className={styles.growthSource}>
-        <Link href={insight.accountHref} className={styles.growthLink}>
-          {insight.accountName}
-        </Link>
-        {insight.assignmentId ? (
-          <>
-            {" · "}
-            <Link href={`/staffing/placements/${insight.assignmentId}`} className={styles.growthLink}>
-              Assignment
+    <Drawer kicker="Qiko" title={insight.accountName} onClose={onClose} width={480}>
+      <div className={styles.insightDrawer}>
+        <div className={styles.insightCopy}>
+          <p className={styles.growthKind}>{KIND_LABEL[insight.kind]}</p>
+          <p className={styles.growthDetected}>{insight.detected}</p>
+          <p className={styles.growthRisk}>{insight.risk}</p>
+        </div>
+
+        <p className={styles.insightNote}>{insight.evidence}</p>
+
+        {showMap && associate ? (
+          <section className={styles.path} aria-label="Documented connections">
+            <h3>Documented connection</h3>
+            <ol>
+              <li>
+                <Link href={`/staffing/associates/${associate.id}`}>
+                  <b>{associate.name}</b>
+                  <span>Associate</span>
+                </Link>
+              </li>
+              <li>
+                <Link href={insight.accountHref}>
+                  <b>{insight.accountName}</b>
+                  <span>Account</span>
+                </Link>
+              </li>
+              {opportunity ? (
+                <li>
+                  <Link href={`/sales/pipeline?opportunity=${opportunity.id}`}>
+                    <b>{opportunity.name}</b>
+                    <span>Opportunity</span>
+                  </Link>
+                </li>
+              ) : null}
+            </ol>
+            {insight.assignmentId ? (
+              <Link href={`/staffing/placements/${insight.assignmentId}`} className={styles.pathLink}>
+                Open recorded assignment
+              </Link>
+            ) : null}
+          </section>
+        ) : (
+          <div className={styles.recordList}>
+            <Link href={insight.accountHref}>
+              <b>{insight.accountName}</b>
+              <small>Account</small>
             </Link>
-          </>
-        ) : null}
-        {opportunity ? (
-          <>
-            {" · "}
-            <Link href={`/sales/pipeline?opportunity=${opportunity.id}`} className={styles.growthLink}>
-              {opportunity.name}
+            {opportunity ? (
+              <Link href={`/sales/pipeline?opportunity=${opportunity.id}`}>
+                <b>{opportunity.name}</b>
+                <small>Opportunity</small>
+              </Link>
+            ) : null}
+          </div>
+        )}
+
+        {status ? <p className={styles.growthStatus}>{status}</p> : null}
+
+        <div className={styles.growthActions}>
+          {insight.actions.includes("review") ? (
+            <Link href={insight.accountHref} className={styles.insightSecondary}>
+              Review account
             </Link>
-          </>
-        ) : null}
-      </p>
-      {showMap && associate ? (
-        <div className={styles.relMap} aria-label="Documented connections">
-          <span>{associate.name}</span>
-          <i />
-          <span>{insight.accountName}</span>
-          {opportunity ? (
-            <>
-              <i />
-              <span>{opportunity.name}</span>
-            </>
+          ) : null}
+          {insight.actions.includes("followup") ? (
+            <Button size="small" onClick={onFollowUp}>
+              Assign follow-up
+            </Button>
+          ) : null}
+          {insight.actions.includes("opportunity") ? (
+            <Button size="small" variant="secondary" onClick={onOpportunity}>
+              Create opportunity
+            </Button>
           ) : null}
         </div>
-      ) : null}
-      {status ? <p className={styles.growthStatus}>{status}</p> : null}
-      <div className={styles.growthActions}>
-        {insight.actions.includes("review") ? (
-          <Link href={insight.accountHref} className={styles.growthLinkBtn}>
-            Review account
-          </Link>
-        ) : null}
-        {insight.actions.includes("followup") ? (
-          <Button size="small" onClick={onFollowUp}>
-            Assign follow-up
-          </Button>
-        ) : null}
-        {insight.actions.includes("opportunity") ? (
-          <Button size="small" variant="secondary" onClick={onOpportunity}>
-            Create opportunity
-          </Button>
-        ) : null}
       </div>
     </Drawer>
   );

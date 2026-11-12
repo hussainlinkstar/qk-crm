@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Overlay";
@@ -146,13 +147,13 @@ export default function InsightCard({
 
         {showReject && insight.reviewStatus === "pending" ? (
           <div className={styles.actions}>
-            <select className="input" value={reason} onChange={(event) => setReason(event.target.value)} aria-label="Reject reason">
+            <Select className="input" value={reason} onChange={(event) => setReason(event.target.value)} aria-label="Reject reason">
               {REJECT_REASONS.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
               ))}
-            </select>
+            </Select>
             <Button size="small" variant="ghost" onClick={reject}>
               Confirm reject
             </Button>
@@ -242,13 +243,13 @@ export default function InsightCard({
             <div style={{ marginTop: 16 }}>
               <h3 className={styles.panelSection}>Reject reason</h3>
               <div className={styles.actions}>
-                <select className="input" value={reason} onChange={(event) => setReason(event.target.value)} aria-label="Reject reason">
+                <Select className="input" value={reason} onChange={(event) => setReason(event.target.value)} aria-label="Reject reason">
                   {REJECT_REASONS.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <Button size="small" variant="ghost" onClick={reject}>
                   Confirm reject
                 </Button>

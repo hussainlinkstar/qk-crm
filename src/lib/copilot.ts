@@ -11,6 +11,7 @@ import {
   staffingCommandKpis,
 } from "./tessiant-insights";
 import { activeAssignments } from "./tessiant-insights";
+import { engagementInsights } from "./commercial-intelligence";
 
 const DAY = 86_400_000;
 
@@ -19,6 +20,7 @@ export const SUGGESTED_QUESTIONS = [
   "Who is available for upcoming assignments?",
   "Which assignments are ending soon?",
   "What sales opportunities need follow-up?",
+  "Which accounts should we re-engage?",
 ];
 
 export const ASK_INTENTS = [
@@ -117,6 +119,29 @@ export function answerQuestion(state: CrmState, question: string, contextLeadId?
       })),
       recommendation: available[0] ? `Start shortlisting with ${available[0].name}.` : null,
       executions: [{ type: "open", label: "Open Talent Network", href: "/staffing/associates?view=available_now" }],
+    });
+  }
+
+  if (/re-?engage|engagements? ending|accounts? .*(ending|re-?engage)|next engagement|contract ending/.test(text)) {
+    if (!tessiant) return unsupportedTessiant("which accounts to re-engage");
+    const insights = engagementInsights(state);
+    return answer(question, {
+      answer: insights.length
+        ? `${plural(insights.length, "account")} ${insights.length === 1 ? "has" : "have"} a recorded engagement ending within 30 days. ${insights[0].title}`
+        : "No accounts have a recorded engagement ending in the next 30 days.",
+      evidence: insights.slice(0, 5).map((item): Evidence => ({
+        label: item.accountName,
+        detail: item.detail,
+        source: "Tessiant CRM",
+        kind: "fact",
+      })),
+      recommendation: insights[0]?.title ?? null,
+      executions: [
+        ...(insights[0]?.contactId
+          ? [{ type: "open", label: `Open ${insights[0].contactName ?? "contact"}`, href: `/sales/contacts?contact=${insights[0].contactId}` } as Execution]
+          : []),
+        { type: "open", label: "Open accounts", href: "/sales/accounts" },
+      ],
     });
   }
 

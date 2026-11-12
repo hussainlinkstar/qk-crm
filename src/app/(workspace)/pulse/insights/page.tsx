@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Select from "@/components/ui/Select";
 import { EmptyState, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import InsightCard from "@/components/pulse/InsightCard";
 import PulseSubnav from "@/components/pulse/PulseSubnav";
@@ -50,20 +51,20 @@ export default function PulseInsightsPage() {
       <section className="card">
         <div className="card-body">
           <div className={styles.actions}>
-            <select className="input" value={block} onChange={(e) => setBlock(e.target.value as KnowledgeBlockId | "")} aria-label="Filter knowledge block">
+            <Select className="input" value={block} onChange={(e) => setBlock(e.target.value as KnowledgeBlockId | "")} aria-label="Filter knowledge block">
               <option value="">All blocks</option>
               {TESSIANT_KNOWLEDGE_BLOCKS.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.title}
                 </option>
               ))}
-            </select>
-            <select className="input" value={status} onChange={(e) => setStatus(e.target.value as InsightReviewStatus | "")} aria-label="Filter review status">
+            </Select>
+            <Select className="input" value={status} onChange={(e) => setStatus(e.target.value as InsightReviewStatus | "")} aria-label="Filter review status">
               <option value="">All statuses</option>
               <option value="pending">Pending</option>
               <option value="accepted">Accepted</option>
               <option value="rejected">Rejected</option>
-            </select>
+            </Select>
           </div>
         </div>
       </section>

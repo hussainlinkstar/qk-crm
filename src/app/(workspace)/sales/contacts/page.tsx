@@ -5,6 +5,8 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import ContactQuickPanel from "@/components/sales/ContactQuickPanel";
+import CommercialInsights from "@/components/sales/CommercialInsights";
+import { engagementInsights } from "@/lib/commercial-intelligence";
 import { isOpen, sortTasks } from "@/lib/insights";
 import { initials, timeAgo } from "@/lib/format";
 import styles from "../leads/leads.module.css";
@@ -33,6 +35,11 @@ function ContactsView() {
   useEffect(() => {
     if (contactParam) setPreviewId(contactParam);
   }, [contactParam]);
+
+  const insights = useMemo(
+    () => (state ? engagementInsights(state).filter((item) => item.contactId) : []),
+    [state],
+  );
 
   const rows = useMemo(() => {
     if (!state) return [];
@@ -82,6 +89,14 @@ function ContactsView() {
           <p className="subtitle">Stakeholders linked to accounts.</p>
         </div>
       </header>
+
+      <CommercialInsights
+        label="Contact intelligence"
+        title="Contact intelligence"
+        summary="Named contacts on accounts whose recorded engagement ends within 30 days."
+        insights={insights}
+        onOpen={(insight) => insight.contactId && setPreviewId(insight.contactId)}
+      />
 
       <section className="card">
         <div className="card-body" style={{ paddingTop: 0 }}>

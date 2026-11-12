@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import MatchCandidateCard from "@/components/staffing/MatchCandidateCard";
@@ -579,7 +580,7 @@ export default function RequirementDetailPage() {
           )}
 
           <div className={styles.actions} style={{ marginTop: 16 }}>
-            <select
+            <Select
               className="input"
               value={externalAssociateId}
               onChange={(e) => setExternalAssociateId(e.target.value)}
@@ -594,7 +595,7 @@ export default function RequirementDetailPage() {
                     {associate.name}
                   </option>
                 ))}
-            </select>
+            </Select>
             <Button
               size="small"
               variant="secondary"

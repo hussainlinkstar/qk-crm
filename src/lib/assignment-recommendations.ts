@@ -184,7 +184,9 @@ function renewalRec(state: CrmState, placement: Placement, associate: Associate)
     requirementId: placement.requirementId,
     matchRequirementId: null,
     accountId,
-    detected: `An associate's assignment with ${client} is ending soon.`,
+    detected: end
+      ? `${associate.name}'s assignment at ${client} ends ${formatDate(end)}.`
+      : `${associate.name}'s assignment at ${client} is ending soon.`,
     why: `Confirm whether the client wants to extend. No renewal decision is recorded — this is not a confirmed contract extension.`,
     actionLabel: "Create renewal follow-up",
     sourceLabel: `${associate.name} · ${client}${end ? ` · ends ${formatDate(end)}` : ""}`,
@@ -211,7 +213,7 @@ function redeployRec(
     requirementId: placement.requirementId,
     matchRequirementId: match.requirement.id,
     accountId,
-    detected: "This associate may be suitable for another upcoming assignment.",
+    detected: `${associate.name} may fit ${match.requirement.title} at ${matchAccount}.`,
     why: `${associate.name} has ${skills || "relevant skills"} on record. Remaining capacity after the ${client} assignment ends can cover ${match.requirement.title} at ${matchAccount}. This is a possible fit, not a placement.`,
     actionLabel: "Review matching requirement",
     sourceLabel: `${associate.name} · ${match.requirement.title}`,

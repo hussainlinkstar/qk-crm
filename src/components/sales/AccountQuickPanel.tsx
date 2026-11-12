@@ -6,8 +6,11 @@ import Icon from "@/components/ui/Icon";
 import { Drawer } from "@/components/ui/Overlay";
 import { EmptyState, useWorkspaceData } from "@/components/ui/bits";
 import { liveAssignments, resolveAssignmentAccountId } from "@/lib/assignments";
+import { engagementInsights } from "@/lib/commercial-intelligence";
 import { opportunitiesForAccount } from "@/lib/sales-crm";
+import { salesRelationshipIntel } from "@/lib/sales-relationship";
 import RecordInsightChip from "@/components/pulse/RecordInsightChip";
+import RelationshipIntelligence from "@/components/sales/RelationshipIntelligence";
 import styles from "@/components/leads/Leads.module.css";
 
 export default function AccountQuickPanel({ accountId, onClose }: { accountId: string; onClose: () => void }) {
@@ -26,6 +29,8 @@ export default function AccountQuickPanel({ accountId, onClose }: { accountId: s
   const reqs = state.tessiant.requirements.filter((item) => item.accountId === account.id && item.outcome === "active");
   const deployed = liveAssignments(state).filter((item) => resolveAssignmentAccountId(state, item) === account.id);
   const contacts = (state.contacts ?? []).filter((item) => item.accountId === account.id).slice(0, 4);
+  const ending = engagementInsights(state).find((item) => item.accountId === account.id) ?? null;
+  const relationship = salesRelationshipIntel(state, { accountId: account.id });
 
   return (
     <Drawer
@@ -49,6 +54,17 @@ export default function AccountQuickPanel({ accountId, onClose }: { accountId: s
       }
     >
       <RecordInsightChip accountId={account.id} />
+
+      {ending ? (
+        <p className={styles.panelSection}>
+          <b>{ending.title}</b>
+          <span className="muted" style={{ display: "block", marginTop: 4 }}>
+            {ending.detail}
+          </span>
+        </p>
+      ) : null}
+
+      <RelationshipIntelligence intel={relationship} />
 
       <div className={styles.panelMeta}>
         <span className="chip tabular">{openOpps.length} open opps</span>

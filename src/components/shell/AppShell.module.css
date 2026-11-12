@@ -240,9 +240,23 @@
   left: -10px;
   width: 3px;
   height: 22px;
-  transform: translateY(-50%);
   border-radius: 0 2px 2px 0;
   background: var(--brand);
+  transform: translateY(-50%);
+  transform-origin: center;
+  animation: navBar var(--duration) var(--ease-spring) forwards;
+}
+
+@keyframes navBar {
+  from {
+    transform: translateY(-50%) scaleY(0.35);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(-50%) scaleY(1);
+    opacity: 1;
+  }
 }
 
 .collapsed .navItem {
@@ -297,7 +311,20 @@
   margin: 2px 0 4px 21px !important;
   padding-left: 10px !important;
   border-left: 1px solid var(--line);
+  animation: subIn var(--duration) var(--ease-out);
 }
+
+@keyframes subIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.subnav .subItem:nth-child(2) { animation: subIn var(--duration) var(--ease-out) 40ms backwards; }
+.subnav .subItem:nth-child(3) { animation: subIn var(--duration) var(--ease-out) 80ms backwards; }
+.subnav .subItem:nth-child(4) { animation: subIn var(--duration) var(--ease-out) 120ms backwards; }
+.subnav .subItem:nth-child(5) { animation: subIn var(--duration) var(--ease-out) 160ms backwards; }
 
 .subItem {
   display: flex;
@@ -442,7 +469,7 @@
 }
 
 .askButton:hover {
-  box-shadow: 0 6px 16px -8px rgba(47, 111, 94, 0.45);
+  box-shadow: 0 6px 16px -8px rgba(79, 70, 229, 0.45);
   transform: translateY(-1px);
 }
 
@@ -787,7 +814,7 @@
     border-radius: 999px;
     background: var(--brand-gradient);
     color: #fff;
-    box-shadow: 0 12px 28px -10px rgba(47, 111, 94, 0.55);
+    box-shadow: 0 12px 28px -10px rgba(79, 70, 229, 0.55);
     cursor: pointer;
   }
 

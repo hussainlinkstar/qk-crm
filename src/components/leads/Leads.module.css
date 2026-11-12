@@ -12,10 +12,49 @@
   letter-spacing: 0;
 }
 
-.panelMeta {
+.panelControls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.panelControls label {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
+  min-width: 0;
+}
+
+.panelControls label > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.panelSelect {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.toneNew { color: #1d4ed8; }
+.toneWorking { color: #6d28d9; }
+.toneQualified { color: var(--brand-ink); }
+.toneUnqualified { color: var(--muted); }
+.toneConverted { color: #047857; }
+
+.panelSource {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
 }
 
 .journey {
@@ -37,14 +76,14 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 6px 4px;
-  border: 0;
-  background: transparent;
+  min-height: 52px;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
   cursor: pointer;
 }
 
@@ -62,10 +101,17 @@
 
 .journeyDone {
   color: var(--brand-ink);
+  border-color: var(--brand-ring);
 }
 
 .journeyDone .journeyDot {
   background: var(--brand);
+}
+
+.journeyCurrent {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand-ink);
 }
 
 .journeyCurrent .journeyDot {

@@ -101,6 +101,8 @@
 .drawerBackdrop {
   place-items: stretch end;
   padding: 0;
+  backdrop-filter: none;
+  animation: none;
 }
 
 .drawer {
@@ -112,7 +114,8 @@
   border-left: 1px solid var(--line);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
-  animation: slideIn 280ms var(--ease-spring);
+  animation: drawerSlideIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  backface-visibility: hidden;
   outline: none;
 }
 
@@ -174,14 +177,9 @@
   }
 }
 
-@keyframes slideIn {
+@keyframes drawerSlideIn {
   from {
-    transform: translateX(28px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
+    transform: translate3d(100%, 0, 0);
   }
 }
 

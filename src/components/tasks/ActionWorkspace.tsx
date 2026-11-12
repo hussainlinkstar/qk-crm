@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Select from "@/components/ui/Select";
 import { useMemo, useState, type DragEvent } from "react";
 import { crm } from "@/lib/crm-store";
 import { dueLabel, todayKey } from "@/lib/format";
@@ -119,6 +120,10 @@ export function ActionWorkspace({
   const counts = { ...taskCounts(scopedTasks), dismissed: scopedTasks.filter((task) => task.status === "dismissed").length };
   const today = todayKey();
   const useBoard = layout === "board" && view !== "dismissed";
+  const openScopedTasks = scopedTasks.filter(isOpen);
+  const overdueScopedTasks = sortTasks(openScopedTasks.filter((task) => task.due !== null && task.due < today));
+  const unassignedScopedTasks = openScopedTasks.filter((task) => !task.ownerId);
+  const priorityTask = overdueScopedTasks[0] ?? sortTasks(openScopedTasks)[0] ?? null;
 
   const relatedFor = (task: Task) => {
     const reqMatch = task.description.match(/\[requirement:([^\]]+)\]/);
@@ -171,7 +176,7 @@ export function ActionWorkspace({
         <button type="button" className={view === "overdue" ? styles.summaryActive : undefined} onClick={() => setView(view === "overdue" ? "all" : "overdue")}>
           Overdue <b className={`tabular ${counts.overdue ? styles.overdueText : ""}`}>{counts.overdue}</b>
         </button>
-        <select
+        <Select
           className={`select ${styles.filter}`}
           value={view === "completed" || view === "dismissed" ? view : ""}
           onChange={(event) => {
@@ -183,15 +188,37 @@ export function ActionWorkspace({
           <option value="">Closed…</option>
           <option value="completed">Done ({counts.completed})</option>
           <option value="dismissed">Dismissed ({counts.dismissed})</option>
-        </select>
+        </Select>
       </section>
+
+      {scope === "sales" && (
+        <button
+          type="button"
+          className={styles.intelligence}
+          disabled={!priorityTask}
+          onClick={() => priorityTask && openTask(priorityTask.id)}
+        >
+          <span>
+            <small>Sales activity insight</small>
+            <b>
+              {overdueScopedTasks.length > 0
+                ? `${overdueScopedTasks.length} overdue ${overdueScopedTasks.length === 1 ? "activity needs" : "activities need"} attention`
+                : `${openScopedTasks.length} open sales ${openScopedTasks.length === 1 ? "activity" : "activities"} are on schedule`}
+            </b>
+          </span>
+          <span>
+            {priorityTask ? `Start with “${priorityTask.title}”${unassignedScopedTasks.length ? ` · ${unassignedScopedTasks.length} unassigned` : ""}` : "No open sales activity requires action."}
+          </span>
+          {priorityTask ? <Icon name="arrowRight" size={15} /> : null}
+        </button>
+      )}
 
       <section className={styles.toolbar}>
         <label className={styles.search}>
           <Icon name="search" size={15} />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tasks" aria-label="Search tasks" />
         </label>
-        <select className={`select ${styles.filter}`} value={owner} onChange={(event) => setOwner(event.target.value)} aria-label="Owner">
+        <Select className={`select ${styles.filter}`} value={owner} onChange={(event) => setOwner(event.target.value)} aria-label="Owner">
           <option value="">All owners</option>
           <option value="none">Unassigned</option>
           {state.members.map((member) => (
@@ -199,22 +226,22 @@ export function ActionWorkspace({
               {member.id === "me" ? "Me" : member.name}
             </option>
           ))}
-        </select>
-        <select className={`select ${styles.filter}`} value={priority} onChange={(event) => setPriority(event.target.value as Priority | "")} aria-label="Priority">
+        </Select>
+        <Select className={`select ${styles.filter}`} value={priority} onChange={(event) => setPriority(event.target.value as Priority | "")} aria-label="Priority">
           <option value="">All priorities</option>
           {PRIORITIES.map((item) => (
             <option key={item} value={item}>
               {item[0].toUpperCase() + item.slice(1)}
             </option>
           ))}
-        </select>
-        <select className={`select ${styles.filter}`} value={source} onChange={(event) => setSource(event.target.value as TaskSource)} aria-label="Task source">
+        </Select>
+        <Select className={`select ${styles.filter}`} value={source} onChange={(event) => setSource(event.target.value as TaskSource)} aria-label="Task source">
           {SOURCES.map(([value, label]) => (
             <option key={value || "all"} value={value}>
               {label}
             </option>
           ))}
-        </select>
+        </Select>
         <div className="segmented" role="group" aria-label="Layout">
           <button type="button" aria-pressed={layout === "board"} onClick={() => setLayout("board")}>
             Board

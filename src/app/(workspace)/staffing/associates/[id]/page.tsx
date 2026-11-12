@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
@@ -70,30 +71,11 @@ export default function AssociateDetailPage() {
   useEffect(() => {
     try {
       const stored = window.sessionStorage.getItem(RATE_KEY);
-      if (stored != null) setShowRates(stored === "1");
+      if (stored != null) queueMicrotask(() => setShowRates(stored === "1"));
     } catch {
       // ignore
     }
   }, []);
-
-  useEffect(() => {
-    if (!associate) return;
-    setDraft({
-      summary: associate.summary ?? "",
-      headline: associate.headline,
-      availability: associate.availability,
-      nextAvailableDate: associate.nextAvailableDate ?? "",
-      status: associate.status,
-      workingMode: associate.workingMode,
-      location: associate.location,
-      email: associate.email ?? "",
-      phone: associate.phone ?? "",
-      skills: [...associate.skills],
-      specialisations: [...(associate.specialisations ?? [])],
-      sectors: [...associate.sectors],
-      notes: associate.notes,
-    });
-  }, [associate?.id]);
 
   const linked = useMemo(() => {
     if (!tessiant || !associate) return { candidates: [], placements: [], assignment: null, engagement: "unavailable" as const };
@@ -124,6 +106,25 @@ export default function AssociateDetailPage() {
   }
 
   const cv = latestCv(associate);
+
+  const beginEditing = () => {
+    setDraft({
+      summary: associate.summary ?? "",
+      headline: associate.headline,
+      availability: associate.availability,
+      nextAvailableDate: associate.nextAvailableDate ?? "",
+      status: associate.status,
+      workingMode: associate.workingMode,
+      location: associate.location,
+      email: associate.email ?? "",
+      phone: associate.phone ?? "",
+      skills: [...associate.skills],
+      specialisations: [...(associate.specialisations ?? [])],
+      sectors: [...associate.sectors],
+      notes: associate.notes,
+    });
+    setEditing(true);
+  };
 
   const saveProfile = () => {
     if (!draft.headline.trim() || !draft.summary.trim()) {
@@ -161,15 +162,15 @@ export default function AssociateDetailPage() {
   const recentRecruitment = linked.candidates.slice(0, 3);
 
   return (
-    <div className={`page ${styles.density}`}>
-      <header className="page-head">
-        <div>
+    <div className={`page ${styles.density} ${styles.profilePage}`}>
+      <header className={styles.profileHero}>
+        <div className={styles.profileIdentity}>
           <p className="kicker">
             <Link href="/staffing/associates">Talent network</Link>
           </p>
-          <div className={talent.person}>
-            <span className="avatar">{initials(associate.name)}</span>
-            <div>
+          <div className={styles.profilePerson}>
+            <span className={styles.profileAvatar}>{initials(associate.name)}</span>
+            <div className={styles.profileName}>
               <h1>{associate.name}</h1>
               <p className="subtitle">{associate.headline}</p>
               <div className={talent.heroChips}>
@@ -182,7 +183,7 @@ export default function AssociateDetailPage() {
             </div>
           </div>
         </div>
-        <div className="page-actions">
+        <div className={styles.profileActions}>
           <Button
             variant="secondary"
             size="small"
@@ -200,15 +201,15 @@ export default function AssociateDetailPage() {
           </Button>
           {editing ? (
             <>
-              <Button variant="ghost" onClick={() => setEditing(false)}>
+              <Button variant="ghost" size="small" onClick={() => setEditing(false)}>
                 Cancel
               </Button>
-              <Button icon="check" onClick={saveProfile}>
+              <Button icon="check" size="small" onClick={saveProfile}>
                 Save profile
               </Button>
             </>
           ) : (
-            <Button variant="secondary" icon="edit" onClick={() => setEditing(true)}>
+            <Button variant="secondary" size="small" icon="edit" onClick={beginEditing}>
               Edit profile
             </Button>
           )}
@@ -216,17 +217,24 @@ export default function AssociateDetailPage() {
       </header>
 
       <div className={styles.profileGrid}>
-        <aside className={`card ${styles.sideCard}`}>
+        <aside className={`card ${styles.sideCard} ${styles.profileSidebar}`}>
           <div className={`card-body ${talent.sideStack}`}>
-            <div>
-              <div className="muted">Capacity</div>
+            <div className={styles.profileSideHeading}>
+              <span>Profile snapshot</span>
+              <small>{associate.verifiedAt ? "Verified record" : "Review required"}</small>
+            </div>
+            <div className={styles.capacityBlock}>
+              <div className={styles.profileFactLabel}>Capacity</div>
               <b className="tabular">
                 {capacity}% committed · {freeCapacity}% free
               </b>
+              <span className={styles.capacityTrack} aria-hidden="true">
+                <span style={{ width: `${freeCapacity}%` }} />
+              </span>
               <div className="muted">{linked.engagement}</div>
             </div>
-            <div>
-              <div className="muted">Current assignment</div>
+            <div className={styles.profileFact}>
+              <div className={styles.profileFactLabel}>Current assignment</div>
               {linked.assignment ? (
                 <>
                   <b>
@@ -238,13 +246,13 @@ export default function AssociateDetailPage() {
                 <b>Bench</b>
               )}
             </div>
-            <div>
-              <div className="muted">CV status</div>
+            <div className={styles.profileFact}>
+              <div className={styles.profileFactLabel}>CV status</div>
               <b>{cv ? `${cv.name} · v${cv.version}` : "No CV"}</b>
               <div className="muted">{cv?.verifiedAt ? `Verified ${formatDate(cv.verifiedAt)}` : "Needs review"}</div>
             </div>
-            <div>
-              <div className="muted">Recent recruitment</div>
+            <div className={styles.profileFact}>
+              <div className={styles.profileFactLabel}>Recent recruitment</div>
               {recentRecruitment.length === 0 ? (
                 <b>None</b>
               ) : (
@@ -260,25 +268,25 @@ export default function AssociateDetailPage() {
                 })
               )}
             </div>
-            <div>
-              <div className="muted">Location</div>
+            <div className={styles.profileFact}>
+              <div className={styles.profileFactLabel}>Location</div>
               <b>
                 {associate.location} · {associate.workingMode}
               </b>
             </div>
-            <div>
-              <div className="muted">Day rate</div>
+            <div className={styles.profileFact}>
+              <div className={styles.profileFactLabel}>Day rate</div>
               <b className="tabular">{showRates ? formatRate(associate.rate) : "Restricted"}</b>
             </div>
-            <div>
-              <div className="muted">Owner</div>
+            <div className={styles.profileFact}>
+              <div className={styles.profileFactLabel}>Owner</div>
               <b>{state.members.find((member) => member.id === associate.ownerId)?.name ?? "Unassigned"}</b>
             </div>
           </div>
         </aside>
 
-        <div>
-          <div className="segmented" role="tablist" aria-label="Talent profile sections" style={{ marginBottom: 14 }}>
+        <div className={styles.profileMain}>
+          <div className={`segmented ${styles.profileTabs}`} role="tablist" aria-label="Talent profile sections">
             {TABS.map((item) => (
               <button
                 key={item.key}
@@ -292,7 +300,7 @@ export default function AssociateDetailPage() {
           </div>
 
           {tab === "overview" && (
-            <section className="card tab-panel">
+            <section className={`card tab-panel ${styles.profileContentCard}`}>
               <div className="card-head">
                 <h2>Professional overview</h2>
               </div>
@@ -316,11 +324,11 @@ export default function AssociateDetailPage() {
                         </div>
                         <div className={styles.field}>
                           <label htmlFor="status">Profile status</label>
-                          <select id="status" className="input" value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as AssociateStatus })}>
+                          <Select id="status" className="input" value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as AssociateStatus })}>
                             <option value="active">Active</option>
                             <option value="unverified">Unverified</option>
                             <option value="inactive">Inactive</option>
-                          </select>
+                          </Select>
                         </div>
                       </div>
                     </section>
@@ -365,12 +373,12 @@ export default function AssociateDetailPage() {
                       <div className={styles.formGrid}>
                         <div className={styles.field}>
                           <label htmlFor="availability">Status</label>
-                          <select id="availability" className="input" value={draft.availability} onChange={(e) => setDraft({ ...draft, availability: e.target.value as AvailabilityStatus })}>
+                          <Select id="availability" className="input" value={draft.availability} onChange={(e) => setDraft({ ...draft, availability: e.target.value as AvailabilityStatus })}>
                             <option value="available">Available</option>
                             <option value="limited">Limited</option>
                             <option value="unavailable">Unavailable</option>
                             <option value="unknown">Unknown</option>
-                          </select>
+                          </Select>
                         </div>
                         <div className={styles.field}>
                           <label htmlFor="nextAvailableDate">Next available</label>
@@ -378,11 +386,11 @@ export default function AssociateDetailPage() {
                         </div>
                         <div className={styles.field}>
                           <label htmlFor="workingMode">Working preference</label>
-                          <select id="workingMode" className="input" value={draft.workingMode} onChange={(e) => setDraft({ ...draft, workingMode: e.target.value as WorkingMode })}>
+                          <Select id="workingMode" className="input" value={draft.workingMode} onChange={(e) => setDraft({ ...draft, workingMode: e.target.value as WorkingMode })}>
                             <option value="remote">Remote</option>
                             <option value="hybrid">Hybrid</option>
                             <option value="onsite">Onsite</option>
-                          </select>
+                          </Select>
                         </div>
                         <div className={styles.field}>
                           <label htmlFor="location">Location</label>
@@ -422,9 +430,20 @@ export default function AssociateDetailPage() {
                         </span>
                       ))}
                     </div>
-                    <p className="muted" style={{ marginTop: 14 }}>
-                      {associate.email ?? "No email"} · {associate.phone ?? "No phone"} · Languages: {associate.languages.join(", ") || "—"}
-                    </p>
+                    <div className={styles.profileContactGrid}>
+                      <a href={`mailto:${associate.email}`} className={styles.profileContact}>
+                        <span>Email</span>
+                        <b>{associate.email ?? "No email"}</b>
+                      </a>
+                      <div className={styles.profileContact}>
+                        <span>Phone</span>
+                        <b>{associate.phone ?? "No phone"}</b>
+                      </div>
+                      <div className={styles.profileContact}>
+                        <span>Languages</span>
+                        <b>{associate.languages.join(", ") || "—"}</b>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>

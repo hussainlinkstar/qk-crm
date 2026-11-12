@@ -85,7 +85,7 @@ export default function SalesOverviewPage() {
         </p>
       )}
 
-      <GrowthOpportunities state={state} />
+      <GrowthOpportunities state={state} onOpenOpportunity={(opportunity) => setPreviewId(opportunity.id)} />
 
       <section className="card">
         <div className="card-head">
@@ -122,7 +122,9 @@ export default function SalesOverviewPage() {
                         {accountName(opportunity.accountId)} · £{opportunity.amount.toLocaleString("en-GB")}
                       </small>
                     </span>
-                    <span className="chip">{brief.type}</span>
+                    <span className={styles.dealType} data-type={brief.type}>
+                      {brief.type}
+                    </span>
                     <span>{brief.why}</span>
                     <span className="muted">{brief.missing}</span>
                     <span>{brief.next}</span>
@@ -141,35 +143,39 @@ export default function SalesOverviewPage() {
             Activities
           </Link>
         </div>
-        <div className="card-body stack-gap">
+        <div className="card-body">
           {followUps.length === 0 && attentionLeads.length === 0 ? (
             <EmptyState title="No follow-ups due" icon="checkCircle" />
           ) : (
-            <>
-              {followUps.map((task) => (
-                <button key={task.id} type="button" className={styles.nextAction} onClick={() => openTask(task.id)}>
-                  <span className={styles.actionDot} data-priority={task.priority} />
-                  <span>
-                    <b>{task.title}</b>
-                    <small>
-                      {task.due ? (task.due < todayKey() ? `Overdue · ${formatDate(task.due)}` : `Due ${formatDate(task.due)}`) : "No due date"}
-                    </small>
-                  </span>
-                </button>
-              ))}
+            <div className={styles.actionGrid}>
+              {followUps.map((task) => {
+                const overdue = Boolean(task.due && task.due < todayKey());
+                return (
+                  <button key={task.id} type="button" className={styles.nextAction} onClick={() => openTask(task.id)}>
+                    <span className={styles.actionDot} data-priority={task.priority} />
+                    <span className={styles.actionCopy}>
+                      <b>{task.title}</b>
+                    </span>
+                    <span className={styles.actionWhen} data-overdue={overdue ? "true" : "false"}>
+                      {task.due ? (overdue ? `Overdue · ${formatDate(task.due)}` : formatDate(task.due)) : "No date"}
+                    </span>
+                  </button>
+                );
+              })}
               {attentionLeads.map((lead) => (
                 <Link key={lead.id} href={`/sales/leads/${lead.id}`} className={styles.nextAction}>
                   <span className={styles.actionDot} data-priority="medium" />
-                  <span>
+                  <span className={styles.actionCopy}>
                     <b>{lead.nextActionLabel}</b>
                     <small>
                       {lead.name}
                       {lead.company ? ` · ${lead.company}` : ""}
                     </small>
                   </span>
+                  <span className={styles.actionWhen}>Lead</span>
                 </Link>
               ))}
-            </>
+            </div>
           )}
         </div>
       </section>

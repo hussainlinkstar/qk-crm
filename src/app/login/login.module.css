@@ -14,7 +14,10 @@
   padding: 36px 56px 40px;
   overflow: hidden;
   border-right: 1px solid var(--line);
-  background: #fbfcff;
+  background:
+    radial-gradient(820px 360px at 0% -8%, rgba(124, 58, 237, 0.16), transparent 62%),
+    radial-gradient(640px 320px at 100% 0%, rgba(99, 102, 241, 0.14), transparent 58%),
+    #f7f5ff;
 }
 
 

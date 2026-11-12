@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Select from "@/components/ui/Select";
 import { crm, type TaskInput } from "@/lib/crm-store";
 import { addDays } from "@/lib/format";
 import { PRIORITIES, type Priority } from "@/lib/types";
@@ -67,36 +68,36 @@ export default function TaskFormModal({ request, onClose }: { request: TaskFormR
         </label>
         <label className="field">
           <span>Linked lead</span>
-          <select className="select" value={form.leadId ?? ""} onChange={(event) => set("leadId", event.target.value || null)}>
+          <Select className="select" value={form.leadId ?? ""} onChange={(event) => set("leadId", event.target.value || null)}>
             <option value="">No linked lead</option>
             {leads.map((lead) => (
               <option key={lead.id} value={lead.id}>
                 {lead.name}{lead.company ? ` — ${lead.company}` : ""}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <div className="form-row">
           <label className="field">
             <span>Owner</span>
-            <select className="select" value={form.ownerId ?? ""} onChange={(event) => set("ownerId", event.target.value || null)}>
+            <Select className="select" value={form.ownerId ?? ""} onChange={(event) => set("ownerId", event.target.value || null)}>
               <option value="">Unassigned</option>
               {state.members.map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.id === "me" ? `${member.name} (you)` : member.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="field">
             <span>Priority</span>
-            <select className="select" value={form.priority} onChange={(event) => set("priority", event.target.value as Priority)}>
+            <Select className="select" value={form.priority} onChange={(event) => set("priority", event.target.value as Priority)}>
               {PRIORITIES.map((priority) => (
                 <option key={priority} value={priority}>
                   {priority[0].toUpperCase() + priority.slice(1)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
         <label className="field">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EmptyState, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
@@ -531,7 +532,7 @@ export default function PulseCockpitPage() {
                         </div>
                         {showReject ? (
                           <div className={styles.rejectRowExact}>
-                            <select
+                            <Select
                               className="input"
                               value={rejectReason}
                               onChange={(e) => setRejectReason(e.target.value)}
@@ -542,7 +543,7 @@ export default function PulseCockpitPage() {
                                   {item}
                                 </option>
                               ))}
-                            </select>
+                            </Select>
                             <button type="button" className={styles.btnPulseSecondary} onClick={() => reject(selected.id)}>
                               Confirm reject
                             </button>

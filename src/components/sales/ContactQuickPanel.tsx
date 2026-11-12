@@ -6,6 +6,7 @@ import Icon from "@/components/ui/Icon";
 import { Drawer } from "@/components/ui/Overlay";
 import { EmptyState, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
+import { engagementInsights } from "@/lib/commercial-intelligence";
 import { addDays, formatDate, initials, timeAgo } from "@/lib/format";
 import styles from "@/components/leads/Leads.module.css";
 
@@ -33,6 +34,7 @@ export default function ContactQuickPanel({ contactId, onClose }: { contactId: s
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
     .slice(0, 5);
   const lastInteraction = events[0] ?? null;
+  const ending = engagementInsights(state).find((item) => item.contactId === contact.id) ?? null;
   const openTasks = state.tasks.filter(
     (task) =>
       task.status !== "completed" &&
@@ -65,6 +67,15 @@ export default function ContactQuickPanel({ contactId, onClose }: { contactId: s
         </Link>
       }
     >
+      {ending ? (
+        <p>
+          <b>{ending.title}</b>
+          <span className="muted" style={{ display: "block", marginTop: 4 }}>
+            {ending.detail}
+          </span>
+        </p>
+      ) : null}
+
       <div className={styles.panelMeta}>
         {contact.isPrimary ? <span className="chip chip-completed">Primary</span> : <span className="chip">Stakeholder</span>}
         <span className="tag">Owner · {owner?.name ?? "Unassigned"}</span>

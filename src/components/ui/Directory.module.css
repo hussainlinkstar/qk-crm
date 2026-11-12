@@ -128,7 +128,7 @@
 .personCard:hover,
 .personCard:focus-visible {
   border-color: var(--brand-ring);
-  box-shadow: 0 12px 24px -18px rgba(47, 111, 94, 0.4);
+  box-shadow: 0 12px 24px -18px rgba(79, 70, 229, 0.4);
   transform: translateY(-1px);
   outline: none;
 }

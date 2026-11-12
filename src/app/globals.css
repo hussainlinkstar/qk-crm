@@ -1,37 +1,34 @@
-/* Qiko Core design system — structure preserved; Tessiant green is the workspace brand. */
+/* Qiko Core design system — Signal indigo across the workspace. */
 
 :root {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Surfaces — clean neutrals for a premium consultancy platform */
-  --canvas: #f4f6f5;
+  /* Surfaces — Signal lavender canvas, white cards */
+  --canvas: #f7f5ff;
   --surface: #ffffff;
-  --surface-muted: #f7f9f8;
-  --well: #eef2f0;
-  --line: #dde5e1;
-  --line-soft: #eef2f0;
-  --line-strong: #c5d0cb;
+  --surface-muted: #f8fafc;
+  --well: #eef2ff;
+  --line: #e0e7ff;
+  --line-soft: #eef2ff;
+  --line-strong: #c7d2fe;
 
-  /* Ink — dark, readable */
-  --ink: #0f1714;
-  --ink-2: #2a3732;
-  --ink-3: #3f4f48;
-  --muted: #5c6b64;
-  --subtle: #8a9891;
+  /* Ink — slate, readable on the lavender canvas */
+  --ink: #0f172a;
+  --ink-2: #1e293b;
+  --ink-3: #334155;
+  --muted: #64748b;
+  --subtle: #94a3b8;
 
-  /*
-   * Brand — Tessiant-inspired green (not claimed as an official Tessiant hex).
-   * Qiko product naming (Core, Pulse, Ask Qiko) remains; --qiko-accent for intelligence accents.
-   */
-  --brand: #2f6f5e;
-  --brand-strong: #24574a;
-  --brand-ink: #1c453b;
-  --brand-soft: #e8f3ef;
-  --brand-ring: #b7d7cd;
-  --brand-blue: #3d7a6a;
-  --brand-violet: #4a8f7c;
-  --brand-gradient: linear-gradient(135deg, #3d7a6a 0%, #2f6f5e 52%, #24574a 100%);
+  /* Brand — same Signal / Pulse indigo used on Sales */
+  --brand: #4f46e5;
+  --brand-strong: #4338ca;
+  --brand-ink: #312e81;
+  --brand-soft: #eef2ff;
+  --brand-ring: #c7d2fe;
+  --brand-blue: #6366f1;
+  --brand-violet: #7c3aed;
+  --brand-gradient: linear-gradient(135deg, #818cf8 0%, #4f46e5 46%, #7c3aed 100%);
   --qiko-accent: #4f46e5;
   --qiko-accent-soft: #eef2ff;
 
@@ -56,8 +53,8 @@
   --shadow-sm: 0 1px 2px rgba(15, 23, 20, 0.05), 0 1px 3px rgba(15, 23, 20, 0.04);
   --shadow-md: 0 8px 22px -14px rgba(15, 23, 20, 0.14);
   --shadow-lg: 0 22px 56px -28px rgba(15, 23, 20, 0.28);
-  --shadow-hover: 0 10px 24px -16px rgba(47, 111, 94, 0.28);
-  --focus-ring: 0 0 0 3px var(--brand-ring);
+  --shadow-hover: 0 14px 28px -18px rgba(79, 70, 229, 0.48);
+  --focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.28);
 
   /* Motion — purposeful, short, consistent */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -70,16 +67,16 @@
   --sidebar-collapsed: 72px;
 }
 
-/* Explicit tenant mark (tokens already Tessiant-first). */
+/* Workspace mark uses the same Signal indigo as Sales. */
 [data-tenant="tessiant"] {
-  --brand: #2f6f5e;
-  --brand-strong: #24574a;
-  --brand-ink: #1c453b;
-  --brand-soft: #e8f3ef;
-  --brand-ring: #b7d7cd;
-  --brand-blue: #3d7a6a;
-  --brand-violet: #4a8f7c;
-  --brand-gradient: linear-gradient(135deg, #3d7a6a 0%, #2f6f5e 52%, #24574a 100%);
+  --brand: #4f46e5;
+  --brand-strong: #4338ca;
+  --brand-ink: #312e81;
+  --brand-soft: #eef2ff;
+  --brand-ring: #c7d2fe;
+  --brand-blue: #6366f1;
+  --brand-violet: #7c3aed;
+  --brand-gradient: linear-gradient(135deg, #818cf8 0%, #4f46e5 46%, #7c3aed 100%);
 }
 
 /* Qiko Pulse product surface — indigo identity, independent of Tessiant CRM green. */
@@ -110,7 +107,11 @@ body {
   font-family: var(--font-sans);
   font-size: 14px;
   color: var(--ink);
-  background: var(--canvas);
+  background:
+    radial-gradient(820px 360px at 0% -8%, rgba(124, 58, 237, 0.16), transparent 62%),
+    radial-gradient(640px 320px at 100% 0%, rgba(99, 102, 241, 0.14), transparent 58%),
+    linear-gradient(180deg, #f7f5ff 0%, #f8fafc 42%, #f8fafc 100%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -146,7 +147,7 @@ p {
 }
 
 ::selection {
-  background: #b7d7cd;
+  background: #ddd6fe;
 }
 
 a:focus-visible,
@@ -171,7 +172,7 @@ textarea:focus-visible {
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--subtle);
+  color: #6d28d9;
 }
 
 .muted {
@@ -210,6 +211,25 @@ textarea:focus-visible {
   }
 }
 
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.page > * {
+  animation: riseIn var(--duration-slow) var(--ease-out) backwards;
+}
+
+.page > *:nth-child(2) { animation-delay: 40ms; }
+.page > *:nth-child(3) { animation-delay: 80ms; }
+.page > *:nth-child(4) { animation-delay: 120ms; }
+.page > *:nth-child(5) { animation-delay: 160ms; }
+.page > *:nth-child(6) { animation-delay: 200ms; }
+.page > *:nth-child(7) { animation-delay: 240ms; }
+.page > *:nth-child(n + 8) { animation-delay: 280ms; }
+
 .page-head {
   display: flex;
   flex-wrap: wrap;
@@ -220,6 +240,7 @@ textarea:focus-visible {
 
 .page-head h1 {
   margin-top: 0;
+  color: #1e1b4b;
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -257,11 +278,10 @@ textarea:focus-visible {
 /* — Cards — */
 .card {
   min-width: 0;
-  border: 1px solid var(--line);
+  border: 1px solid #e0e7ff;
   border-radius: var(--radius-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-xs);
-  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(49, 46, 129, 0.04), 0 16px 36px -28px rgba(79, 70, 229, 0.55);
 }
 
 .interactive,
@@ -310,6 +330,16 @@ textarea:focus-visible {
 .metric-grid-5 {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
+
+.metric-grid > * {
+  animation: riseIn var(--duration) var(--ease-out) backwards;
+}
+
+.metric-grid > *:nth-child(2) { animation-delay: 40ms; }
+.metric-grid > *:nth-child(3) { animation-delay: 80ms; }
+.metric-grid > *:nth-child(4) { animation-delay: 120ms; }
+.metric-grid > *:nth-child(5) { animation-delay: 160ms; }
+.metric-grid > *:nth-child(6) { animation-delay: 200ms; }
 
 .metric-card {
   display: flex;
@@ -469,8 +499,17 @@ textarea:focus-visible {
   border-style: dashed;
   background: var(--brand-soft);
   box-shadow: inset 0 0 0 1px var(--brand-ring);
-  transform: scale(1.008);
+  transform: scale(1.012);
 }
+
+.kanban-column > .kanban-card {
+  animation: riseIn var(--duration) var(--ease-out) backwards;
+}
+
+.kanban-column > .kanban-card:nth-child(2) { animation-delay: 30ms; }
+.kanban-column > .kanban-card:nth-child(3) { animation-delay: 60ms; }
+.kanban-column > .kanban-card:nth-child(4) { animation-delay: 90ms; }
+.kanban-column > .kanban-card:nth-child(n + 5) { animation-delay: 120ms; }
 
 .kanban-card {
   display: flex;
@@ -912,6 +951,10 @@ textarea:focus-visible {
   vertical-align: middle;
 }
 
+.table-wrap {
+  animation: riseIn var(--duration) var(--ease-out) backwards;
+}
+
 .table tbody tr {
   transition: background var(--duration-fast) var(--ease-out);
 }
@@ -1101,7 +1144,10 @@ select.input,
   }
 
   .interactive:hover,
-  .lift:hover {
+  .lift:hover,
+  .card:hover,
+  .metric-card:hover,
+  .kanban-card:hover {
     transform: none;
   }
 }

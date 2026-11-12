@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useMemo, useState, type DragEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { EmptyState, MemberAvatar, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
@@ -9,17 +9,9 @@ import OpportunityQuickPanel from "@/components/sales/OpportunityQuickPanel";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { addDays, formatDate, todayKey } from "@/lib/format";
-import { commercialBuckets } from "@/lib/sales-crm";
+import { opportunitySignal } from "@/lib/commercial-intelligence";
 import { OPPORTUNITY_STAGES, type Opportunity, type OpportunityStage } from "@/lib/types";
 import styles from "./pipeline.module.css";
-
-function riskFor(opportunity: Opportunity) {
-  const soon = opportunity.expectedCloseDate <= addDays(14);
-  const stalled = ["Proposal", "Negotiation"].includes(opportunity.stage) && !opportunity.nextStep;
-  if (soon && opportunity.stage !== "Closed Won" && opportunity.stage !== "Closed Lost") return "Closing soon";
-  if (stalled) return "Needs next step";
-  return null;
-}
 
 export default function OpportunitiesPipelinePage() {
   const { state } = useWorkspaceData();
@@ -33,10 +25,6 @@ export default function OpportunitiesPipelinePage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [pending, setPending] = useState<{ opportunity: Opportunity; stage: OpportunityStage } | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(opportunityParam);
-
-  useEffect(() => {
-    if (opportunityParam) setPreviewId(opportunityParam);
-  }, [opportunityParam]);
   const [createRequirement, setCreateRequirement] = useState(true);
 
   const opportunities = useMemo(() => {
@@ -53,7 +41,15 @@ export default function OpportunitiesPipelinePage() {
     [opportunities],
   );
 
-  const buckets = state ? commercialBuckets(state) : null;
+  const openOpportunities = opportunities.filter((item) => item.stage !== "Closed Won" && item.stage !== "Closed Lost");
+  const negotiationOpportunities = opportunities.filter((item) => item.stage === "Negotiation");
+  const closedOpportunities = opportunities.filter((item) => item.stage === "Closed Won" || item.stage === "Closed Lost");
+  const focusOpportunity =
+    negotiationOpportunities[0] ??
+    opportunities.find((item) => item.stage === "Proposal") ??
+    opportunities.find((item) => item.stage === "Discovery") ??
+    openOpportunities[0] ??
+    null;
 
   if (!state) {
     return (
@@ -139,21 +135,53 @@ export default function OpportunitiesPipelinePage() {
         </div>
       </header>
 
-      {buckets && (
-        <div className={styles.metrics} aria-label="Pipeline health">
+      <div className={styles.metrics} aria-label="Pipeline health">
           <div>
-            <b className="tabular kpi-value">£{buckets.pipeline.toLocaleString("en-GB")}</b>
-            <span>Open pipeline</span>
+            <b className="tabular kpi-value">{openOpportunities.length}</b>
+            <span>Open deals · £{openOpportunities.reduce((sum, item) => sum + item.amount, 0).toLocaleString("en-GB")}</span>
           </div>
           <div>
-            <b className="tabular kpi-value">£{buckets.weighted.toLocaleString("en-GB")}</b>
-            <span>Weighted pipeline</span>
+            <b className="tabular kpi-value">{negotiationOpportunities.length}</b>
+            <span>Under negotiation · £{negotiationOpportunities.reduce((sum, item) => sum + item.amount, 0).toLocaleString("en-GB")}</span>
           </div>
           <div>
-            <b className="tabular kpi-value">{opportunities.filter((item) => item.expectedCloseDate <= addDays(21) && item.stage !== "Closed Won" && item.stage !== "Closed Lost").length}</b>
+            <b className="tabular kpi-value">{closedOpportunities.length}</b>
+            <span>
+              Closed deals · {opportunities.filter((item) => item.stage === "Closed Won").length} won,{" "}
+              {opportunities.filter((item) => item.stage === "Closed Lost").length} lost
+            </span>
+          </div>
+          <div>
+            <b className="tabular kpi-value">
+              {
+                opportunities.filter(
+                  (item) =>
+                    item.expectedCloseDate >= todayKey() &&
+                    item.expectedCloseDate <= addDays(21) &&
+                    item.stage !== "Closed Won" &&
+                    item.stage !== "Closed Lost",
+                ).length
+              }
+            </b>
             <span>Closing in 21 days</span>
           </div>
-        </div>
+      </div>
+
+      {focusOpportunity && (
+        <button type="button" className={styles.pipelineInsight} onClick={() => setPreviewId(focusOpportunity.id)}>
+          <span>
+            <small>Pipeline insight</small>
+            <b>
+              {negotiationOpportunities.length > 0
+                ? `${negotiationOpportunities.length} ${negotiationOpportunities.length === 1 ? "deal is" : "deals are"} in negotiation`
+                : `${openOpportunities.length} open ${openOpportunities.length === 1 ? "deal" : "deals"} need progression`}
+            </b>
+          </span>
+          <span>
+            {focusOpportunity.name}: {focusOpportunity.nextStep?.trim() || `Set the next action to progress from ${focusOpportunity.stage}.`}
+          </span>
+          <span aria-hidden="true">→</span>
+        </button>
       )}
 
       {layout === "board" ? (
@@ -180,7 +208,7 @@ export default function OpportunitiesPipelinePage() {
                 ) : (
                   column.items.map((opportunity) => {
                     const owner = ownerOf(opportunity.ownerId);
-                    const risk = riskFor(opportunity);
+                    const risk = opportunitySignal(state, opportunity);
                     return (
                       <article
                         key={opportunity.id}
@@ -247,10 +275,14 @@ export default function OpportunitiesPipelinePage() {
                   <tbody>
                     {opportunities.map((opportunity) => {
                       const owner = ownerOf(opportunity.ownerId);
+                      const risk = opportunitySignal(state, opportunity);
                       return (
                         <tr key={opportunity.id} className="clickable" onClick={() => setPreviewId(opportunity.id)}>
                           <td>
-                            <b>{opportunity.name}</b>
+                            <div className={styles.oppNameCell}>
+                              <b>{opportunity.name}</b>
+                              {risk ? <span className={styles.risk}>{risk}</span> : null}
+                            </div>
                           </td>
                           <td>{accountName(opportunity.accountId)}</td>
                           <td>

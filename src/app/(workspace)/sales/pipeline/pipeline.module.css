@@ -362,9 +362,62 @@
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.pipelineInsight {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr) auto;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 13px 16px;
+  border: 1px solid var(--brand-ring);
+  border-radius: var(--radius-lg);
+  background: var(--brand-soft);
+  color: var(--ink-2);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.pipelineInsight:hover {
+  border-color: var(--brand);
+  transform: translateY(-1px);
+}
+
+.pipelineInsight > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pipelineInsight small {
+  color: var(--brand);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pipelineInsight b {
+  color: var(--brand-ink);
+  font-size: 14px;
+}
+
+.pipelineInsight > span:nth-child(2) {
+  min-width: 0;
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.pipelineInsight > span:last-child {
+  color: var(--brand);
+  font-size: 18px;
 }
 
 .actionStrip {
@@ -553,6 +606,13 @@
   font-weight: 550;
 }
 
+.oppNameCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
 .risk {
   align-self: flex-start;
   margin-top: 2px;
@@ -644,5 +704,14 @@
 @media (max-width: 1100px) {
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pipelineInsight {
+    grid-template-columns: 1fr auto;
+  }
+
+  .pipelineInsight > span:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 }

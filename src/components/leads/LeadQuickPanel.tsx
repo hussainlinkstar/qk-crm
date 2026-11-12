@@ -1,21 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import Select from "@/components/ui/Select";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { crm } from "@/lib/crm-store";
-import { addDays, formatDate, initials, timeAgo } from "@/lib/format";
-import type { ConversationChannel, LeadStatus } from "@/lib/types";
+import { addDays, formatDate, initials } from "@/lib/format";
+import { LEAD_STATUSES, type ConversationChannel, type LeadStatus } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import { Drawer } from "@/components/ui/Overlay";
-import { KIND_ICON } from "@/components/ui/kind-icons";
-import { EmptyState, LeadStatusChip, useWorkspaceData } from "@/components/ui/bits";
-import SuggestionCard from "@/components/tasks/SuggestionCard";
+import { useWorkspaceData } from "@/components/ui/bits";
 import RecordInsightChip from "@/components/pulse/RecordInsightChip";
-import RelationshipIntelligence from "@/components/sales/RelationshipIntelligence";
-import TaskCard from "@/components/tasks/TaskCard";
-import { salesRelationshipIntel } from "@/lib/sales-relationship";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import LogInteractionModal from "./LogInteractionModal";
 import ComposeMessageModal from "./ComposeMessageModal";
@@ -33,13 +29,8 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
   const lead = workspace.leadById.get(leadId);
   if (!lead) return null;
 
-  const owner = state.members.find((member) => member.id === lead.ownerId);
-  const events = (workspace.byLead.get(lead.id) ?? []).slice(0, 5);
-  const suggestion = workspace.suggestions.find((item) => item.leadId === lead.id);
-  const messages = (state.messages ?? []).filter((message) => message.leadId === lead.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 4);
   const journeyIndex = JOURNEY.indexOf(lead.status === "Unqualified" ? "New" : lead.status);
   const accounts = state.tessiant?.accounts ?? [];
-  const relationship = salesRelationshipIntel(state, { leadId });
 
   const advanceStatus = (status: LeadStatus) => {
     if (lead.status === status) return;
@@ -91,16 +82,45 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
     >
       <RecordInsightChip leadId={lead.id} accountId={lead.accountId} />
 
-      <div className={styles.panelMeta}>
-        <LeadStatusChip status={lead.status} />
-        <span className="tag">{lead.source}</span>
-        <label className="tag" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          Owner
-          <select
-            className="input"
-            style={{ height: 28, minHeight: 28, padding: "0 8px", fontSize: 12 }}
+      <div className={styles.panelControls}>
+        <label>
+          <span>Status</span>
+          <Select
+            className={`${styles.panelSelect} ${
+              {
+                New: styles.toneNew,
+                Working: styles.toneWorking,
+                Qualified: styles.toneQualified,
+                Unqualified: styles.toneUnqualified,
+                Converted: styles.toneConverted,
+              }[lead.status]
+            }`}
+            value={lead.status}
+            aria-label="Lead status"
+            disabled={lead.status === "Converted"}
+            onChange={(event) => {
+              const next = event.target.value as LeadStatus;
+              if (next === "Converted") {
+                convert();
+                return;
+              }
+              advanceStatus(next);
+            }}
+          >
+            {LEAD_STATUSES.map((status) => (
+              <option key={status} disabled={status === "Converted" && lead.status !== "Qualified" && lead.status !== "Converted"}>
+                {status}
+              </option>
+            ))}
+          </Select>
+        </label>
+        <label>
+          <span>Owner</span>
+          <Select
+            className={styles.panelSelect}
             value={lead.ownerId ?? ""}
             aria-label="Update lead owner"
+            disabled={lead.status === "Converted"}
             onChange={(event) => {
               const ownerId = event.target.value || null;
               crm.updateLead(lead.id, { ownerId });
@@ -113,11 +133,10 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
                 {member.id === "me" ? "Me" : member.name}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       </div>
-
-      <RelationshipIntelligence intel={relationship} />
+      <p className={styles.panelSource}>Source · {lead.source}</p>
 
       <section className={styles.journey} aria-label="Qualification journey">
         <div className={styles.journeyTrack}>
@@ -179,53 +198,6 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
         <div><dt>Added</dt><dd>{formatDate(lead.createdAt, true)}</dd></div>
         <div><dt>Next</dt><dd>{lead.nextActionLabel}</dd></div>
       </dl>
-
-      <h3 className={`kicker ${styles.panelSection}`}>Conversation</h3>
-      {messages.length === 0 ? (
-        <EmptyState icon="message" title="No email or WhatsApp yet" />
-      ) : (
-        <ol className={styles.miniTimeline}>
-          {messages.map((message) => (
-            <li key={message.id}>
-              <span className={styles.miniIcon}><Icon name={message.channel === "email" ? "mail" : "whatsapp"} size={13} /></span>
-              <span>
-                <b>{message.channel === "email" ? message.subject || "Email" : "WhatsApp"}</b>
-                <small className={styles.detail}>{message.body}</small>
-                <small>{message.actor} · {timeAgo(message.at)}</small>
-              </span>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      <h3 className={`kicker ${styles.panelSection}`}>Next best action</h3>
-      {suggestion ? (
-        <SuggestionCard suggestion={suggestion} lead={lead} showLead={false} />
-      ) : lead.openTasks.length ? (
-        <div className={styles.stack}>
-          {lead.openTasks.map((task) => <TaskCard key={task.id} task={task} owner={state.members.find((member) => member.id === task.ownerId)} showLead={false} />)}
-        </div>
-      ) : (
-        <EmptyState icon="checkCircle" title={lead.nextActionLabel} />
-      )}
-
-      <h3 className={`kicker ${styles.panelSection}`}>Recent activity</h3>
-      {events.length === 0 ? (
-        <EmptyState title="No activity yet" />
-      ) : (
-        <ol className={styles.miniTimeline}>
-          {events.map((event) => (
-            <li key={event.id}>
-              <span className={styles.miniIcon}><Icon name={KIND_ICON[event.kind]} size={13} /></span>
-              <span>
-                <b>{event.title}</b>
-                {event.detail && <small className={styles.detail}>{event.detail}</small>}
-                <small>{event.source} · {timeAgo(event.occurredAt)}</small>
-              </span>
-            </li>
-          ))}
-        </ol>
-      )}
 
       {logOpen && <LogInteractionModal leadId={lead.id} leadName={lead.name} onClose={() => setLogOpen(false)} />}
       {compose && (
