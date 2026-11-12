@@ -17,6 +17,7 @@ function nextPath() {
   return next && next.startsWith("/") && !next.startsWith("//") && next !== "/login" ? next : "/";
 }
 
+
 export default function LoginView() {
   const router = useRouter();
   const session = useSession();
