@@ -44,7 +44,7 @@ export default function PulseCockpitPage() {
   const tickerWrapRef = useRef<HTMLDivElement>(null);
   const tickerListRef = useRef<HTMLUListElement>(null);
 
-  const insights = useMemo(() => (state ? generateTessiantInsights(state, now || Date.now()) : []), [state, now]);
+  const insights = useMemo(() => (state ? generateTessiantInsights(state, now) : []), [state, now]);
   const pendingAll = useMemo(() => insights.filter((item) => item.reviewStatus === "pending"), [insights]);
   const mix = useMemo(() => (state ? networkMix(state) : null), [state]);
   const snapshot = useMemo(() => (state ? getPulseSnapshot(state) : null), [state]);
@@ -309,7 +309,7 @@ export default function PulseCockpitPage() {
             <div className={styles.mapCardHeadExact}>
               <div>
                 <h2>Knowledge map</h2>
-                <p>Associate Network Intelligence and Augmentation &amp; Placement · click a block to open</p>
+                <p>Network Intelligence and Augmentation &amp; Placement · click a block to open</p>
               </div>
               <Link href="/pulse/knowledge" className={styles.mapLinkExact}>
                 Company intelligence

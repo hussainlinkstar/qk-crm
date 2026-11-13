@@ -252,6 +252,16 @@ export function ActionWorkspace({
         </div>
       </section>
 
+      {suggestions.length > 0 && !suggestionsOpen && (
+        <button type="button" className={styles.suggestionToggle} onClick={() => setSuggestionsOpen(true)}>
+          <span>
+            <Icon name="sparkles" size={14} />
+            Suggested by Qiko ({suggestions.length})
+          </span>
+          <span className="muted">Open panel</span>
+        </button>
+      )}
+
       {useBoard ? (
         <section className={styles.board} aria-label="Task board">
           {COLUMNS.map((column) => {
@@ -366,16 +376,6 @@ export function ActionWorkspace({
             </div>
           )}
         </section>
-      )}
-
-      {suggestions.length > 0 && !suggestionsOpen && (
-        <button type="button" className={styles.suggestionToggle} onClick={() => setSuggestionsOpen(true)}>
-          <span>
-            <Icon name="sparkles" size={14} />
-            Suggested by Qiko ({suggestions.length})
-          </span>
-          <span className="muted">Open panel</span>
-        </button>
       )}
 
       {suggestionsOpen && (

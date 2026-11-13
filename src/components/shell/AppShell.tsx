@@ -14,6 +14,7 @@ import CopilotPanel from "@/components/copilot/CopilotPanel";
 import TaskFormModal from "@/components/tasks/TaskFormModal";
 import TaskDrawer from "@/components/tasks/TaskDrawer";
 import AddLeadModal from "@/components/leads/AddLeadModal";
+import PulseNavigation from "@/components/pulse/PulseNavigation";
 import { WorkspaceContext, type TaskFormRequest, type WorkspaceApi } from "./WorkspaceContext";
 import styles from "./AppShell.module.css";
 
@@ -197,6 +198,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
     ? state.tessiant.requirements.filter((req) => !req.archived && req.outcome === "active" && req.stage !== "Placed").length
     : 0;
   const onStaffing = pathname.startsWith("/staffing");
+  const onPulse = pathname.startsWith("/pulse");
   const currentLabel = pageTitle(pathname);
 
   useEffect(() => {
@@ -206,6 +208,15 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
       delete document.documentElement.dataset.tenant;
     };
   }, []);
+
+  useEffect(() => {
+    if (!onPulse) return;
+    const previousTitle = document.title;
+    document.title = "Qiko Pulse · Tessiant";
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [onPulse]);
 
   const navigate = (href: string) => {
     setMobileOpen(false);
@@ -217,6 +228,16 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
       <div className={`${styles.shell} ${collapsed ? styles.collapsed : ""}`}>
         <div className={`${styles.scrim} ${mobileOpen ? styles.scrimOpen : ""}`} onClick={() => setMobileOpen(false)} aria-hidden="true" />
         <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`} aria-label="Main navigation">
+          {onPulse ? (
+            <PulseNavigation
+              pathname={pathname}
+              collapsed={collapsed}
+              onCollapse={() => setCollapsed((value) => !value)}
+              onNavigate={() => setMobileOpen(false)}
+              onClose={() => setMobileOpen(false)}
+            />
+          ) : (
+            <>
           <div className={styles.brandRow}>
             <Link href="/" className={styles.brand} onClick={() => setMobileOpen(false)} aria-label="Tessiant workspace home">
               {collapsed ? (
@@ -277,6 +298,8 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
               <li>
                 <Link
                   href="/pulse"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`${styles.navItem} ${pathname.startsWith("/pulse") ? styles.active : ""}`}
                   onClick={() => setMobileOpen(false)}
                   title={collapsed ? "Qiko Pulse" : undefined}
@@ -310,10 +333,26 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
               <span className={styles.hideCollapsed}>Sign out</span>
             </button>
           </div>
+            </>
+          )}
         </aside>
 
         <div className={styles.main}>
-          <header className={styles.topbar}>
+          <header className={`${styles.topbar} ${onPulse ? styles.pulseTopbar : ""}`}>
+            {onPulse ? (
+              <>
+                <button type="button" className={styles.menuButton} onClick={() => setMobileOpen(true)} aria-label="Open Pulse navigation">
+                  <Icon name="menu" size={20} />
+                </button>
+                <Image src="/brand/qiko-icon.png" alt="" width={28} height={28} className={styles.pulseMobileLogo} />
+                <span className={styles.mobileTitle}>{currentLabel}</span>
+                <Link href="/" className={styles.pulseCoreLink} aria-label="Back to Tessiant">
+                  <Icon name="arrowLeft" size={14} />
+                  <span>Back to Tessiant</span>
+                </Link>
+              </>
+            ) : (
+              <>
             <button type="button" className={styles.menuButton} onClick={() => setMobileOpen(true)} aria-label="Open navigation">
               <Icon name="menu" size={20} />
             </button>
@@ -400,6 +439,8 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                 )}
               </div>
             </div>
+              </>
+            )}
           </header>
           <main className={styles.content}>{children}</main>
         </div>

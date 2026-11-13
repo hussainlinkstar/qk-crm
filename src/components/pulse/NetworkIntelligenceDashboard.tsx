@@ -2,11 +2,11 @@
 
 import { useMemo } from "react";
 import InsightCard from "@/components/pulse/InsightCard";
-import KnowledgeFlow from "@/components/pulse/KnowledgeFlow";
+import BlockKnowledgeMap from "@/components/pulse/BlockKnowledgeMap";
 import PulseLiveChart from "@/components/pulse/PulseLiveChart";
 import { EmptyState } from "@/components/ui/bits";
-import { networkIntelligenceView } from "@/lib/network-intelligence";
-import type { KnowledgeBlockDefinition, TessiantInsight } from "@/lib/tessiant-pulse-types";
+import { networkIntelligenceView, networkKnowledgeBubbles } from "@/lib/network-intelligence";
+import type { TessiantInsight } from "@/lib/tessiant-pulse-types";
 import type { CrmState } from "@/lib/types";
 import styles from "@/app/(workspace)/pulse/pulse.module.css";
 
@@ -17,13 +17,12 @@ const PULSE_TEAL = "#0891b2";
 export default function NetworkIntelligenceDashboard({
   state,
   insights,
-  block,
 }: {
   state: CrmState;
   insights: TessiantInsight[];
-  block: KnowledgeBlockDefinition;
 }) {
   const view = useMemo(() => networkIntelligenceView(state), [state]);
+  const bubbles = useMemo(() => networkKnowledgeBubbles(state, insights), [state, insights]);
   const findings = useMemo(() => {
     const pending = insights.filter((item) => item.reviewStatus === "pending");
     const rest = insights.filter((item) => item.reviewStatus !== "pending");
@@ -32,6 +31,8 @@ export default function NetworkIntelligenceDashboard({
 
   return (
     <div className={styles.networkDash}>
+      <BlockKnowledgeMap blockTitle="Network Intelligence" bubbles={bubbles} insights={insights} />
+
       <p className={styles.networkBanner}>{view.sampleNote}</p>
 
       <section className={styles.kpis} aria-label="Network headline metrics">
@@ -57,65 +58,75 @@ export default function NetworkIntelligenceDashboard({
         </div>
       </section>
 
-      <section className={styles.chartsGridExact} aria-label="Network visualisations">
-        <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
-          <div className={styles.pulseChartHeadExact}>
-            <div>
-              <h2 className={styles.pulseChartTitleExact}>Skills in the sample</h2>
-              <p className={styles.pulseChartSubExact}>Distribution across {view.sampleSize} seeded profiles — not the {view.networkTotal} illustrative total.</p>
-            </div>
-            <div className={styles.pulseChartSideExact}>
-              <div className={styles.pulseChartTotalExact}>
-                <strong>{view.sampleSize}</strong>
-                <span>Sample profiles</span>
+      <section aria-label="Network analytics">
+        <div className={styles.analyticsSectionHead}>
+          <h3>Network analytics</h3>
+          <p>Skills in the sample and open demand against verified available capacity.</p>
+        </div>
+        <div className={styles.chartsGridExact}>
+          <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
+            <div className={styles.pulseChartHeadExact}>
+              <div>
+                <h2 className={styles.pulseChartTitleExact}>Skills in the sample</h2>
+                <p className={styles.pulseChartSubExact}>
+                  Distribution across {view.sampleSize} seeded profiles — not the {view.networkTotal} illustrative total.
+                </p>
               </div>
-            </div>
-          </div>
-          <div className={styles.pulseChartBodyExact}>
-            {view.skillSeries.length ? (
-              <PulseLiveChart kind="bar" series={view.skillSeries} color={PULSE_SKY} />
-            ) : (
-              <EmptyState title="No skills recorded on the sample" icon="sparkles" />
-            )}
-          </div>
-        </article>
-        <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
-          <div className={styles.pulseChartHeadExact}>
-            <div>
-              <h2 className={styles.pulseChartTitleExact}>Demand vs verified available</h2>
-              <p className={styles.pulseChartSubExact}>Open must-have skills against verified available associates in sample.</p>
-            </div>
-            <div className={styles.pulseChartSideExact}>
-              <div className={styles.pulseChartTotalExact}>
-                <strong>{view.verifiedAvailable}/{view.openDemandHeadcount}</strong>
-                <span>Available vs demand</span>
-              </div>
-            </div>
-          </div>
-          <div className={styles.pulseChartBodyExact}>
-            {view.demandSeries.length ? (
-              <>
-                <PulseLiveChart
-                  kind="bar"
-                  series={view.demandSeries}
-                  compare={view.capacitySeries}
-                  color={PULSE_INDIGO}
-                  compareColor={PULSE_TEAL}
-                />
-                <div className={styles.chartLegend} style={{ padding: "0 .9rem .35rem" }}>
-                  <span>
-                    <i style={{ background: PULSE_INDIGO }} /> Open demand
-                  </span>
-                  <span>
-                    <i style={{ background: PULSE_TEAL }} /> Verified available
-                  </span>
+              <div className={styles.pulseChartSideExact}>
+                <div className={styles.pulseChartTotalExact}>
+                  <strong>{view.sampleSize}</strong>
+                  <span>Sample profiles</span>
                 </div>
-              </>
-            ) : (
-              <EmptyState title="No open skill demand in sample" icon="sparkles" />
-            )}
-          </div>
-        </article>
+              </div>
+            </div>
+            <div className={styles.pulseChartBodyExact}>
+              {view.skillSeries.length ? (
+                <PulseLiveChart kind="bar" series={view.skillSeries} color={PULSE_SKY} />
+              ) : (
+                <EmptyState title="No skills recorded on the sample" icon="sparkles" />
+              )}
+            </div>
+          </article>
+          <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
+            <div className={styles.pulseChartHeadExact}>
+              <div>
+                <h2 className={styles.pulseChartTitleExact}>Demand vs verified available</h2>
+                <p className={styles.pulseChartSubExact}>Open must-have skills against verified available associates in sample.</p>
+              </div>
+              <div className={styles.pulseChartSideExact}>
+                <div className={styles.pulseChartTotalExact}>
+                  <strong>
+                    {view.verifiedAvailable}/{view.openDemandHeadcount}
+                  </strong>
+                  <span>Available vs demand</span>
+                </div>
+              </div>
+            </div>
+            <div className={styles.pulseChartBodyExact}>
+              {view.demandSeries.length ? (
+                <>
+                  <PulseLiveChart
+                    kind="bar"
+                    series={view.demandSeries}
+                    compare={view.capacitySeries}
+                    color={PULSE_INDIGO}
+                    compareColor={PULSE_TEAL}
+                  />
+                  <div className={styles.chartLegend} style={{ padding: "0 .9rem .35rem" }}>
+                    <span>
+                      <i style={{ background: PULSE_INDIGO }} /> Open demand
+                    </span>
+                    <span>
+                      <i style={{ background: PULSE_TEAL }} /> Verified available
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <EmptyState title="No open skill demand in sample" icon="sparkles" />
+              )}
+            </div>
+          </article>
+        </div>
       </section>
 
       <section className={`card ${styles.pulseCard}`} aria-label="Key findings">
@@ -132,59 +143,11 @@ export default function NetworkIntelligenceDashboard({
             </EmptyState>
           ) : (
             findings.map((insight) => (
-              <InsightCard
-                key={insight.id}
-                insight={insight}
-                compact
-                reviewOnClick
-              />
+              <InsightCard key={insight.id} insight={insight} compact reviewOnClick />
             ))
           )}
         </div>
       </section>
-
-      <details className={styles.advanced}>
-        <summary>Details / configuration</summary>
-        <div className={styles.advancedBody}>
-          <KnowledgeFlow blockTitle={block.title} />
-          <div className={styles.advancedGrid} style={{ marginTop: 16 }}>
-            <div>
-              <h3 className={styles.sectionLabel}>Data sources</h3>
-              <ul className={styles.plainList}>
-                {block.dataSources.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className={styles.sectionLabel}>Required fields</h3>
-              <ul className={styles.plainList}>
-                {block.requiredFields.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className={styles.sectionLabel}>Business rules</h3>
-              <ul className={styles.plainList}>
-                {block.businessRules.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className={styles.sectionLabel}>Signal definitions</h3>
-              <div className={styles.actions}>
-                {block.signalDefinitions.map((item) => (
-                  <span key={item} className="chip">
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </details>
     </div>
   );
 }

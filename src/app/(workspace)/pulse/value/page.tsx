@@ -32,7 +32,7 @@ export default function PulseValuePage() {
   const { state } = useWorkspaceData();
   const { openTask } = useWorkspace();
   const now = useNow();
-  const insights = useMemo(() => (state ? generateTessiantInsights(state, now || Date.now()) : []), [state, now]);
+  const insights = useMemo(() => (state ? generateTessiantInsights(state, now) : []), [state, now]);
 
   if (!state?.tessiant) {
     return (

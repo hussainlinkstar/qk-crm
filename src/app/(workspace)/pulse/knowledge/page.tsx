@@ -42,7 +42,7 @@ export default function PulseKnowledgePage() {
   const { state } = useWorkspaceData();
   const now = useNow();
 
-  const insights = useMemo(() => (state ? generateTessiantInsights(state, now || Date.now()) : []), [state, now]);
+  const insights = useMemo(() => (state ? generateTessiantInsights(state, now) : []), [state, now]);
   const mix = useMemo(() => (state ? networkMix(state) : null), [state]);
   const funnel = useMemo(() => (state ? placementFunnel(state) : null), [state]);
   const snapshot = useMemo(() => (state ? getPulseSnapshot(state) : null), [state]);

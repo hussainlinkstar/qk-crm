@@ -18,7 +18,7 @@ export default function PulseInsightsPage() {
 
   const insights = useMemo(() => {
     if (!state) return [];
-    return generateTessiantInsights(state, now || Date.now()).filter((item) => {
+    return generateTessiantInsights(state, now).filter((item) => {
       if (block && item.knowledgeBlockId !== block) return false;
       if (status && item.reviewStatus !== status) return false;
       return true;

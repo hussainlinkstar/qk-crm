@@ -7,7 +7,7 @@ import type { KnowledgeBlockDefinition, KnowledgeBlockId, TessiantInsight } from
 export const TESSIANT_KNOWLEDGE_BLOCKS: KnowledgeBlockDefinition[] = [
   {
     id: "network",
-    title: "Associate Network Intelligence",
+    title: "Network Intelligence",
     purpose: "What capabilities exist, who is actually available, and where are the gaps?",
     owner: "Resource management",
     dataSources: ["tessiant-crm associates", "availability verification", "offerings"],
@@ -252,7 +252,7 @@ export const KNOWLEDGE_VALUE_FLOW = [
 ] as const;
 
 export const KNOWLEDGE_BLOCK_INITIALS: Record<string, string> = {
-  network: "AN",
+  network: "NI",
   augmentation: "AP",
   commercial: "CR",
   capability: "SC",

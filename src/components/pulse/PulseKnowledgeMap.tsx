@@ -31,8 +31,6 @@ export default function PulseKnowledgeMap({
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef({ networkSub, placementSub });
-  statsRef.current = { networkSub, placementSub };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -45,7 +43,7 @@ export default function PulseKnowledgeMap({
     const AREAS: Area[] = [
       {
         id: "network",
-        name: "Associate Network Intelligence",
+        name: "Network Intelligence",
         ang: -2.2,
         col: "#6366F1",
         agents: 1,
@@ -110,7 +108,7 @@ export default function PulseKnowledgeMap({
     let dpr = 1;
     let nodes: Node[] = [];
     let sysNodes: { s: Sys; x: number; y: number }[] = [];
-    let parts: { from: Pt; to: Node; c: Pt; t: number; sp: number; kind: "in" | "up"; col: string }[] = [];
+    const parts: { from: Pt; to: Node; c: Pt; t: number; sp: number; kind: "in" | "up"; col: string }[] = [];
     let core = { x: 0, y: 0 };
     let hoverNode: Node | null = null;
     let lastSpawn = 0;
@@ -205,7 +203,7 @@ export default function PulseKnowledgeMap({
           f.n.a.name,
           [
             ["Role", f.n.a.id === "network" ? "Network intelligence" : "Placement intelligence"],
-            ["Live", f.n.a.id === "network" ? statsRef.current.networkSub : statsRef.current.placementSub],
+            ["Live", f.n.a.id === "network" ? networkSub : placementSub],
           ],
           "Open knowledge block →",
           place.x,
@@ -378,7 +376,7 @@ export default function PulseKnowledgeMap({
 
       const t = ts / 1000;
       for (const n of nodes) {
-        n.a.sub = n.a.id === "network" ? statsRef.current.networkSub : statsRef.current.placementSub;
+        n.a.sub = n.a.id === "network" ? networkSub : placementSub;
         const isH = hoverNode === n;
         const r = n.r * (1 + Math.sin(t * 1.6 + n.phase) * 0.025) * (isH ? 1.07 : 1);
         n.flash = Math.max(0, n.flash - 0.04);
@@ -451,7 +449,7 @@ export default function PulseKnowledgeMap({
       canvas.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("click", onClick);
     };
-  }, [router]);
+  }, [networkSub, placementSub, router]);
 
   return (
     <div className={styles.mapWrapExact} ref={wrapRef}>
@@ -460,7 +458,7 @@ export default function PulseKnowledgeMap({
       <div className={styles.mapLegendExact}>
         <span>
           <i style={{ background: "#6366F1" }} />
-          Associate Network Intelligence
+          Network Intelligence
         </span>
         <span>
           <i style={{ background: "#22D3EE" }} />
