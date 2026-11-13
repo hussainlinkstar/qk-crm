@@ -2,7 +2,8 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import Icon, { type IconName } from "./Icon";
 import styles from "./Button.module.css";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "soft";
+/** `qiko` is for intelligence actions (accept an insight, ask Qiko): indigo regardless of workspace. */
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "soft" | "qiko";
 type ButtonSize = "small" | "medium" | "large";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import { Drawer } from "@/components/ui/Overlay";
@@ -11,7 +11,13 @@ import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import RecordInsightChip from "@/components/pulse/RecordInsightChip";
 import { crm } from "@/lib/crm-store";
 import { formatDate } from "@/lib/format";
-import { opportunityBrief, staffingCoveragePreview } from "@/lib/record-intelligence";
+import { staffingCoveragePreview } from "@/lib/record-intelligence";
+import { opportunityInsight } from "@/lib/record-insights";
+import RecordInsight from "@/components/ui/RecordInsight";
+import DealJourney from "@/components/journey/DealJourney";
+import CapacityCheck from "@/components/sales/CapacityCheck";
+import { needsCapacityCheck } from "@/lib/capacity-check";
+import { dealJourneyFor } from "@/lib/deal-journey";
 import { salesRelationshipIntel } from "@/lib/sales-relationship";
 import RelationshipIntelligence from "@/components/sales/RelationshipIntelligence";
 import RecommendedMatches from "@/components/staffing/RecommendedMatches";
@@ -31,10 +37,13 @@ export default function OpportunityQuickPanel({
   const { toast, askQiko } = useWorkspace();
   const opportunity = (state?.opportunities ?? []).find((item) => item.id === opportunityId);
   const [nextStep, setNextStep] = useState(opportunity?.nextStep ?? "");
-
-  useEffect(() => {
+  // Re-seed the draft when the record (or its stored next step) changes; adjusted during render, not in an effect.
+  const seedKey = `${opportunity?.id ?? ""}|${opportunity?.nextStep ?? ""}`;
+  const [seenSeed, setSeenSeed] = useState(seedKey);
+  if (seedKey !== seenSeed) {
+    setSeenSeed(seedKey);
     setNextStep(opportunity?.nextStep ?? "");
-  }, [opportunity?.id, opportunity?.nextStep]);
+  }
 
   if (!state) return null;
   if (!opportunity) return null;
@@ -43,7 +52,6 @@ export default function OpportunityQuickPanel({
   const owner = state.members.find((item) => item.id === opportunity.ownerId);
   const contact = (state.contacts ?? []).find((item) => item.id === opportunity.contactId);
   const canGenerateRequirement = opportunity.stage === "Closed Won";
-  const brief = opportunityBrief(state, opportunity);
   const coverage = staffingCoveragePreview(state, opportunity);
   const relationship = salesRelationshipIntel(state, { opportunityId });
   const linkedRequirement = (state.tessiant?.requirements ?? []).find((item) => item.linkedOpportunityId === opportunity.id);
@@ -91,22 +99,24 @@ export default function OpportunityQuickPanel({
           </div>
         </div>
 
-        <RecordInsightChip opportunityId={opportunity.id} accountId={opportunity.accountId} />
+        <RecordInsight
+          subject="deal"
+          data={opportunityInsight(state, opportunity)}
+          actions={
+            <Button size="small" variant="qiko" icon="sparkles" onClick={() => askQiko(`Summarise opportunity ${opportunity.name} and recommend the next sales step`)}>
+              Ask Qiko
+            </Button>
+          }
+        />
 
-        <dl className={salesStyles.oppBrief}>
-          <div>
-            <dt>Why</dt>
-            <dd>{brief.why}</dd>
-          </div>
-          <div>
-            <dt>Missing</dt>
-            <dd>{brief.missing}</dd>
-          </div>
-          <div>
-            <dt>Next</dt>
-            <dd>{brief.next}</dd>
-          </div>
-        </dl>
+        {needsCapacityCheck(opportunity) ? <CapacityCheck state={state} opportunity={opportunity} onNavigate={onClose} /> : null}
+
+        {(() => {
+          const journey = dealJourneyFor(state, { opportunityId: opportunity.id });
+          return journey ? <DealJourney journey={journey} compact onNavigate={onClose} /> : null;
+        })()}
+
+        <RecordInsightChip opportunityId={opportunity.id} accountId={opportunity.accountId} />
 
         <div className={salesStyles.oppStep}>
           <label htmlFor="opp-next-step">Update next step</label>
@@ -209,14 +219,6 @@ export default function OpportunityQuickPanel({
               Generate requirement
             </Button>
           ) : null}
-          <Button
-            size="small"
-            variant="soft"
-            icon="sparkles"
-            onClick={() => askQiko(`Summarise opportunity ${opportunity.name} and recommend the next sales step`)}
-          >
-            Ask Qiko
-          </Button>
         </div>
       </div>
     </Drawer>

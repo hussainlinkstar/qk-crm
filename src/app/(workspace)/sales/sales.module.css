@@ -104,9 +104,68 @@
 .dealsHead,
 .dealsRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(88px, 0.7fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(150px, 0.9fr) minmax(0, 1.1fr);
+  gap: 12px;
   align-items: center;
+}
+
+.dealCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dealCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dealCopy b,
+.dealCopy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dealSignal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dealSignal small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dealNext {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.dealNext svg {
+  flex-shrink: 0;
+  color: var(--subtle);
+  transition: transform var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+
+.dealsRow:hover .dealNext svg {
+  color: var(--brand);
+  transform: translateX(2px);
 }
 
 .dealsHead {
@@ -535,7 +594,7 @@
 .accountHeader,
 .accountRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(100px, 0.7fr) minmax(110px, 0.8fr) minmax(80px, 0.55fr) minmax(0, 1.1fr) auto;
+  grid-template-columns: minmax(0, 1.5fr) minmax(100px, 0.7fr) minmax(110px, 0.8fr) minmax(96px, 0.6fr) minmax(80px, 0.55fr) minmax(0, 1.1fr) auto;
   align-items: center;
   gap: 12px 14px;
 }
@@ -720,11 +779,12 @@
 
 .growthSection,
 .sourceSection {
-  margin: 0 0 4px;
-  padding: 14px 16px;
+  margin: 0;
+  padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
 .growthHead {
@@ -732,8 +792,349 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+}
+
+.growthHeadCopy {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.growthCardTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.demoTag {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--well);
+  color: var(--subtle);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.growthHeadTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-left: auto;
+}
+
+.viewAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.viewAll:hover {
+  border-color: var(--qiko-accent-ring);
+  background: var(--qiko-accent-soft);
+  color: var(--qiko-accent-strong);
+}
+
+.growthMore {
+  margin: 10px 0 0;
+  color: var(--subtle);
+  font-size: 12px;
+}
+
+.growthEmpty {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+/* Paired columns stretch to one height so card edges line up. */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.overviewGrid > *,
+.intelGrid > * {
+  min-width: 0;
+  height: 100%;
+}
+
+/* — Insight spotlight: one signal in focus, the rest ranked beside it — */
+.spotlight {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.spotHero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 18px 20px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--qiko-accent) 30%, var(--line));
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--qiko-accent-soft) 0%, var(--surface) 55%);
+  animation: contentIn var(--duration) var(--ease-out);
+}
+
+.spotHero::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.16), transparent 68%);
+  pointer-events: none;
+}
+
+.spotHeroTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.spotHero h3 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.spotWhy {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.spotEvidence {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.spotEvidence svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--success);
+}
+
+.spotActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.spotImpact {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--subtle);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spotImpact span {
+  margin-right: 4px;
+}
+
+.spotImpact i {
+  width: 14px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.spotImpact i[data-on="true"] {
+  background: var(--qiko-accent);
+}
+
+.spotRail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.spotRailHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.spotList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.spotList[data-expanded="true"] {
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+}
+
+.spotList li {
+  animation: growthIn var(--duration-slow) var(--ease-out) both;
+}
+
+.spotRow {
+  display: grid;
+  grid-template-columns: 6px auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 10px 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.spotRow:hover {
+  border-color: var(--qiko-accent-ring);
+  background: var(--qiko-accent-soft);
+  box-shadow: var(--shadow-xs);
+  transform: translateX(2px);
+}
+
+.spotRow > svg {
+  color: var(--subtle);
+  transition: transform var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+
+.spotRow:hover > svg {
+  color: var(--qiko-accent);
+  transform: translateX(2px);
+}
+
+.spotMeter {
+  display: block;
+  width: 6px;
+  height: 28px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--line-strong) 0%, var(--line-strong) 100%);
+}
+
+.spotMeter[data-level="3"] {
+  background: var(--qiko-accent);
+}
+
+.spotMeter[data-level="2"] {
+  background: linear-gradient(180deg, var(--line-strong) 0 34%, var(--qiko-accent) 34%);
+}
+
+.spotMeter[data-level="1"] {
+  background: linear-gradient(180deg, var(--line-strong) 0 67%, var(--qiko-accent) 67%);
+}
+
+.spotRowCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.spotRowCopy b {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 620;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spotRowCopy small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .spotlight {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spotHero,
+  .spotList li {
+    animation: none;
+  }
+
+  .spotRow:hover {
+    transform: none;
+  }
+}
+
+.intelGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .overviewGrid,
+  .intelGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .growthHead h2 {
@@ -747,29 +1148,96 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  align-items: stretch;
+}
+
+.growthGrid[data-cols="1"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.growthGrid[data-cols="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.growthGrid > * {
+  height: 100%;
+}
+
+.growthCardWrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+.growthCardWrap > .growthCard {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.growthFeedback {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.spotFeedback {
+  margin-left: auto;
 }
 
 .growthCard {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  width: 100%;
   min-width: 0;
-  padding: 12px 14px;
+  padding: 13px 14px;
   border: 1px solid color-mix(in srgb, var(--qiko-accent) 22%, var(--line));
   border-radius: var(--radius-md);
   background: linear-gradient(180deg, var(--qiko-accent-soft), var(--surface) 42%);
   color: inherit;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
+  animation: growthIn var(--duration-slow) var(--ease-out) both;
   transition: border-color var(--duration) var(--ease-out), box-shadow var(--duration) var(--ease-out),
     transform var(--duration) var(--ease-out);
+}
+
+@keyframes growthIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 
 .growthCard:hover {
   border-color: var(--qiko-accent);
   box-shadow: var(--shadow-hover);
-  transform: translateY(-1px);
+  color: inherit;
+  transform: translateY(-2px);
+}
+
+.growthCard:hover .growthActionLine svg {
+  transform: translateX(2px);
+}
+
+.growthActionLine svg {
+  vertical-align: -2px;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .growthCard {
+    animation: none;
+  }
+
+  .growthCard:hover {
+    transform: none;
+  }
 }
 
 .growthActionLine {
@@ -1080,12 +1548,34 @@
   text-transform: uppercase;
 }
 
+/* Title and detail each reserve two lines so every card in a row shares the same rhythm and the
+   action line sits on the same baseline across the grid. */
 .growthDetected {
+  display: -webkit-box;
   margin: 0;
+  min-height: calc(2 * 1.35em);
+  overflow: hidden;
   font-size: 14px;
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.35;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.growthCard .growthRisk {
+  display: -webkit-box;
+  min-height: calc(2 * 1.45em);
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.growthCard .growthEvidence {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
 }
 
 .growthRisk,
@@ -1201,4 +1691,45 @@
   .score {
     display: none;
   }
+}
+
+/* Founder-dependency cell on the accounts list: score with a bar behind it, band below. */
+.dependency b {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.dependency b i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: -1;
+  border-radius: 6px;
+  background: var(--success-soft);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.dependency[data-band="medium"] b i {
+  background: var(--warning-soft);
+}
+
+.dependency[data-band="high"] b i {
+  background: var(--danger-soft);
+}
+
+.dependency[data-band="high"] b {
+  color: var(--danger);
+}
+
+.dependency[data-band="medium"] b {
+  color: var(--warning);
+}
+
+.dependency b svg {
+  opacity: 0.8;
 }

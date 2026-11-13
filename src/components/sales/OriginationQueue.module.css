@@ -1,0 +1,264 @@
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border-color: color-mix(in srgb, var(--qiko-accent) 22%, var(--line));
+  background: linear-gradient(180deg, var(--qiko-accent-soft), var(--surface) 22%);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.headCopy {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.headCopy h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--qiko-accent-soft);
+  color: var(--qiko-accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chevron {
+  color: var(--subtle);
+  transition: transform var(--duration) var(--ease-out);
+}
+
+.queue[data-collapsed] .chevron {
+  transform: rotate(-90deg);
+}
+
+.queue[data-collapsed] {
+  gap: 0;
+}
+
+.headCopy h2 {
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.sub {
+  margin-top: 3px;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 46%;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+
+.filter:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.filter[aria-pressed="true"] {
+  border-color: var(--qiko-accent);
+  background: var(--qiko-accent-soft);
+  color: var(--qiko-accent-strong);
+}
+
+.filter span {
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--canvas);
+  font-size: 10.5px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 4px auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 4px;
+  border-top: 1px solid var(--line-soft);
+  animation: rowIn var(--duration-slow) var(--ease-out) both;
+}
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+}
+
+.row:first-child {
+  border-top: 0;
+}
+
+.meter {
+  align-self: stretch;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.meter[data-level="3"] {
+  background: var(--qiko-accent);
+}
+
+.meter[data-level="2"] {
+  background: color-mix(in srgb, var(--qiko-accent) 55%, var(--line));
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.kind {
+  color: var(--qiko-accent-strong);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.copy b {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.copy p {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.evidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  color: var(--subtle);
+  font-size: 11.5px;
+}
+
+.evidence[data-kind="fact"] svg {
+  color: var(--success);
+}
+
+.evidence[data-kind="inference"] svg {
+  color: var(--qiko-accent);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.raised {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.empty svg {
+  color: var(--success);
+}
+
+.more {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--qiko-accent-strong);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .head {
+    flex-direction: column;
+  }
+
+  .filters {
+    justify-content: flex-start;
+    max-width: none;
+  }
+
+  .row {
+    grid-template-columns: 4px auto minmax(0, 1fr);
+  }
+
+  .actions {
+    grid-column: 3;
+    align-items: flex-start;
+  }
+}

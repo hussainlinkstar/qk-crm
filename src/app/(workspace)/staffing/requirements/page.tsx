@@ -6,7 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import CreateRequirementModal from "@/components/staffing/CreateRequirementModal";
 import RequirementQuickPanel from "@/components/staffing/RequirementQuickPanel";
-import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
+import { EmptyState, MemberAvatar, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
+import BarList from "@/components/ui/BarList";
+import CountUp from "@/components/ui/CountUp";
+import IconTile from "@/components/ui/IconTile";
+import InsightSignals from "@/components/sales/InsightSignals";
+import { demandBySector, requirementSignals } from "@/lib/staffing-intelligence";
+import { plural } from "@/lib/format";
+import salesStyles from "@/app/(workspace)/sales/sales.module.css";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { formatDate, todayKey } from "@/lib/format";
@@ -80,6 +87,8 @@ export default function RequirementsPage() {
 
   const rows = useMemo(() => (state ? filterRequisitions(state, filters) : []), [state, filters]);
   const columns = useMemo(() => (state ? boardColumns(state, filters) : []), [state, filters]);
+  const signals = useMemo(() => (state ? requirementSignals(state) : []), [state]);
+  const demand = useMemo(() => (state ? demandBySector(state).slice(0, 6) : []), [state]);
 
   const sectors = useMemo(() => {
     if (!tessiant) return [];
@@ -202,21 +211,31 @@ export default function RequirementsPage() {
 
       <section className={styles.requirementMetrics} aria-label="Requirement intelligence">
         <div>
-          <b className="tabular">{openRequirements.length}</b>
+          <IconTile name="flag" tone="brand" className={styles.metricIcon} />
+          <b className="tabular">
+            <CountUp value={openRequirements.length} />
+          </b>
           <span>Open requirements</span>
           <small>{openRequirements.reduce((sum, item) => sum + Math.max(1, item.headcount), 0)} open positions</small>
         </div>
         <div>
-          <b className="tabular">{verifiedAvailableTalent.length}</b>
+          <IconTile name="userCheck" tone="success" className={styles.metricIcon} />
+          <b className="tabular">
+            <CountUp value={verifiedAvailableTalent.length} />
+          </b>
           <span>Verified talent available</span>
           <small>Recorded as active and available</small>
         </div>
         <div data-alert={uncoveredRequirements.length > 0 ? "true" : undefined}>
-          <b className="tabular">{uncoveredRequirements.length}</b>
+          <IconTile name="shield" tone={uncoveredRequirements.length > 0 ? "danger" : "success"} className={styles.metricIcon} />
+          <b className="tabular">
+            <CountUp value={uncoveredRequirements.length} />
+          </b>
           <span>Requirements without coverage</span>
           <small>No verified available match recorded</small>
         </div>
         <div>
+          <IconTile name="chart" tone="info" className={styles.metricIcon} />
           <b className="tabular">
             {topSectorDemand && totalOpenPositions ? Math.round((topSectorDemand[1] / totalOpenPositions) * 100) : 0}%
           </b>
@@ -229,27 +248,47 @@ export default function RequirementsPage() {
         </div>
       </section>
 
-      <button
-        type="button"
-        className={styles.requirementInsight}
-        disabled={uncoveredRequirements.length === 0}
-        onClick={() => uncoveredRequirements[0] && setPreviewId(uncoveredRequirements[0].id)}
-      >
-        <span>
-          <small>Requirement insight</small>
-          <b>
-            {uncoveredRequirements.length > 0
-              ? `${uncoveredRequirements.length} open ${uncoveredRequirements.length === 1 ? "requirement has" : "requirements have"} no verified available match`
-              : "Every open requirement has verified available coverage"}
-          </b>
-        </span>
-        <span>
-          {uncoveredRequirements[0]
-            ? `Review ${uncoveredRequirements[0].title} and start a focused talent search.`
-            : "Coverage is based on currently recorded availability."}
-        </span>
-        <span aria-hidden="true">{uncoveredRequirements.length > 0 ? "→" : "✓"}</span>
-      </button>
+      <div className={salesStyles.intelGrid}>
+        <InsightSignals
+          title="Requirement intelligence"
+          summary="Where delivery is at risk: no verified cover, start dates slipping, briefs that have stalled. Each signal opens the requirement."
+          items={signals.map((signal) => ({
+            id: signal.id,
+            kind: signal.kind,
+            title: signal.title,
+            detail: signal.detail,
+            actionLabel: signal.actionLabel,
+            onClick: () => setPreviewId(signal.requirementId),
+          }))}
+          emptyTitle="Every open requirement has verified cover and is on schedule."
+        />
+        <section className="card">
+          <div className="card-head">
+            <div>
+              <h2>Demand by sector</h2>
+              <p className="card-sub">Open positions per sector against verified available associates. Click to filter.</p>
+            </div>
+          </div>
+          <div className="card-body">
+            {demand.length === 0 ? (
+              <p className="muted">No open requirements.</p>
+            ) : (
+              <BarList
+                label="Open positions by sector"
+                rows={demand.map((row) => ({
+                  key: row.sector,
+                  label: row.sector,
+                  value: row.positions,
+                  display: plural(row.positions, "position"),
+                  caption: `${plural(row.requirements, "requirement")} · ${row.verifiedAvailable} verified available`,
+                  tone: row.verifiedAvailable < row.positions ? ("warning" as const) : ("brand" as const),
+                  onClick: () => setSector(row.sector),
+                }))}
+              />
+            )}
+          </div>
+        </section>
+      </div>
 
       <section className="card">
         <div className="card-head">
@@ -383,11 +422,16 @@ export default function RequirementsPage() {
                           <div className={styles.boardProgress}>
                             {req.headcount} {req.headcount === 1 ? "position" : "positions"} · {formatCandidateProgress(counts)}
                           </div>
-                          <div className={styles.boardOwner}>Owner · {owner?.name ?? "Unassigned"}</div>
-                          <div className={styles.boardMeta}>
-                            <span className={`chip ${priorityValue === "high" ? "chip-ai" : ""}`}>{priorityValue}</span>
-                            {overdue ? <span className="chip">Overdue</span> : <span className="muted tabular">{daysOpen(req)}d</span>}
+                          <div className={styles.boardFoot}>
+                            <span className={styles.boardOwner} title={owner?.name ?? "Unassigned"}>
+                              <MemberAvatar member={owner ?? null} />
+                            </span>
                             <span className={`chip tabular ${verified === 0 ? "chip-high" : ""}`}>{verified} verified</span>
+                            {overdue ? (
+                              <span className="chip chip-high">Overdue</span>
+                            ) : (
+                              <span className={`muted tabular ${styles.boardDays}`}>{daysOpen(req)}d</span>
+                            )}
                           </div>
                         </article>
                       );

@@ -126,7 +126,7 @@ export default function MatchCandidateCard({
                 {presentation.relevantPlacements.length === 0 ? (
                   <p className="muted" style={{ margin: "4px 0 0" }}>
                     {presentation.priorPlacementCount
-                      ? `${presentation.priorPlacementCount} prior placement(s) on record — none tagged to this sector in demo data`
+                      ? `${presentation.priorPlacementCount} prior placement(s) on record — none tagged to this sector`
                       : "No prior placements on record"}
                   </p>
                 ) : (

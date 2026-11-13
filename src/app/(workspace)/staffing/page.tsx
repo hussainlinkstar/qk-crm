@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import Button from "@/components/ui/Button";
-import Icon from "@/components/ui/Icon";
+import Icon, { type IconName } from "@/components/ui/Icon";
+import IconTile, { type IconTone } from "@/components/ui/IconTile";
 import { EmptyState, PriorityChip, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import {
   assignmentsEndingSoon,
@@ -14,14 +15,27 @@ import {
   upcomingStaffingActions,
 } from "@/lib/tessiant-insights";
 import AssignmentRecommendedActions from "@/components/staffing/AssignmentRecommendedActions";
+import NetworkMix from "@/components/staffing/NetworkMix";
+import JourneysInFlight from "@/components/journey/JourneysInFlight";
 import SupplyDemand from "@/components/staffing/SupplyDemand";
+import BenchTimeline from "@/components/staffing/BenchTimeline";
 import { staffingDeskFindings } from "@/lib/record-intelligence";
+import { showcaseSignals } from "@/lib/showcase-signals";
 import { daysOpen, requirementPriority } from "@/lib/requisition";
 import { recommendedMatches } from "@/lib/requirement-recommendations";
 import { formatDate, todayKey } from "@/lib/format";
 import styles from "./staffing.module.css";
 
 const INITIAL_NOW = Date.now();
+
+const KPI_ICON: Record<string, { icon: IconName; tone: IconTone }> = {
+  total: { icon: "users", tone: "brand" },
+  available: { icon: "userCheck", tone: "success" },
+  deployed: { icon: "briefcase", tone: "info" },
+  open: { icon: "flag", tone: "warning" },
+  assignments: { icon: "layers", tone: "brand" },
+  month: { icon: "star", tone: "qiko" },
+};
 
 const ACTION_LABEL: Record<string, string> = {
   interview: "Interview",
@@ -38,7 +52,22 @@ export default function StaffingOverviewPage() {
   const now = useNow();
   const tessiant = state?.tessiant;
 
-  const findings = useMemo(() => (state ? staffingDeskFindings(state, now || INITIAL_NOW) : []), [state, now]);
+  const findings = useMemo(() => {
+    if (!state) return [];
+    const recorded = staffingDeskFindings(state, now || INITIAL_NOW).map((item) => ({ ...item, demo: false }));
+    // Showcase layer: second-degree reach for thin briefs and past-client hiring signals.
+    const showcase = showcaseSignals(state)
+      .filter((item) => item.kind === "Network reach" || item.kind === "Hiring signal")
+      .slice(0, 2)
+      .map((item) => ({
+        id: item.id,
+        label: item.kind === "Network reach" ? item.title.replace(/^(\d+) second-degree connections? could fill/, "$1 2nd-degree connections could fill") : item.title,
+        href: item.href,
+        count: Number(item.title.match(/^(\d+)/)?.[1] ?? 1),
+        demo: true,
+      }));
+    return [...recorded, ...showcase];
+  }, [state, now]);
   const kpis = useMemo(() => (state ? staffingCommandKpis(state, now || INITIAL_NOW) : []), [state, now]);
   const pipeline = useMemo(() => (state ? recruitmentPipeline(state) : []), [state]);
   const openReqs = useMemo(() => (state ? urgentStaffingNeeds(state, now || INITIAL_NOW) : []), [state, now]);
@@ -126,6 +155,7 @@ export default function StaffingOverviewPage() {
       <section className={styles.kpis} aria-label="Staffing summary">
         {kpis.map((item) => (
           <Link key={item.key} href={item.href} className="metric-card">
+            <IconTile name={KPI_ICON[item.key]?.icon ?? "chart"} tone={KPI_ICON[item.key]?.tone ?? "brand"} className="metric-icon" />
             <b className="tabular">{item.value}</b>
             <span className="metric-label">{item.label}</span>
             {item.delta ? <small className="metric-delta">{item.delta}</small> : null}
@@ -133,33 +163,56 @@ export default function StaffingOverviewPage() {
         ))}
       </section>
 
-      {findings.length > 0 ? (
-        <section className={styles.findingsStrip} aria-label="Staffing findings">
-          {findings.map((item) => (
-            <Link key={item.id} href={item.href} className={styles.findingsChip}>
-              {item.label}
-            </Link>
-          ))}
+      {findings.length > 0 || namedMatch ? (
+        <section className={styles.attention} aria-label="Needs attention">
+          <div className={styles.attentionHead}>
+            <IconTile name="sparkles" tone="qiko" size="lg" />
+            <div>
+              <p className="kicker kicker-qiko">Qiko</p>
+              <h2>Needs attention</h2>
+            </div>
+          </div>
+          <div className={styles.attentionGrid}>
+            {findings.map((item) => {
+              const split = /^(\d+)\s+(.*)$/.exec(item.label);
+              return (
+                <Link key={item.id} href={item.href} className={styles.attentionCard} data-kind={item.id} data-demo={item.demo ? "true" : undefined}>
+                  {split ? <b className="tabular">{split[1]}</b> : <b className={styles.attentionMark}>!</b>}
+                  <span>
+                    {item.demo ? <small>Estimate</small> : null}
+                    {split ? split[2] : item.label}
+                  </span>
+                  <Icon name="arrowRight" size={14} />
+                </Link>
+              );
+            })}
+            {namedMatch ? (
+              <Link
+                href={`/staffing/requirements/${namedMatch.requirement.id}`}
+                className={`${styles.attentionCard} ${styles.attentionMatch}`}
+              >
+                <b className={styles.attentionMark}>
+                  <Icon name="sparkles" size={13} />
+                </b>
+                <span>
+                  <small>Recorded talent match</small>
+                  {namedMatch.match.associate.name} may fit {namedMatch.requirement.title}
+                  {namedMatch.match.unverified ? " · verification needed" : " · verified profile"}
+                </span>
+                <Icon name="arrowRight" size={14} />
+              </Link>
+            ) : null}
+          </div>
         </section>
       ) : null}
 
-      {namedMatch ? (
-        <Link href={`/staffing/requirements/${namedMatch.requirement.id}`} className={styles.fitInsight}>
-          <span>
-            <small>Recorded talent match</small>
-            <b>
-              {namedMatch.match.associate.name} may fit {namedMatch.requirement.title}
-            </b>
-          </span>
-          <span>
-            {namedMatch.match.reason} {namedMatch.accountName} · {namedMatch.match.associate.availability}
-            {namedMatch.match.unverified ? " · verification needed" : " · verified profile"}
-          </span>
-          <Icon name="arrowRight" size={15} />
-        </Link>
-      ) : null}
-
       <AssignmentRecommendedActions state={state} />
+
+      <JourneysInFlight state={state} limit={3} title="From deal to delivery" />
+
+      <NetworkMix state={state} />
+
+      <BenchTimeline state={state} />
 
       <SupplyDemand state={state} />
 

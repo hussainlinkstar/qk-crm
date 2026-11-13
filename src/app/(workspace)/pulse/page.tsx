@@ -16,7 +16,7 @@ import {
   activitySeries,
   associateGrowthSeries,
   roleDistributionSeries,
-  signalsSeries,
+  signalsByBlockSeries,
 } from "@/lib/pulse-overview-charts";
 import {
   confidenceNote,
@@ -26,10 +26,15 @@ import {
   knowledgeBlockTitle,
   rulePlainLanguage,
 } from "@/lib/pulse-presentation";
-import { TESSIANT_KNOWLEDGE_BLOCKS } from "@/lib/tessiant-knowledge";
 import { generateTessiantInsights, networkMix } from "@/lib/tessiant-pulse-rules";
 import { timeAgo } from "@/lib/format";
+import { automationProposals } from "@/lib/automations";
+import { trackRecord } from "@/lib/qiko-track-record";
+import CountUp from "@/components/ui/CountUp";
 import styles from "./pulse.module.css";
+
+/** Server render and first client frame use this; `useNow` takes over once the clock subscribes. */
+const INITIAL_NOW = Date.now();
 
 const REJECT_REASONS = ["Not relevant", "Poor data", "Already handled", "Inappropriate suggestion"] as const;
 
@@ -54,10 +59,9 @@ export default function PulseCockpitPage() {
     () => (state ? activitySeries(state, activityDays, now ? new Date(now) : new Date()) : []),
     [state, activityDays, now],
   );
-  const signals = useMemo(
-    () => signalsSeries(insights, 14, now ? new Date(now) : new Date()),
-    [insights, now],
-  );
+  const signals = useMemo(() => signalsByBlockSeries(pendingAll.length ? pendingAll : insights), [pendingAll, insights]);
+  const proposals = useMemo(() => (state ? automationProposals(state, now || INITIAL_NOW) : []), [state, now]);
+  const record = useMemo(() => (state ? trackRecord(state, now || INITIAL_NOW) : null), [state, now]);
 
   useEffect(() => {
     const wrap = tickerWrapRef.current;
@@ -165,24 +169,32 @@ export default function PulseCockpitPage() {
             <p className={styles.monoKickerExact}>Outcomes this period</p>
             <p className={styles.outcomesTitleExact}>Decisions waiting on you</p>
             <p className={styles.outcomesSubExact}>
-              Flags, open steps, and the size of the book. Accepted work is measured in Value after it is done.
+              Coverage, relationships and open Tessiant work. Accepted steps are measured in Value after they are done.
             </p>
             <div className={styles.pulseKpisExact} aria-label="Pulse outcome KPIs">
               <div className={styles.pulseKpiExact}>
-                <p className={styles.pulseKpiValue}>{highIntent}</p>
-                <p className={styles.pulseKpiLabel}>High-intent flags</p>
+                <p className={styles.pulseKpiValue}>
+                  <CountUp value={highIntent} />
+                </p>
+                <p className={styles.pulseKpiLabel}>High-priority signals</p>
               </div>
               <div className={styles.pulseKpiExact}>
-                <p className={styles.pulseKpiValue}>{pendingAll.length}</p>
+                <p className={styles.pulseKpiValue}>
+                  <CountUp value={pendingAll.length} />
+                </p>
                 <p className={styles.pulseKpiLabel}>Next steps open</p>
               </div>
-              <Link href="/pulse/knowledge" className={styles.pulseKpiExactBtn}>
-                <p className={styles.pulseKpiValue}>{TESSIANT_KNOWLEDGE_BLOCKS.length}</p>
-                <p className={styles.pulseKpiLabel}>Knowledge blocks</p>
+              <Link href="/" className={styles.pulseKpiExactBtn}>
+                <p className={`${styles.pulseKpiValue} ${styles.pulseKpiLinkValue}`}>
+                  <CountUp value={proposals.length} />
+                </p>
+                <p className={styles.pulseKpiLabel}>Home proposals</p>
               </Link>
-              <Link href="/staffing/associates" className={styles.pulseKpiExactBtn}>
-                <p className={`${styles.pulseKpiValue} ${styles.pulseKpiLinkValue}`}>{mix.sampleSize}</p>
-                <p className={styles.pulseKpiLabel}>Associates ({mix.networkTotal} network)</p>
+              <Link href="/pulse/value" className={styles.pulseKpiExactBtn}>
+                <p className={`${styles.pulseKpiValue} ${styles.pulseKpiLinkValue}`}>
+                  {record?.accuracyPct === null || record?.accuracyPct === undefined ? "—" : <CountUp value={record.accuracyPct} format={(n) => `${Math.round(n)}%`} />}
+                </p>
+                <p className={styles.pulseKpiLabel}>Right-call rate ({mix.sampleSize} associates)</p>
               </Link>
             </div>
           </section>
@@ -245,7 +257,7 @@ export default function PulseCockpitPage() {
               </div>
               <div className={styles.pulseChartSideExact}>
                 <Link href="/staffing/associates" className={styles.pulseChartTotalExact} style={{ textDecoration: "none" }}>
-                  <strong style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>{mix.sampleSize}</strong>
+                  <strong style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>{roles.length}</strong>
                   <span>Role types</span>
                 </Link>
               </div>
@@ -258,8 +270,8 @@ export default function PulseCockpitPage() {
           <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
             <div className={styles.pulseChartHeadExact}>
               <div>
-                <h2 className={styles.pulseChartTitleExact}>Platform activity</h2>
-                <p className={styles.pulseChartSubExact}>Events recorded on the platform in the selected window.</p>
+                <h2 className={styles.pulseChartTitleExact}>Sales &amp; staffing activity</h2>
+                <p className={styles.pulseChartSubExact}>Recorded CRM moves per day: leads, shortlists, interviews, placements and renewals.</p>
               </div>
               <div className={styles.pulseChartSideExact}>
                 <div className={styles.filterPillsExact}>
@@ -276,7 +288,7 @@ export default function PulseCockpitPage() {
                 </div>
                 <div className={styles.pulseChartTotalExact}>
                   <strong>{activityTotal}</strong>
-                  <span>Events · {activityDays} days</span>
+                  <span>Moves · {activityDays} days</span>
                 </div>
               </div>
             </div>
@@ -288,18 +300,18 @@ export default function PulseCockpitPage() {
           <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
             <div className={styles.pulseChartHeadExact}>
               <div>
-                <h2 className={styles.pulseChartTitleExact}>Signals generated</h2>
-                <p className={styles.pulseChartSubExact}>Insights the workers saved. Each point is one day.</p>
+                <h2 className={styles.pulseChartTitleExact}>Open signals by knowledge block</h2>
+                <p className={styles.pulseChartSubExact}>What Pulse is asking the team to decide, from the records: coverage, founder dependency, bench gaps, offerings, SIA reach.</p>
               </div>
               <div className={styles.pulseChartSideExact}>
                 <div className={styles.pulseChartTotalExact}>
                   <strong>{signalsTotal || insights.length}</strong>
-                  <span>Persisted · 14 days</span>
+                  <span>Open now</span>
                 </div>
               </div>
             </div>
             <div className={styles.pulseChartBodyExact}>
-              <PulseLiveChart kind="line" series={signals} color="#7c3aed" />
+              <PulseLiveChart kind="bar" series={signals} color="#7c3aed" />
             </div>
           </article>
         </div>
@@ -309,15 +321,19 @@ export default function PulseCockpitPage() {
             <div className={styles.mapCardHeadExact}>
               <div>
                 <h2>Knowledge map</h2>
-                <p>Network Intelligence and Augmentation &amp; Placement · click a block to open</p>
+                <p>Four knowledge blocks around the Pulse core · click a block to open</p>
               </div>
               <Link href="/pulse/knowledge" className={styles.mapLinkExact}>
                 Company intelligence
               </Link>
             </div>
             <PulseKnowledgeMap
-              networkSub={`${highIntent} high-intent`}
-              placementSub={`${pendingAll.filter((item) => item.knowledgeBlockId === "augmentation").length} with insights`}
+              subs={{
+                network: `${pendingAll.filter((item) => item.knowledgeBlockId === "network").length} open`,
+                augmentation: `${pendingAll.filter((item) => item.knowledgeBlockId === "augmentation").length} open`,
+                commercial: `${pendingAll.filter((item) => item.knowledgeBlockId === "commercial").length} open`,
+                capability: `${pendingAll.filter((item) => item.knowledgeBlockId === "capability").length} open`,
+              }}
             />
           </section>
 

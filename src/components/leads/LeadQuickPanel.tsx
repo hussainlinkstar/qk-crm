@@ -12,6 +12,8 @@ import Icon from "@/components/ui/Icon";
 import { Drawer } from "@/components/ui/Overlay";
 import { useWorkspaceData } from "@/components/ui/bits";
 import RecordInsightChip from "@/components/pulse/RecordInsightChip";
+import RecordInsight from "@/components/ui/RecordInsight";
+import { leadInsight } from "@/lib/record-insights";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import LogInteractionModal from "./LogInteractionModal";
 import ComposeMessageModal from "./ComposeMessageModal";
@@ -22,12 +24,13 @@ const JOURNEY: LeadStatus[] = ["New", "Working", "Qualified", "Converted"];
 export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; onClose: () => void }) {
   const router = useRouter();
   const { state, workspace } = useWorkspaceData();
-  const { openTaskForm, askQiko, toast } = useWorkspace();
+  const { openTaskForm, askQiko, toast, openTask } = useWorkspace();
   const [logOpen, setLogOpen] = useState(false);
   const [compose, setCompose] = useState<ConversationChannel | null>(null);
   if (!state || !workspace) return null;
   const lead = workspace.leadById.get(leadId);
   if (!lead) return null;
+  const insight = leadInsight(state, workspace, lead);
 
   const journeyIndex = JOURNEY.indexOf(lead.status === "Unqualified" ? "New" : lead.status);
   const accounts = state.tessiant?.accounts ?? [];
@@ -80,6 +83,38 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
         </Link>
       }
     >
+      <RecordInsight
+        subject="lead"
+        data={insight}
+        actions={
+          insight.suggestion ? (
+            <Button
+              size="small"
+              variant="qiko"
+              icon="check"
+              onClick={() => {
+                const suggestion = insight.suggestion;
+                if (!suggestion) return;
+                const taskId = crm.acceptSuggestion(suggestion);
+                toast("Suggestion accepted — task created");
+                if (taskId) openTask(taskId);
+              }}
+            >
+              Accept as task
+            </Button>
+          ) : lead.status !== "Converted" && lead.status !== "Unqualified" ? (
+            <Button
+              size="small"
+              variant="qiko"
+              icon="plus"
+              onClick={() => openTaskForm({ initial: { title: `${lead.nextActionLabel} · ${lead.name}`, leadId: lead.id, ownerId: lead.ownerId ?? "me", due: addDays(2) } })}
+            >
+              Plan this step
+            </Button>
+          ) : null
+        }
+      />
+
       <RecordInsightChip leadId={lead.id} accountId={lead.accountId} />
 
       <div className={styles.panelControls}>
@@ -136,7 +171,34 @@ export default function LeadQuickPanel({ leadId, onClose }: { leadId: string; on
           </Select>
         </label>
       </div>
-      <p className={styles.panelSource}>Source · {lead.source}</p>
+      <p className={styles.panelSource}>
+        Source · {lead.source}
+        {lead.source === "SIA introduction" || lead.source === "Associate introduction" || lead.introducedByAssociateId ? (
+          <label className={styles.introducedBy}>
+            <span>Introduced by</span>
+            <Select
+              className="select"
+              value={lead.introducedByAssociateId ?? ""}
+              onChange={(event) => {
+                crm.updateLead(lead.id, { introducedByAssociateId: event.target.value || null });
+                toast(event.target.value ? "Introducer recorded" : "Introducer cleared");
+              }}
+              aria-label="Introduced by"
+            >
+              <option value="">Not recorded</option>
+              {(state.tessiant?.associates ?? [])
+                .filter((item) => item.status === "active" && (item.roleType === "SIA" || item.source === "network"))
+                .sort((a, b) => (a.roleType === "SIA" ? 0 : 1) - (b.roleType === "SIA" ? 0 : 1) || a.name.localeCompare(b.name))
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                    {item.roleType === "SIA" ? " · SIA" : ""}
+                  </option>
+                ))}
+            </Select>
+          </label>
+        ) : null}
+      </p>
 
       <section className={styles.journey} aria-label="Qualification journey">
         <div className={styles.journeyTrack}>

@@ -3,7 +3,7 @@
 import { useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { useCrm } from "@/lib/crm-store";
 import { buildWorkspace } from "@/lib/insights";
-import { formatDate, initials, timeAgo } from "@/lib/format";
+import { avatarStyle, formatDate, initials, timeAgo } from "@/lib/format";
 import type { Evidence, LeadStatus, Member, Priority, TaskStatus } from "@/lib/types";
 import Icon, { type IconName } from "./Icon";
 
@@ -53,7 +53,7 @@ export function AiChip({ label = "Qiko suggestion" }: { label?: string }) {
 
 export function MemberAvatar({ member, size = "sm" }: { member: Member | null | undefined; size?: "sm" | "md" }) {
   return (
-    <span className={`avatar ${size === "sm" ? "avatar-sm" : ""}`} title={member?.name ?? "Unassigned"} style={member ? undefined : { background: "var(--well)", color: "var(--subtle)" }}>
+    <span className={`avatar ${size === "sm" ? "avatar-sm" : ""}`} title={member?.name ?? "Unassigned"} style={member ? avatarStyle(member.name) : { background: "var(--well)", color: "var(--subtle)" }}>
       {member ? initials(member.name) : "–"}
     </span>
   );

@@ -185,7 +185,7 @@ export default function LoginView() {
 
                 <p className={styles.demo}>
                   <Icon name="database" size={13} />
-                  <span><b>Demo workspace.</b> Sign in with any work email and a password of 8+ characters. All data is sample data.</span>
+                  <span>Sign in with any work email and a password of 8+ characters.</span>
                 </p>
               </form>
             )}
@@ -222,7 +222,7 @@ export default function LoginView() {
                 </header>
                 <p className={styles.demo}>
                   <Icon name="info" size={13} />
-                  <span>Demo mode: no email is actually sent.</span>
+                  <span>No email is sent from this workspace.</span>
                 </p>
                 <button type="button" className={styles.submit} onClick={() => setView("signin")}>Back to sign in</button>
               </div>

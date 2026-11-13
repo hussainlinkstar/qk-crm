@@ -4,11 +4,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
+import Icon from "@/components/ui/Icon";
+import IconTile from "@/components/ui/IconTile";
+import { signalVisual } from "@/components/ui/signal-icons";
 import { Drawer } from "@/components/ui/Overlay";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { addDays, todayKey } from "@/lib/format";
 import { opportunityBrief } from "@/lib/record-intelligence";
+import { showcaseSignals } from "@/lib/showcase-signals";
 import {
   consultingFollowOnDraft,
   leadSourceSummary,
@@ -16,6 +20,7 @@ import {
   type GrowthInsight,
 } from "@/lib/sales-growth";
 import type { CrmState, Opportunity } from "@/lib/types";
+import FeedbackThumbs from "@/components/ui/FeedbackThumbs";
 import styles from "@/app/(workspace)/sales/sales.module.css";
 
 const KIND_LABEL: Record<GrowthInsight["kind"], string> = {
@@ -25,6 +30,23 @@ const KIND_LABEL: Record<GrowthInsight["kind"], string> = {
 };
 
 const MAX_DEAL_INSIGHTS = 3;
+/** Rail rows shown before "View all": enough to scan, not a wall. */
+const INITIAL_CARDS = 4;
+
+interface Signal {
+  id: string;
+  kind: string;
+  title: string;
+  why: string;
+  evidence: string;
+  action: string;
+  /** 1–3, drives the impact meter and the ranking. */
+  impact: 1 | 2 | 3;
+  run: () => void;
+  status?: string;
+  /** Showcase signal built on seeded second-degree or market figures; shown with a demo tag. */
+  demo?: boolean;
+}
 
 function dealSignal(why: string) {
   if (why.startsWith("Coverage")) return "Coverage";
@@ -85,7 +107,88 @@ export default function GrowthOpportunities({
   const sources = useMemo(() => leadSourceSummary(state), [state]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [acted, setActed] = useState<Record<string, string>>({});
+  const [expanded, setExpanded] = useState(false);
+  const [spotId, setSpotId] = useState<string | null>(null);
   const selected = insights.find((item) => item.id === openId) ?? null;
+
+  // One ranked list of everything Qiko has to say, deals first. The spotlight shows one; the rail lists the rest.
+  const signals = useMemo<Signal[]>(() => {
+    const deals: Signal[] = dealInsights.map(({ opportunity, brief, score }) => ({
+      id: `deal-${opportunity.id}`,
+      kind: dealSignal(brief.why),
+      title: opportunity.name,
+      why: brief.why,
+      evidence: `${state.tessiant?.accounts.find((item) => item.id === opportunity.accountId)?.name ?? "Account"}${
+        brief.missing !== "Nothing blocking" ? ` · ${brief.missing}` : " · nothing blocking"
+      }`,
+      action: brief.next,
+      impact: score >= 4 ? 3 : score >= 2 ? 2 : 1,
+      run: () => onOpenOpportunity?.(opportunity),
+    }));
+    const growth: Signal[] = insights.map((insight) => ({
+      id: insight.id,
+      kind: KIND_LABEL[insight.kind],
+      title: insight.detected,
+      why: insight.risk,
+      evidence: insight.evidence,
+      action: insight.actionLabel,
+      impact: insight.kind === "single_owner" ? 3 : 2,
+      run: () => setOpenId(insight.id),
+      status: acted[insight.id],
+    }));
+    // Keep the rail varied: at most two network-reach rows, the rest are hiring and rate signals.
+    const allShowcase = showcaseSignals(state);
+    const keptReach = new Set(
+      allShowcase
+        .filter((signal) => signal.kind === "Network reach")
+        .slice(0, 2)
+        .map((signal) => signal.id),
+    );
+    const showcase: Signal[] = allShowcase
+      .filter((signal) => signal.kind !== "Network reach" || keptReach.has(signal.id))
+      .map((signal) => ({
+      id: signal.id,
+      kind: signal.kind,
+      title: signal.title,
+      why: signal.detail,
+      evidence: signal.evidence,
+      action: signal.action,
+      impact: signal.impact,
+      demo: true,
+      run: () => {
+        if (signal.kind === "Network reach" && signal.requirementId) {
+          openTaskForm({
+            title: "Request introductions",
+            evidence: [{ label: signal.evidence, source: "Qiko network index", kind: "inference" }],
+            initial: {
+              title: `Request second-degree introductions · ${signal.title.replace(/^.*could fill /, "")}`,
+              description: `[requirement:${signal.requirementId}] ${signal.detail}`,
+              priority: "high",
+              due: addDays(2),
+              ownerId: "me",
+              leadId: null,
+              accountId: signal.accountId ?? null,
+            },
+          });
+          return;
+        }
+        if (signal.kind === "Rate benchmark" && signal.opportunityId) {
+          const opportunity = (state.opportunities ?? []).find((item) => item.id === signal.opportunityId);
+          if (opportunity) onOpenOpportunity?.(opportunity);
+          return;
+        }
+        router.push(signal.href);
+      },
+    }));
+    // Deals and recorded relationship risks lead; estimated network signals support, never headline.
+    const tier = (signal: Signal) => (signal.id.startsWith("deal-") ? 0 : signal.demo ? 2 : 1);
+    return [...deals, ...growth, ...showcase].sort((a, b) => tier(a) - tier(b) || b.impact - a.impact);
+  }, [dealInsights, insights, acted, onOpenOpportunity, state, openTaskForm, router]);
+
+  const spotlight = signals.find((item) => item.id === spotId) ?? signals[0] ?? null;
+  const rail = signals.filter((item) => item.id !== spotlight?.id);
+  const railVisible = expanded ? rail : rail.slice(0, INITIAL_CARDS);
+  const hiddenCards = rail.length - railVisible.length;
 
   const followUp = (insight: GrowthInsight) => {
     openTaskForm({
@@ -121,49 +224,100 @@ export default function GrowthOpportunities({
     router.push(`/sales/pipeline?opportunity=${id}`);
   };
 
-  const accountName = (accountId: string) =>
-    state.tessiant?.accounts.find((item) => item.id === accountId)?.name ?? "Account";
 
   if (insights.length === 0 && dealInsights.length === 0 && sources.every((item) => item.count === 0)) return null;
 
   return (
     <>
-      {insights.length > 0 || dealInsights.length > 0 ? (
+      {spotlight ? (
         <section className={styles.growthSection} aria-label="Insights">
           <div className={styles.growthHead}>
-            <div>
-              <p className="kicker">Qiko</p>
-              <h2>Insights</h2>
-              <p className={styles.sourceSub}>Signals on open deals and recorded relationships.</p>
+            <div className={styles.growthHeadCopy}>
+              <IconTile name="sparkles" tone="qiko" size="lg" />
+              <div>
+                <p className="kicker kicker-qiko">Qiko</p>
+                <h2>What deserves attention</h2>
+                <p className={styles.sourceSub}>
+                  {signals.length} signals on open deals and recorded relationships, ranked by impact. Pick one to see why and act.
+                </p>
+              </div>
             </div>
           </div>
-          <div className={styles.growthGrid}>
-            {dealInsights.map(({ opportunity, brief }) => (
-              <button
-                key={opportunity.id}
-                type="button"
-                className={styles.growthCard}
-                onClick={() => onOpenOpportunity?.(opportunity)}
-              >
-                <span className={styles.growthKind}>{dealSignal(brief.why)}</span>
-                <p className={styles.growthDetected}>{opportunity.name}</p>
-                <p className={styles.growthRisk}>{brief.why}</p>
-                <p className={styles.growthEvidence}>
-                  {accountName(opportunity.accountId)}
-                  {brief.missing !== "Nothing blocking" ? ` · ${brief.missing}` : ""}
+
+          <div className={styles.spotlight} data-tour="signals">
+            <article key={spotlight.id} className={styles.spotHero}>
+              <div className={styles.spotHeroTop}>
+                <span className={styles.growthCardTop}>
+                  <IconTile name={signalVisual(spotlight.kind).icon} tone={signalVisual(spotlight.kind).tone} size="md" />
+                  <span className={styles.growthKind}>{spotlight.kind}</span>
+                  {spotlight.demo ? <span className={styles.demoTag}>estimate</span> : null}
+                </span>
+                <span className={styles.spotImpact} aria-label={`Impact ${spotlight.impact} of 3`}>
+                  <span>Impact</span>
+                  <i data-on={spotlight.impact >= 1} />
+                  <i data-on={spotlight.impact >= 2} />
+                  <i data-on={spotlight.impact >= 3} />
+                </span>
+              </div>
+              <h3>{spotlight.title}</h3>
+              <p className={styles.spotWhy}>{spotlight.why}</p>
+              <p className={styles.spotEvidence}>
+                <Icon name="check" size={12} strokeWidth={2.6} />
+                {spotlight.evidence}
+              </p>
+              <div className={styles.spotActions}>
+                <Button variant="qiko" iconRight="arrowRight" onClick={spotlight.run}>
+                  {spotlight.action}
+                </Button>
+                {spotlight.status ? <span className={styles.growthStatus}>{spotlight.status}</span> : null}
+                <span className={styles.spotFeedback}>
+                  <FeedbackThumbs feedbackKey={`signal:${spotlight.id}`} context="signal" />
+                </span>
+              </div>
+            </article>
+
+            <div className={styles.spotRail}>
+              <div className={styles.spotRailHead}>
+                <span>
+                  {rail.length} more {rail.length === 1 ? "signal" : "signals"}
+                </span>
+                {rail.length > INITIAL_CARDS ? (
+                  <button type="button" className={styles.viewAll} onClick={() => setExpanded((value) => !value)} aria-expanded={expanded}>
+                    {expanded ? "Show fewer" : "View all"}
+                    <Icon name={expanded ? "chevronLeft" : "chevronRight"} size={13} />
+                  </button>
+                ) : null}
+              </div>
+              {rail.length === 0 ? (
+                <p className={styles.growthEmpty}>
+                  <Icon name="checkCircle" size={14} /> That is the only open signal.
                 </p>
-                <p className={styles.growthActionLine}>{brief.next}</p>
-              </button>
-            ))}
-            {insights.map((insight) => (
-              <button key={insight.id} type="button" className={styles.growthCard} onClick={() => setOpenId(insight.id)}>
-                <span className={styles.growthKind}>{KIND_LABEL[insight.kind]}</span>
-                <p className={styles.growthDetected}>{insight.detected}</p>
-                <p className={styles.growthRisk}>{insight.risk}</p>
-                <p className={styles.growthActionLine}>{insight.actionLabel}</p>
-                {acted[insight.id] ? <span className={styles.growthStatus}>{acted[insight.id]}</span> : null}
-              </button>
-            ))}
+              ) : (
+                <ol className={styles.spotList} data-expanded={expanded ? "true" : undefined}>
+                  {railVisible.map((item, index) => (
+                    <li key={item.id} style={{ animationDelay: `${index * 40}ms` }}>
+                      <button type="button" className={styles.spotRow} onClick={() => setSpotId(item.id)}>
+                        <span className={styles.spotMeter} data-level={item.impact} aria-hidden="true" />
+                        <IconTile name={signalVisual(item.kind).icon} tone={signalVisual(item.kind).tone} size="sm" />
+                        <span className={styles.spotRowCopy}>
+                          <b>{item.title}</b>
+                          <small>
+                            {item.kind}
+                            {item.demo ? " · estimate" : ""} · {item.action}
+                          </small>
+                        </span>
+                        <Icon name="chevronRight" size={14} />
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              {!expanded && hiddenCards > 0 ? (
+                <p className={styles.growthMore}>
+                  {hiddenCards} more folded away.
+                </p>
+              ) : null}
+            </div>
           </div>
           {selected ? (
             <GrowthDrawer

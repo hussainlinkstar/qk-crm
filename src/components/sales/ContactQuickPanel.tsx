@@ -7,7 +7,9 @@ import { Drawer } from "@/components/ui/Overlay";
 import { EmptyState, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { engagementInsights } from "@/lib/commercial-intelligence";
-import { addDays, formatDate, initials, timeAgo } from "@/lib/format";
+import { addDays, avatarStyle, formatDate, initials, timeAgo } from "@/lib/format";
+import { contactInsight } from "@/lib/record-insights";
+import RecordInsight from "@/components/ui/RecordInsight";
 import styles from "@/components/leads/Leads.module.css";
 
 export default function ContactQuickPanel({ contactId, onClose }: { contactId: string; onClose: () => void }) {
@@ -49,7 +51,9 @@ export default function ContactQuickPanel({ contactId, onClose }: { contactId: s
       kicker="Contact"
       title={
         <span className={styles.panelTitle}>
-          <span className="avatar">{initials(contact.name)}</span>
+          <span className="avatar" style={avatarStyle(contact.name)}>
+            {initials(contact.name)}
+          </span>
           <span>
             {contact.name}
             <small>
@@ -67,14 +71,31 @@ export default function ContactQuickPanel({ contactId, onClose }: { contactId: s
         </Link>
       }
     >
-      {ending ? (
-        <p>
-          <b>{ending.title}</b>
-          <span className="muted" style={{ display: "block", marginTop: 4 }}>
-            {ending.detail}
-          </span>
-        </p>
-      ) : null}
+      <RecordInsight
+        subject="contact"
+        data={contactInsight(state, contact)}
+        actions={
+          <Button
+            size="small"
+            variant="qiko"
+            icon="plus"
+            onClick={() =>
+              openTaskForm({
+                initial: {
+                  title: ending ? `Re-engage ${contact.name}` : `Next conversation with ${contact.name}`,
+                  description: `Contact ${contact.id} · Account ${contact.accountId}${ending ? ` · ${ending.detail}` : ""}`,
+                  leadId: account?.linkedLeadId ?? null,
+                  ownerId: contact.ownerId ?? "me",
+                  due: addDays(2),
+                  priority: ending ? "high" : "medium",
+                },
+              })
+            }
+          >
+            Plan the conversation
+          </Button>
+        }
+      />
 
       <div className={styles.panelMeta}>
         {contact.isPrimary ? <span className="chip chip-completed">Primary</span> : <span className="chip">Stakeholder</span>}

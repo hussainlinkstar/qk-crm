@@ -264,6 +264,35 @@
   padding: 0;
 }
 
+/* Intelligence entries carry the Qiko indigo so they read as "the system", not the workspace. */
+.navIntel svg {
+  color: var(--qiko-accent);
+}
+
+.navIntel:hover svg {
+  color: var(--qiko-accent-strong);
+}
+
+.navIntel.active {
+  background: var(--qiko-accent-soft);
+  color: var(--qiko-accent-strong);
+}
+
+.navIntel.active::before {
+  background: var(--qiko-accent);
+}
+
+.navExternal {
+  margin-left: auto;
+  color: var(--subtle) !important;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.navItem:hover .navExternal {
+  opacity: 1;
+}
+
 .disabled {
   color: var(--subtle);
   cursor: default;
@@ -534,7 +563,7 @@
 }
 
 .search:focus-within {
-  border-color: #818cf8;
+  border-color: var(--brand-ring);
   background: var(--surface);
   box-shadow: var(--focus-ring);
 }
@@ -566,19 +595,23 @@
   gap: 7px;
   height: 36px;
   padding: 0 13px;
-  border: 1px solid var(--brand-ring);
+  border: 1px solid var(--qiko-accent-ring);
   border-radius: var(--radius-md);
-  background: linear-gradient(180deg, #fff, var(--brand-soft));
-  color: var(--brand-strong);
+  background: var(--qiko-accent-soft);
+  color: var(--qiko-accent-strong);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .askButton:hover {
-  box-shadow: 0 6px 16px -8px rgba(79, 70, 229, 0.45);
-  transform: translateY(-1px);
+  border-color: var(--qiko-accent);
+  box-shadow: 0 6px 16px -10px rgba(79, 70, 229, 0.5);
+}
+
+.askButton:focus-visible {
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.28);
 }
 
 .iconButton,
@@ -694,8 +727,8 @@
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: var(--brand-soft);
-  color: var(--brand);
+  background: var(--qiko-accent-soft);
+  color: var(--qiko-accent);
 }
 
 .dropdownFoot {
@@ -761,6 +794,93 @@
 
 .fab {
   display: none;
+}
+
+/* — Floating Qiko launcher: always one tap from help — */
+.qikoFab {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.qikoFabMark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: var(--qiko-gradient);
+  color: #fff;
+  box-shadow: 0 14px 30px -12px rgba(79, 70, 229, 0.7), 0 0 0 4px rgba(79, 70, 229, 0.12);
+  animation: fabBounce 5.5s var(--ease-spring) infinite;
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.qikoFab:hover .qikoFabMark,
+.qikoFab:focus-visible .qikoFabMark {
+  animation-play-state: paused;
+  transform: scale(1.06);
+  box-shadow: 0 18px 34px -12px rgba(79, 70, 229, 0.8), 0 0 0 6px rgba(79, 70, 229, 0.16);
+}
+
+.qikoFab:focus-visible {
+  outline: none;
+}
+
+.qikoFabBubble {
+  padding: 8px 12px;
+  border: 1px solid var(--qiko-accent-ring);
+  border-radius: 12px 12px 4px 12px;
+  background: var(--surface);
+  color: var(--qiko-accent-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity var(--duration) var(--ease-out), transform var(--duration) var(--ease-out);
+  pointer-events: none;
+}
+
+.qikoFab:hover .qikoFabBubble,
+.qikoFab:focus-visible .qikoFabBubble {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@keyframes fabBounce {
+  0%,
+  86%,
+  100% {
+    transform: translateY(0);
+  }
+
+  90% {
+    transform: translateY(-7px);
+  }
+
+  94% {
+    transform: translateY(0);
+  }
+
+  97% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qikoFabMark {
+    animation: none;
+  }
 }
 
 .toasts {
@@ -928,7 +1048,7 @@
     height: 52px;
     border: 0;
     border-radius: 999px;
-    background: var(--brand-gradient);
+    background: var(--qiko-gradient);
     color: #fff;
     box-shadow: 0 12px 28px -10px rgba(79, 70, 229, 0.55);
     cursor: pointer;

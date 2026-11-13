@@ -9,8 +9,10 @@ import type { LeadView } from "@/lib/insights";
 import { LEAD_SOURCES, LEAD_STATUSES, type LeadStatus } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
+import IconTile from "@/components/ui/IconTile";
 import { EmptyState, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import LeadQuickPanel from "@/components/leads/LeadQuickPanel";
+import OriginationQueue from "@/components/sales/OriginationQueue";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import styles from "./leads.module.css";
 
@@ -214,15 +216,26 @@ function LeadsView() {
         </div>
       </header>
 
-      <section className={styles.insightStrip} aria-label="Lead insights">
-        {leadInsights.map((insight) => (
-          <div key={insight.text} className={styles.insightCard}>
-            <b className="tabular">{insight.value}</b>
-            <span>{insight.text}</span>
-            <small>{insight.detail}</small>
+      <section className={styles.insightSection} aria-label="Lead insights">
+        <div className={styles.insightHead}>
+          <IconTile name="sparkles" tone="qiko" size="lg" />
+          <div>
+            <p className="kicker kicker-qiko">Qiko</p>
+            <h2>Where leads come from</h2>
           </div>
-        ))}
+        </div>
+        <div className={styles.insightStrip}>
+          {leadInsights.map((insight) => (
+            <div key={insight.text} className={styles.insightCard}>
+              <b className="tabular">{insight.value}</b>
+              <span>{insight.text}</span>
+              <small>{insight.detail}</small>
+            </div>
+          ))}
+        </div>
       </section>
+
+      <OriginationQueue onOpenLead={(leadId) => setPanelLead(leadId)} />
 
       <section className="card">
         <div className={styles.toolbar}>

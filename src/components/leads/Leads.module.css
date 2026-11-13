@@ -249,3 +249,19 @@ a.fullProfile:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+.introducedBy {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.introducedBy :global(.select) {
+  min-width: 180px;
+  padding: 3px 28px 3px 8px;
+  font-size: 12px;
+}

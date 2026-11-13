@@ -1,0 +1,56 @@
+.tile {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.sm {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+}
+
+.md {
+  width: 32px;
+  height: 32px;
+}
+
+.lg {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+}
+
+.tile[data-tone="qiko"] {
+  background: var(--qiko-accent-soft);
+  color: var(--qiko-accent);
+}
+
+.tile[data-tone="success"] {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.tile[data-tone="warning"] {
+  background: var(--warning-soft);
+  color: #b45309;
+}
+
+.tile[data-tone="danger"] {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.tile[data-tone="info"] {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.tile[data-tone="muted"] {
+  background: var(--well);
+  color: var(--ink-3);
+}

@@ -20,13 +20,19 @@ type Sys = { name: string; to: string[] };
 
 type Node = Area & { x: number; y: number; r: number; c: string; phase: number; flash: number; a: Area };
 
+type BlockId = "network" | "augmentation" | "commercial" | "capability";
+
 export default function PulseKnowledgeMap({
-  networkSub = "high-intent",
-  placementSub = "with insights",
+  networkSub = "verified capacity",
+  placementSub = "open requirements",
+  subs,
 }: {
   networkSub?: string;
   placementSub?: string;
+  /** Live line per block; falls back to the two legacy props. */
+  subs?: Partial<Record<BlockId, string>>;
 }) {
+  const subKey = JSON.stringify(subs ?? {});
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -40,31 +46,30 @@ export default function PulseKnowledgeMap({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const liveSubs: Record<BlockId, string> = {
+      network: subs?.network ?? networkSub,
+      augmentation: subs?.augmentation ?? placementSub,
+      commercial: subs?.commercial ?? "accounts and deals",
+      capability: subs?.capability ?? "bench and offerings",
+    };
+    const ROLE: Record<BlockId, string> = {
+      network: "Network intelligence",
+      augmentation: "Placement intelligence",
+      commercial: "Commercial & relationship intelligence",
+      capability: "Strategic capability intelligence",
+    };
+    // Four blocks around the core, one per quadrant.
     const AREAS: Area[] = [
-      {
-        id: "network",
-        name: "Network Intelligence",
-        ang: -2.2,
-        col: "#6366F1",
-        agents: 1,
-        href: "/pulse/knowledge/network",
-        sub: networkSub,
-      },
-      {
-        id: "augmentation",
-        name: "Augmentation & Placement Intelligence",
-        ang: 0.85,
-        col: "#22D3EE",
-        agents: 1,
-        href: "/pulse/knowledge/augmentation",
-        sub: placementSub,
-      },
+      { id: "network", name: "Network Intelligence", ang: -2.35, col: "#6366F1", agents: 1, href: "/pulse/knowledge/network", sub: liveSubs.network },
+      { id: "commercial", name: "Commercial & Relationship Intelligence", ang: -0.8, col: "#8B5CF6", agents: 1, href: "/pulse/knowledge/commercial", sub: liveSubs.commercial },
+      { id: "augmentation", name: "Augmentation & Placement Intelligence", ang: 0.8, col: "#22D3EE", agents: 1, href: "/pulse/knowledge/augmentation", sub: liveSubs.augmentation },
+      { id: "capability", name: "Strategic Capability Intelligence", ang: 2.35, col: "#10B981", agents: 1, href: "/pulse/knowledge/capability", sub: liveSubs.capability },
     ];
     const SYS: Sys[] = [
-      { name: "Associates", to: ["network"] },
-      { name: "Requirements", to: ["augmentation"] },
-      { name: "Knowledge library", to: ["network", "augmentation"] },
-      { name: "Ask Pulse", to: ["network", "augmentation"] },
+      { name: "Associates", to: ["network", "capability"] },
+      { name: "Requirements", to: ["augmentation", "capability"] },
+      { name: "Accounts & deals", to: ["commercial", "augmentation"] },
+      { name: "Ask Pulse", to: ["network", "commercial"] },
     ];
 
     const hexA = (hex: string, a: number) => {
@@ -202,8 +207,8 @@ export default function PulseKnowledgeMap({
         showTip(
           f.n.a.name,
           [
-            ["Role", f.n.a.id === "network" ? "Network intelligence" : "Placement intelligence"],
-            ["Live", f.n.a.id === "network" ? networkSub : placementSub],
+            ["Role", ROLE[f.n.a.id as BlockId] ?? f.n.a.name],
+            ["Live", liveSubs[f.n.a.id as BlockId] ?? f.n.a.sub],
           ],
           "Open knowledge block →",
           place.x,
@@ -376,7 +381,7 @@ export default function PulseKnowledgeMap({
 
       const t = ts / 1000;
       for (const n of nodes) {
-        n.a.sub = n.a.id === "network" ? networkSub : placementSub;
+        n.a.sub = liveSubs[n.a.id as BlockId] ?? n.a.sub;
         const isH = hoverNode === n;
         const r = n.r * (1 + Math.sin(t * 1.6 + n.phase) * 0.025) * (isH ? 1.07 : 1);
         n.flash = Math.max(0, n.flash - 0.04);
@@ -449,7 +454,8 @@ export default function PulseKnowledgeMap({
       canvas.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("click", onClick);
     };
-  }, [networkSub, placementSub, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [networkSub, placementSub, subKey, router]);
 
   return (
     <div className={styles.mapWrapExact} ref={wrapRef}>
@@ -461,8 +467,16 @@ export default function PulseKnowledgeMap({
           Network Intelligence
         </span>
         <span>
+          <i style={{ background: "#8B5CF6" }} />
+          Commercial & Relationship
+        </span>
+        <span>
           <i style={{ background: "#22D3EE" }} />
           Augmentation & Placement
+        </span>
+        <span>
+          <i style={{ background: "#10B981" }} />
+          Strategic Capability
         </span>
       </div>
     </div>

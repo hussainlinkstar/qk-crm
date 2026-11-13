@@ -1,0 +1,25 @@
+.wrap {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--line);
+}
+
+.wrap[data-ring="available"] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--success);
+}
+
+.wrap[data-ring="limited"] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--warning);
+}
+
+.wrap[data-ring="unavailable"] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--danger);
+}
+
+.svg {
+  display: block;
+  border-radius: 999px;
+}

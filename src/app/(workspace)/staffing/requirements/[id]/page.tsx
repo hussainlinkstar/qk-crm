@@ -6,12 +6,20 @@ import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import MatchCandidateCard from "@/components/staffing/MatchCandidateCard";
 import RecommendedMatches from "@/components/staffing/RecommendedMatches";
+import SourcingSweep from "@/components/staffing/SourcingSweep";
+import Introducers from "@/components/staffing/Introducers";
+import PricingGuidance from "@/components/staffing/PricingGuidance";
+import InterviewScorecard from "@/components/staffing/InterviewScorecard";
+import ScorecardComparison from "@/components/staffing/ScorecardComparison";
+import DealJourney from "@/components/journey/DealJourney";
+import { dealJourneyFor } from "@/lib/deal-journey";
 import RecordInsightChip from "@/components/pulse/RecordInsightChip";
 import Button from "@/components/ui/Button";
-import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
+import RecordHeader, { type RecordFact } from "@/components/ui/RecordHeader";
+import { EmptyState, PriorityChip, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
-import { addDays, formatDate, timeAgo } from "@/lib/format";
+import { addDays, avatarStyle, formatDate, initials, timeAgo } from "@/lib/format";
 import { formatRate, marginForCandidate, mapRequirementToOpsStage, requirementTasks, verifiedAvailableMatchCount } from "@/lib/tessiant-insights";
 import { buildMatchPresentation } from "@/lib/tessiant-matching";
 import {
@@ -21,6 +29,7 @@ import {
   groupCandidatesByStatus,
   normalizeCandidateStatus,
   requirementActivityTimeline,
+  requirementPriority,
   requisitionCounts,
   type CandidateAction,
 } from "@/lib/requisition";
@@ -51,6 +60,7 @@ export default function RequirementDetailPage() {
   const [externalAssociateId, setExternalAssociateId] = useState("");
   const [actionNotes, setActionNotes] = useState<Record<string, string>>({});
   const [expandedCandidate, setExpandedCandidate] = useState<string | null>(null);
+  const [sweepRun, setSweepRun] = useState(0);
   const [externalForm, setExternalForm] = useState({
     name: "",
     headline: "",
@@ -155,10 +165,8 @@ export default function RequirementDetailPage() {
     return status === "offer" || status === "placed" || Boolean(c.quotedClientRate);
   });
 
-  const runMatches = () => {
-    const added = crm.findMatches(requirement.id);
-    toast(added > 0 ? `Find Matches added ${added} suggestions` : "Matches refreshed (scores updated)", "success");
-  };
+  // Header "Find Matches" plays the sourcing sweep, which runs the matcher when it completes.
+  const runMatches = () => setSweepRun((value) => value + 1);
 
   const moveStage = (stage: RequirementStage) => {
     if (stage === "Placed") {
@@ -338,46 +346,74 @@ export default function RequirementDetailPage() {
     );
   };
 
+  const verifiedAvailable = verifiedAvailableMatchCount(state, requirement.id);
+  const headerFacts: RecordFact[] = [
+    { label: "Verified available", value: verifiedAvailable, tone: verifiedAvailable === 0 ? "danger" : "success" },
+    { label: "Shortlisted", value: counts?.shortlisted ?? 0 },
+    { label: "Start", value: formatDate(requirement.startDate) },
+    { label: "Positions", value: `${counts?.filled ?? 0} of ${requirement.headcount} filled` },
+    { label: "Days open", value: daysOpen(requirement) },
+    { label: "Owner", value: owner?.name ?? "Unassigned" },
+  ];
+
   return (
     <div className={`page ${styles.density}`}>
-      <header className="page-head">
-        <div>
-          <p className="kicker">
-            <Link href="/staffing/requirements">Requirements</Link>
-          </p>
-          <h1>{requirement.title}</h1>
-          <p className="subtitle">
-            {account?.name ?? "Client"} · {requirement.category} · {requirement.sector} · {mapRequirementToOpsStage(requirement)} ·{" "}
-            {daysOpen(requirement)} days open · {verifiedAvailableMatchCount(state, requirement.id)} verified available
-          </p>
-        </div>
-        <div className="page-actions">
-          <Button
-            variant="secondary"
-            icon="tasks"
-            onClick={() =>
-              openTaskForm({
-                title: "Create staffing task",
-                initial: {
-                  title: `Follow up · ${requirement.title}`,
-                  description: `Follow up on requirement ${requirement.title}`,
-                  leadId: account?.linkedLeadId ?? requirement.linkedOpportunityId ?? null,
-                  priority: "medium",
-                  due: null,
-                  ownerId: "me",
-                },
-              })
-            }
-          >
-            Add task
-          </Button>
-          <Button icon="search" onClick={runMatches}>
-            Find Matches
-          </Button>
-        </div>
-      </header>
+      <RecordHeader
+        back={{ href: "/staffing/requirements", label: "Requirements" }}
+        mark={initials(account?.name ?? requirement.title)}
+        markStyle={avatarStyle(account?.name ?? requirement.title)}
+        title={requirement.title}
+        chips={
+          <>
+            <span className="chip chip-dot chip-working">{mapRequirementToOpsStage(requirement)}</span>
+            <PriorityChip priority={requirementPriority(requirement)} />
+            {requirement.outcome !== "active" ? <span className="chip">{requirement.outcome.replace("_", " ")}</span> : null}
+          </>
+        }
+        meta={
+          <>
+            {account ? <Link href={`/sales/accounts/${account.id}`}>{account.name}</Link> : "Client"} · {requirement.category} ·{" "}
+            {requirement.sector} · {requirement.seniority} · {requirement.workingMode} · {requirement.location}
+          </>
+        }
+        facts={headerFacts}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              icon="tasks"
+              onClick={() =>
+                openTaskForm({
+                  title: "Create staffing task",
+                  initial: {
+                    title: `Follow up · ${requirement.title}`,
+                    description: `Follow up on requirement ${requirement.title}`,
+                    leadId: account?.linkedLeadId ?? requirement.linkedOpportunityId ?? null,
+                    priority: "medium",
+                    due: null,
+                    ownerId: "me",
+                  },
+                })
+              }
+            >
+              Add task
+            </Button>
+            <Button icon="search" onClick={runMatches}>
+              Find Matches
+            </Button>
+          </>
+        }
+      />
+
+      {(() => {
+        const journey = dealJourneyFor(state, { requirementId: requirement.id });
+        return journey ? <DealJourney journey={journey} /> : null;
+      })()}
 
       <RecordInsightChip requirementId={requirement.id} accountId={requirement.accountId} />
+
+      {requirement.stage !== "Placed" ? <SourcingSweep state={state} requirement={requirement} runKey={sweepRun} /> : null}
+      {requirement.stage !== "Placed" ? <Introducers state={state} requirement={requirement} /> : null}
 
       <RecommendedMatches state={state} requirement={requirement} />
 
@@ -758,11 +794,21 @@ export default function RequirementDetailPage() {
             {interviewCandidates.length === 0 ? (
               <EmptyState title="No interviews yet" icon="users" />
             ) : (
-              <div className={styles.stack}>{interviewCandidates.map((candidate) => renderCard(candidate))}</div>
+              <div className={styles.stack}>
+                <ScorecardComparison candidates={interviewCandidates} nameOf={(associateId) => tessiant.associates.find((item) => item.id === associateId)?.name ?? "Associate"} />
+                {interviewCandidates.map((candidate) => (
+                  <div key={candidate.id} className={styles.stack}>
+                    {renderCard(candidate)}
+                    <InterviewScorecard candidate={candidate} associateName={tessiant.associates.find((item) => item.id === candidate.associateId)?.name ?? "Associate"} />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </section>
       )}
+
+      {tab === "commercials" && <PricingGuidance state={state} requirement={requirement} />}
 
       {tab === "commercials" && <section className={`${styles.split} ${styles.sectionAnchor}`}>
         <article className="card">

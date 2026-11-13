@@ -2,6 +2,9 @@ import type { ChartPoint } from "@/components/pulse/PulseLiveChart";
 import type { CrmState } from "./types";
 import type { TessiantInsight } from "./tessiant-pulse-types";
 import { networkMix } from "./tessiant-pulse-rules";
+import { roleLabel } from "./talent-network";
+import { knowledgeBlockTitle } from "./pulse-presentation";
+import type { AssociateRoleType } from "./tessiant-types";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -58,7 +61,22 @@ export function roleDistributionSeries(state: CrmState): ChartPoint[] {
   return Object.entries(mix.byRole)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6)
-    .map(([l, v]) => ({ l: l.length > 12 ? `${l.slice(0, 11)}…` : l, v }));
+    .map(([l, v]) => {
+      const label = roleLabel(l as AssociateRoleType);
+      return { l: label.length > 14 ? `${label.slice(0, 13)}…` : label, v };
+    });
+}
+
+/** Open signals per knowledge block: the shape of what Pulse is asking the team to decide. */
+export function signalsByBlockSeries(insights: TessiantInsight[]): ChartPoint[] {
+  const counts = new Map<string, number>();
+  for (const insight of insights) counts.set(insight.knowledgeBlockId, (counts.get(insight.knowledgeBlockId) ?? 0) + 1);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([block, v]) => {
+      const label = knowledgeBlockTitle(block as TessiantInsight["knowledgeBlockId"]).replace(/ Intelligence$/, "");
+      return { l: label.length > 16 ? `${label.slice(0, 15)}…` : label, v };
+    });
 }
 
 export function activitySeries(state: CrmState, days: number, now = new Date()): ChartPoint[] {

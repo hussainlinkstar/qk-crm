@@ -278,14 +278,8 @@
   width: 76px;
   height: 76px;
   margin: 6px 0 4px;
-  border: 2px solid var(--surface);
   border-radius: 999px;
-  background: var(--brand-soft);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-ring) 65%, white), 0 6px 14px -10px rgba(79, 70, 229, 0.45);
-  color: var(--brand-ink);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  filter: drop-shadow(0 6px 10px rgba(79, 70, 229, 0.18));
 }
 
 .statusPill {
@@ -466,21 +460,53 @@
   align-items: center;
 }
 
+/* The directory table never squeezes the person column: it keeps a floor width and scrolls inside
+   its wrap when the viewport is narrower than the columns. */
 .compactTable {
-  font-size: 14px;
+  min-width: 900px;
+  font-size: 13.5px;
+  table-layout: auto;
+}
+
+.compactTable th,
+.compactTable td {
+  padding-right: 12px;
+  padding-left: 12px;
 }
 
 .compactTable td {
+  height: 56px;
   vertical-align: middle;
   white-space: nowrap;
 }
 
 .compactTable td:first-child {
+  width: 260px;
+  min-width: 240px;
   white-space: normal;
 }
 
-.compactTable .muted {
+.compactTable td:nth-child(3) {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compactTable :global(.muted) {
+  overflow: hidden;
+  max-width: 210px;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.rowGo {
+  width: 36px;
+  color: var(--subtle);
+  text-align: right;
+}
+
+.clickRow:hover .rowGo {
+  color: var(--brand);
 }
 
 .compactTable th:first-child,
@@ -506,7 +532,13 @@
   min-width: 0;
 }
 
-.personMeta .muted {
+.personMeta b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personMeta :global(.muted) {
   margin-top: 0;
 }
 

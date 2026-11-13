@@ -1,26 +1,35 @@
-/* Qiko Core design system — Signal indigo across the workspace. */
+/*
+  Qiko Core design system.
+
+  Three colour roles, kept deliberately separate:
+  - Workspace (--brand): the tenant's operational identity. Tessiant is a deep teal-green.
+    Primary actions, active navigation, links and selection use it.
+  - Intelligence (--qiko-accent): Qiko indigo. Reserved for Ask Qiko, insight cards,
+    recommendations and Pulse, so anything the system worked out for you reads as such.
+  - Semantic: success / warning / danger / info for status only.
+*/
 
 :root {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Surfaces — Signal lavender canvas, white cards */
-  --canvas: #f7f5ff;
+  /* Surfaces — quiet neutral canvas, flat white panels */
+  --canvas: #f6f7f9;
   --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --well: #eef2ff;
-  --line: #e0e7ff;
-  --line-soft: #eef2ff;
-  --line-strong: #c7d2fe;
+  --surface-muted: #f8f9fb;
+  --well: #f1f3f6;
+  --line: #e6e8ee;
+  --line-soft: #f0f2f5;
+  --line-strong: #d3d8e1;
 
-  /* Ink — slate, readable on the lavender canvas */
+  /* Ink */
   --ink: #0f172a;
   --ink-2: #1e293b;
   --ink-3: #334155;
   --muted: #64748b;
   --subtle: #94a3b8;
 
-  /* Brand — same Signal / Pulse indigo used on Sales */
+  /* Workspace brand — defaults to Qiko indigo outside a tenant (login, splash) */
   --brand: #4f46e5;
   --brand-strong: #4338ca;
   --brand-ink: #312e81;
@@ -29,13 +38,19 @@
   --brand-blue: #6366f1;
   --brand-violet: #7c3aed;
   --brand-gradient: linear-gradient(135deg, #818cf8 0%, #4f46e5 46%, #7c3aed 100%);
+
+  /* Intelligence — Qiko indigo, never overridden by a tenant */
   --qiko-accent: #4f46e5;
+  --qiko-accent-strong: #4338ca;
+  --qiko-accent-ink: #312e81;
   --qiko-accent-soft: #eef2ff;
+  --qiko-accent-ring: #c7d2fe;
+  --qiko-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 55%, #7c3aed 100%);
 
   /* Semantic */
-  --success: #047857;
-  --success-soft: #ecfdf5;
-  --success-line: #a7f3d0;
+  --success: #15803d;
+  --success-soft: #f0fdf4;
+  --success-line: #bbf7d0;
   --warning: #92400e;
   --warning-soft: #fffbeb;
   --warning-line: #fde68a;
@@ -49,12 +64,12 @@
   --radius-lg: 12px;
   --radius-xl: 16px;
 
-  --shadow-xs: 0 1px 2px rgba(15, 23, 20, 0.04);
-  --shadow-sm: 0 1px 2px rgba(15, 23, 20, 0.05), 0 1px 3px rgba(15, 23, 20, 0.04);
-  --shadow-md: 0 8px 22px -14px rgba(15, 23, 20, 0.14);
-  --shadow-lg: 0 22px 56px -28px rgba(15, 23, 20, 0.28);
-  --shadow-hover: 0 14px 28px -18px rgba(79, 70, 229, 0.48);
-  --focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.28);
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 8px 22px -14px rgba(15, 23, 42, 0.16);
+  --shadow-lg: 0 22px 56px -28px rgba(15, 23, 42, 0.3);
+  --shadow-hover: 0 10px 24px -16px rgba(15, 23, 42, 0.24);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand) 28%, transparent);
 
   /* Motion — purposeful, short, consistent */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -67,19 +82,19 @@
   --sidebar-collapsed: 72px;
 }
 
-/* Workspace mark uses the same Signal indigo as Sales. */
+/* Tessiant operating workspace — deep teal-green identity for everything operational. */
 [data-tenant="tessiant"] {
-  --brand: #4f46e5;
-  --brand-strong: #4338ca;
-  --brand-ink: #312e81;
-  --brand-soft: #eef2ff;
-  --brand-ring: #c7d2fe;
-  --brand-blue: #6366f1;
-  --brand-violet: #7c3aed;
-  --brand-gradient: linear-gradient(135deg, #818cf8 0%, #4f46e5 46%, #7c3aed 100%);
+  --brand: #0f766e;
+  --brand-strong: #115e59;
+  --brand-ink: #134e4a;
+  --brand-soft: #effaf7;
+  --brand-ring: #a7e3d8;
+  --brand-blue: #0d9488;
+  --brand-violet: #0f766e;
+  --brand-gradient: linear-gradient(135deg, #14b8a6 0%, #0f766e 55%, #115e59 100%);
 }
 
-/* Qiko Pulse product surface — indigo identity, independent of Tessiant CRM green. */
+/* Qiko Pulse product surface — indigo identity, independent of the Tessiant workspace. */
 [data-product="pulse"] {
   --brand: #4f46e5;
   --brand-strong: #4338ca;
@@ -89,7 +104,6 @@
   --brand-blue: #6366f1;
   --brand-violet: #7c3aed;
   --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 52%, #4338ca 100%);
-  --focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.22);
   --canvas: #f8fafc;
 }
 
@@ -107,11 +121,7 @@ body {
   font-family: var(--font-sans);
   font-size: 14px;
   color: var(--ink);
-  background:
-    radial-gradient(820px 360px at 0% -8%, rgba(124, 58, 237, 0.16), transparent 62%),
-    radial-gradient(640px 320px at 100% 0%, rgba(99, 102, 241, 0.14), transparent 58%),
-    linear-gradient(180deg, #f7f5ff 0%, #f8fafc 42%, #f8fafc 100%);
-  background-attachment: fixed;
+  background: var(--canvas);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -147,7 +157,7 @@ p {
 }
 
 ::selection {
-  background: #ddd6fe;
+  background: color-mix(in srgb, var(--brand) 18%, white);
 }
 
 a:focus-visible,
@@ -172,7 +182,12 @@ textarea:focus-visible {
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #6d28d9;
+  color: var(--muted);
+}
+
+/* Kicker for anything Qiko worked out: insights, recommendations, Ask Qiko. */
+.kicker-qiko {
+  color: var(--qiko-accent);
 }
 
 .muted {
@@ -201,7 +216,7 @@ textarea:focus-visible {
   min-width: 0;
   margin: 0;
   padding: 28px 28px 64px;
-  animation: pageIn var(--duration-slow) var(--ease-out);
+  animation: pageIn var(--duration-fast) var(--ease-out);
 }
 
 @keyframes pageIn {
@@ -218,17 +233,8 @@ textarea:focus-visible {
   }
 }
 
-.page > * {
-  animation: riseIn var(--duration-slow) var(--ease-out) backwards;
-}
-
-.page > *:nth-child(2) { animation-delay: 40ms; }
-.page > *:nth-child(3) { animation-delay: 80ms; }
-.page > *:nth-child(4) { animation-delay: 120ms; }
-.page > *:nth-child(5) { animation-delay: 160ms; }
-.page > *:nth-child(6) { animation-delay: 200ms; }
-.page > *:nth-child(7) { animation-delay: 240ms; }
-.page > *:nth-child(n + 8) { animation-delay: 280ms; }
+/* One page-level fade only. Per-block staggers were decorative and, with a backwards
+   fill, left content invisible whenever animations were paused. */
 
 .page-head {
   display: flex;
@@ -240,7 +246,7 @@ textarea:focus-visible {
 
 .page-head h1 {
   margin-top: 0;
-  color: #1e1b4b;
+  color: var(--ink);
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -278,10 +284,10 @@ textarea:focus-visible {
 /* — Cards — */
 .card {
   min-width: 0;
-  border: 1px solid #e0e7ff;
-  border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 1px 2px rgba(49, 46, 129, 0.04), 0 16px 36px -28px rgba(79, 70, 229, 0.55);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
 .interactive,
@@ -331,26 +337,23 @@ textarea:focus-visible {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
-.metric-grid > * {
-  animation: riseIn var(--duration) var(--ease-out) backwards;
+.metric-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 
-.metric-grid > *:nth-child(2) { animation-delay: 40ms; }
-.metric-grid > *:nth-child(3) { animation-delay: 80ms; }
-.metric-grid > *:nth-child(4) { animation-delay: 120ms; }
-.metric-grid > *:nth-child(5) { animation-delay: 160ms; }
-.metric-grid > *:nth-child(6) { animation-delay: 200ms; }
-
 .metric-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
   min-width: 0;
   min-height: 0;
-  padding: 12px 14px;
+  padding: 12px 52px 12px 14px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-xs);
   color: var(--ink);
@@ -671,11 +674,15 @@ textarea:focus-visible {
 .chip-pending { background: var(--warning-soft); color: var(--warning); box-shadow: inset 0 0 0 1px var(--warning-line); }
 .chip-in_progress { background: var(--brand-soft); color: var(--brand-ink); box-shadow: inset 0 0 0 1px var(--brand-ring); }
 .chip-completed { background: var(--success-soft); color: var(--success); box-shadow: inset 0 0 0 1px var(--success-line); }
+/* Semantic chips for scores and confidence bands. */
+.chip-success { background: var(--success-soft); color: var(--success); box-shadow: inset 0 0 0 1px var(--success-line); }
+.chip-warning { background: var(--warning-soft); color: var(--warning); box-shadow: inset 0 0 0 1px var(--warning-line); }
+.chip-danger { background: var(--danger-soft); color: var(--danger); box-shadow: inset 0 0 0 1px #fecaca; }
 .chip-dismissed { background: var(--well); color: var(--muted); }
 .chip-high { background: var(--danger-soft); color: var(--danger); box-shadow: inset 0 0 0 1px #fecaca; }
 .chip-medium { background: var(--warning-soft); color: var(--warning); box-shadow: inset 0 0 0 1px var(--warning-line); }
 .chip-low { background: var(--well); color: var(--ink-3); }
-.chip-ai { background: var(--qiko-accent-soft); color: var(--qiko-accent); box-shadow: inset 0 0 0 1px #c7d2fe; }
+.chip-ai { background: var(--qiko-accent-soft); color: var(--qiko-accent); box-shadow: inset 0 0 0 1px var(--qiko-accent-ring); }
 
 .kpi-value {
   display: inline-block;
@@ -964,10 +971,6 @@ textarea:focus-visible {
   vertical-align: middle;
 }
 
-.table-wrap {
-  animation: riseIn var(--duration) var(--ease-out) backwards;
-}
-
 .table tbody tr {
   transition: background var(--duration-fast) var(--ease-out);
 }
@@ -1188,7 +1191,7 @@ select.input,
 }
 
 .evidence-list li[data-kind="inference"] {
-  background: linear-gradient(135deg, #f8faff, #faf5ff);
+  background: var(--qiko-accent-soft);
 }
 
 .evidence-icon {
@@ -1204,8 +1207,8 @@ select.input,
 }
 
 [data-kind="inference"] .evidence-icon {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: var(--qiko-accent-ring);
+  color: var(--qiko-accent-ink);
 }
 
 .evidence-label {
@@ -1236,6 +1239,6 @@ select.input,
 }
 
 .evidence-ai {
-  color: #6d28d9;
+  color: var(--qiko-accent);
   font-weight: 600;
 }

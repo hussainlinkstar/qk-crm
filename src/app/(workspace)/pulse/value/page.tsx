@@ -12,9 +12,13 @@ import { getPulseSnapshot } from "@/lib/pulse-adapter";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { insightIdFromTask, requirementHasConfirmedAssignment } from "@/lib/pulse-journey";
 import { generateTessiantInsights } from "@/lib/tessiant-pulse-rules";
+import { trackRecord } from "@/lib/qiko-track-record";
+import CountUp from "@/components/ui/CountUp";
 import type { PulseOutcome, PulseOutcomeStatus } from "@/lib/tessiant-pulse-types";
 import type { CrmState } from "@/lib/types";
 import styles from "../pulse.module.css";
+
+const INITIAL_NOW = Date.now();
 
 function money(value: number | null | undefined) {
   if (value == null) return "—";
@@ -61,6 +65,7 @@ export default function PulseValuePage() {
   const realisedFromOutcomes = outcomes.reduce((sum, item) => sum + (item.value.realisedRevenue ?? 0), 0);
   const pipelineFromOutcomes = outcomes.reduce((sum, item) => sum + (item.value.pipelinePotential ?? 0), 0);
   const hoursSaved = outcomes.reduce((sum, item) => sum + (item.value.estimatedTimeSavedHours ?? 0), 0);
+  const record = trackRecord(state, now || INITIAL_NOW);
   const directSavings = outcomes.reduce((sum, item) => sum + (item.value.directCostSavings ?? 0), 0);
   const waitingCount = pendingOutcomes.length + waitingTasks.length;
 
@@ -100,6 +105,35 @@ export default function PulseValuePage() {
             <span>Time saved</span>
             <b className="tabular">{hoursSaved.toFixed(1)}h</b>
             <span>From completed actions. Direct cost savings recorded: {money(directSavings || null)}.</span>
+          </article>
+        </section>
+
+        <section className={`${styles.valueKpis} ${styles.recordStrip}`} aria-label="Qiko's record">
+          <article className={styles.valueKpi}>
+            <span>Raised</span>
+            <b className="tabular">
+              <CountUp value={record.raised} />
+            </b>
+            <span>Signals and suggestions Qiko put in front of the team.</span>
+          </article>
+          <article className={styles.valueKpi}>
+            <span>Acted on</span>
+            <b className="tabular">
+              <CountUp value={record.actedOn} />
+            </b>
+            <span>Tasks completed that started as a Qiko call.</span>
+          </article>
+          <article className={styles.valueKpi}>
+            <span>Outcomes recorded</span>
+            <b className="tabular">
+              <CountUp value={record.outcomes} />
+            </b>
+            <span>Results written down after the work, not assumed.</span>
+          </article>
+          <article className={styles.valueKpi}>
+            <span>Right-call rate</span>
+            <b className="tabular">{record.accuracyPct === null ? "—" : <CountUp value={record.accuracyPct} format={(n) => `${Math.round(n)}%`} />}</b>
+            <span>{record.feedbackTotal ? `${record.feedbackRight} right, ${record.feedbackPartly} partly of ${record.feedbackTotal} rated.` : "Rate a priority or signal in the workspace and the score starts here."}</span>
           </article>
         </section>
 
@@ -286,7 +320,7 @@ function ValueRecordForm({ state, outcome }: { state: CrmState; outcome: PulseOu
             pipelinePotential: pipeline ? Number(pipeline) : null,
             realisedRevenue: null,
             qualitativeBenefit: benefit.trim() || null,
-            notes: notes.trim() || "DEMO — value recorded separately from task completion",
+            notes: notes.trim() || "Value recorded separately from task completion",
             sourceEntityIds: outcome.value.sourceEntityIds,
           });
           toast(ok ? "Value recorded against the Pulse outcome" : "Complete the action before recording value");

@@ -17,7 +17,7 @@ import { adaptLeadRecord, normalizeLeadSource, normalizeLeadStatus } from "@/lib
 import { addDays, toDateKey } from "@/lib/format";
 import { createTessiantSlice } from "./tessiant-seed";
 
-export const DATA_VERSION = 16;
+export const DATA_VERSION = 24;
 
 export function demoMessages(ago: (hours: number) => string): ConversationMessage[] {
   return [
@@ -76,6 +76,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       sector?: string | null;
       serviceInterest?: string | null;
       accountId?: string | null;
+      introducedByAssociateId?: string | null;
     },
   ) => {
     const { createdHoursAgo, status, source, ...rest } = data;
@@ -167,6 +168,11 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
   event("l_ravi", "enquiry", "Requested a free audit", 50, "Website", "Assessment form");
   scan("l_ravi", "copperleaf.finance", 47, 30, ["Low visibility for 'SME lending' queries", "No FAQ schema", "Thin comparison content"]);
   event("l_ravi", "report", "Opened the scan report twice", 26, "Qiko Signal");
+
+  // — SIA-introduced win: David Okello (SIA) introduced Civic Services' finance director; advisory engagement delivered.
+  lead("l_sia_intro", { name: "Rachel Nwosu", email: "rachel.nwosu@civicservices.example", phone: null, company: "Civic Services Partnership", role: "Finance Director", source: "SIA introduction", status: "Converted", ownerId: "m_sarah", createdHoursAgo: 135 * 24, accountId: "acc_civic", serviceInterest: "advisory", sector: "Public sector", introducedByAssociateId: "as_sia_david" });
+  event("l_sia_intro", "interaction", "Introduced by David Okello (SIA)", 135 * 24, "Tessiant CRM", "Warm introduction from the SIA network · finance transformation advisory", "Sarah Ahmed");
+  event("l_sia_intro", "conversion", "Converted to advisory opportunity", 128 * 24, "Tessiant CRM", "Civic Services finance transformation advisory", "Sarah Ahmed");
 
   // — Two prospects showing strong engagement
   lead("l_chloe", { name: "Chloe Bennett", email: "chloe@lumenanalytics.io", phone: "+44 20 3868 1190", company: "Lumen Analytics", role: "VP Marketing", source: "Qiko Signal", status: "Qualified", ownerId: "me", createdHoursAgo: 400 });
@@ -390,7 +396,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       role: "Change lead",
       ownerId: "m_sarah",
       isPrimary: true,
-      notes: "Public-sector expansion prospect (fictional).",
+      notes: "Public-sector expansion prospect.",
       createdAt: ago(96),
       updatedAt: ago(90),
     },
@@ -403,7 +409,7 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       role: "Managing partner / hiring manager",
       ownerId: "m_ali",
       isPrimary: true,
-      notes: "Professional-services consulting buyer (fictional).",
+      notes: "Professional-services consulting buyer.",
       createdAt: ago(10 * 24),
       updatedAt: ago(2 * 24),
     },
@@ -602,9 +608,38 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
       updatedAt: ago(2 * 24),
       closedAt: null,
     },
+    {
+      id: "opp_civic_sia_won",
+      name: "Civic Services finance transformation advisory",
+      accountId: "acc_civic",
+      contactId: null,
+      leadId: "l_sia_intro",
+      type: "advisory",
+      stage: "Closed Won",
+      amount: 42000,
+      currency: "GBP",
+      probability: 100,
+      expectedCloseDate: addDays(-125),
+      ownerId: "m_sarah",
+      services: ["Senior Industry Advisors", "Advisory"],
+      nextStep: "Delivered — SIA-introduced advisory engagement completed",
+      agreedContractValue: 42000,
+      expectedBilling: 42000,
+      recognisedRevenue: 42000,
+      lostReason: null,
+      source: "SIA introduction",
+      createdAt: ago(128 * 24),
+      updatedAt: ago(60 * 24),
+      closedAt: ago(125 * 24),
+    },
   ];
 
   // Link converted demo leads
+  const siaIntro = leads.find((item) => item.id === "l_sia_intro");
+  if (siaIntro) {
+    siaIntro.status = "Converted";
+    siaIntro.convertedOpportunityId = "opp_civic_sia_won";
+  }
   const noah = leads.find((item) => item.id === "l_noah");
   if (noah) {
     noah.status = "Converted";
@@ -644,6 +679,13 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
     tasks,
     members,
     decisions: {},
+    // A few recorded verdicts so Qiko's track record has a starting score; keys match live priority and signal ids.
+    feedback: {
+      "priority:dependency-acc_crest": { key: "priority:dependency-acc_crest", context: "priority", verdict: "right", at: ago(26 * 24) },
+      "signal:deal-opp_helix_sap": { key: "signal:deal-opp_helix_sap", context: "signal", verdict: "right", at: ago(30 * 24) },
+      "signal:reach-req_sap": { key: "signal:reach-req_sap", context: "signal", verdict: "partly", at: ago(52 * 24) },
+      "pricing:req_sap": { key: "pricing:req_sap", context: "signal", verdict: "right", at: ago(70 * 24) },
+    },
     tessiant: createTessiantSlice(now),
   };
 }

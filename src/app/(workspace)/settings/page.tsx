@@ -8,6 +8,7 @@ import Icon, { type IconName } from "@/components/ui/Icon";
 import { ConfirmDialog } from "@/components/ui/Overlay";
 import { SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
+import { AUTOMATION_RULES, automationEnabled, automationHistory } from "@/lib/automations";
 import styles from "./settings.module.css";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -74,7 +75,7 @@ export default function SettingsPage() {
       <header className="page-head">
         <div>
           <h1>Settings</h1>
-          <p className="subtitle">Profile, team, and discreet workspace diagnostics — including demo data sources.</p>
+          <p className="subtitle">Profile, team, automation rules and data sources.</p>
         </div>
       </header>
 
@@ -165,13 +166,47 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        <section className={`card ${styles.wide}`} id="automations">
+          <div className="card-head">
+            <div>
+              <h2>Automations · human in the loop</h2>
+              <p className="card-sub">Each rule proposes; nothing runs until someone approves it on Home. {automationHistory(state).filter((item) => item.decision === "done").length} approved so far.</p>
+            </div>
+            <span className="chip chip-ai">Qiko</span>
+          </div>
+          <ul className={styles.sources}>
+            {AUTOMATION_RULES.map((rule) => (
+              <li key={rule.id}>
+                <span className={styles.sourceIcon}><Icon name="zap" size={16} /></span>
+                <span className={styles.memberText}>
+                  <b>{rule.name}</b>
+                  <small>When: {rule.trigger}</small>
+                </span>
+                <span className={styles.sourceNote}>Then: {rule.action}</span>
+                <label className={styles.toggle}>
+                  <input type="checkbox" checked={automationEnabled(state, rule.id)} onChange={(event) => { crm.setAutomationPref(rule.id, event.target.checked); toast(event.target.checked ? `${rule.name} on` : `${rule.name} off`, "info"); }} />
+                  <span>{automationEnabled(state, rule.id) ? "On" : "Off"}</span>
+                </label>
+              </li>
+            ))}
+            <li>
+              <span className={styles.sourceIcon}><Icon name="sun" size={16} /></span>
+              <span className={styles.memberText}>
+                <b>Morning brief</b>
+                <small>The Home read as a page outside the app, with copy-as-text for email or chat.</small>
+              </span>
+              <span className={styles.sourceNote}>Scheduled delivery needs an email or chat connector; none is attached yet.</span>
+              <a href="/brief" target="_blank" rel="noopener" className="link-button">Open today&apos;s brief</a>
+            </li>
+          </ul>
+        </section>
+
         <section className={`card ${styles.wide}`}>
           <div className="card-head">
             <div>
               <h2>Where workspace data comes from</h2>
-              <p className="card-sub">This V1 runs on clearly labelled demo data behind a replaceable data layer. Nothing here is presented as live production data.</p>
+              <p className="card-sub">This workspace runs on sample data behind a replaceable data layer. Nothing here is live production data.</p>
             </div>
-            <span className="chip chip-demo">Demo mode</span>
           </div>
           <ul className={styles.sources}>
             {SOURCES.map((source) => (
@@ -182,7 +217,7 @@ export default function SettingsPage() {
                   <small>{source.scope}</small>
                 </span>
                 <span className={styles.sourceNote}>{source.note}</span>
-                <span className={`chip ${source.status === "demo" ? "chip-demo" : ""}`}>{source.status === "demo" ? "Demo data" : "Coming soon"}</span>
+                <span className={`chip ${source.status === "demo" ? "chip-demo" : ""}`}>{source.status === "demo" ? "Sample data" : "Coming soon"}</span>
               </li>
             ))}
           </ul>
@@ -191,8 +226,8 @@ export default function SettingsPage() {
         <section className={`card ${styles.wide}`}>
           <div className="card-head">
             <div>
-              <h2>Reset demo workspace</h2>
-              <p className="card-sub">Restore the original sample leads, activity and tasks. Your changes in this browser will be replaced. Demo data last generated {formatDateTime(state.seededAt)}.</p>
+              <h2>Reset workspace data</h2>
+              <p className="card-sub">Restore the original sample leads, activity and tasks. Your changes in this browser will be replaced. Sample data last generated {formatDateTime(state.seededAt)}.</p>
             </div>
             <Button variant="danger" icon="refresh" onClick={() => setConfirmReset(true)}>Reset data</Button>
           </div>
@@ -216,14 +251,14 @@ export default function SettingsPage() {
       {confirmReset && (
         <ConfirmDialog
           tone="danger"
-          title="Reset the demo workspace?"
+          title="Reset the workspace data?"
           description="All leads, notes, tasks and decisions return to the original sample data."
           confirmLabel="Reset data"
           onCancel={() => setConfirmReset(false)}
           onConfirm={() => {
             crm.resetDemoData();
             setConfirmReset(false);
-            toast("Demo data restored");
+            toast("Sample data restored");
           }}
         />
       )}

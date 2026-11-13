@@ -12,7 +12,7 @@ import {
 } from "./tessiant-types";
 import { addDays, todayKey } from "./format";
 
-export const TALENT_PAGE_SIZE = 12;
+export const TALENT_PAGE_SIZE = 20;
 
 export type TalentSavedView = "all" | "available_now" | "currently_deployed" | "sias" | "retail_specialists" | "needs_update";
 
@@ -227,7 +227,7 @@ export function ensureTalentProfile(associate: Associate, nowIso = new Date().to
       associate.summary ??
       `${associate.name} is a ${roleLabel(associate.roleType).toLowerCase()} with ${associate.seniority} seniority across ${associate.sectors.join(", ") || "multiple sectors"}.`,
     specialisations: defaultSpecialisations,
-    email: associate.email ?? `demo.${associate.id.replace(/^as_/, "")}@tessiant-network.example`,
+    email: associate.email ?? `${associate.id.replace(/^as_/, "")}@tessiant-network.example`,
     phone: associate.phone ?? null,
     profileUpdatedAt,
     documents,

@@ -7,6 +7,8 @@ import Button from "@/components/ui/Button";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import AssignmentRecommendedActions from "@/components/staffing/AssignmentRecommendedActions";
+import DealJourney from "@/components/journey/DealJourney";
+import { dealJourneyFor } from "@/lib/deal-journey";
 import { crm } from "@/lib/crm-store";
 import {
   assignmentCapacity,
@@ -66,9 +68,6 @@ export default function AssignmentDetailPage() {
   const accountId = resolveAssignmentAccountId(state, assignment);
   const account = tessiant.accounts.find((item) => item.id === accountId);
   const requirement = tessiant.requirements.find((item) => item.id === assignment.requirementId);
-  const opportunity = requirement?.linkedOpportunityId
-    ? state.opportunities?.find((item) => item.id === requirement.linkedOpportunityId)
-    : undefined;
   const owner = state.members.find((item) => item.id === (assignment.ownerId ?? requirement?.ownerId));
   const renewal = assignmentRenewalStatus(assignment, today);
   const live = status === "upcoming" || status === "active" || status === "extended";
@@ -106,27 +105,10 @@ export default function AssignmentDetailPage() {
         </div>
       </header>
 
-      <div className={styles.hierarchy} aria-label="Record links">
-        {account && (
-          <Link href={`/sales/accounts/${account.id}`} className={styles.rowLink}>
-            {account.name}
-          </Link>
-        )}
-        <span>/</span>
-        {opportunity ? (
-          <Link href={`/sales/accounts/${opportunity.accountId}`} className={styles.rowLink}>
-            {opportunity.name}
-          </Link>
-        ) : (
-          <span>No linked opportunity</span>
-        )}
-        <span>/</span>
-        <Link href={`/staffing/requirements/${assignment.requirementId}`} className={styles.rowLink}>
-          {requirement?.title ?? "Requirement"}
-        </Link>
-        <span>/</span>
-        <b>{assignmentStatusLabel(status)}</b>
-      </div>
+      {(() => {
+        const journey = dealJourneyFor(state, { assignmentId: assignment.id });
+        return journey ? <DealJourney journey={journey} /> : null;
+      })()}
 
       <AssignmentRecommendedActions state={state} assignmentId={assignment.id} compact />
 

@@ -12,6 +12,7 @@ import Icon from "@/components/ui/Icon";
 import { ConfirmDialog, Drawer } from "@/components/ui/Overlay";
 import { AiChip, EvidenceList, LeadStatusChip, PriorityChip, TaskStatusChip, taskStatusLabel, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
+import FeedbackThumbs from "@/components/ui/FeedbackThumbs";
 import styles from "./Tasks.module.css";
 
 export default function TaskDrawer({ taskId, onClose }: { taskId: string; onClose: () => void }) {
@@ -43,6 +44,9 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
   const due = dueLabel(task.due, task.status);
   const closed = task.status === "completed" || task.status === "dismissed";
   const pulseInsightId = insightIdFromTask(task.description);
+  // Tasks Qiko made (accepted suggestion, Ask Qiko) close the loop: a line on what happened plus a verdict.
+  const qikoMade = !pulseInsightId && (task.origin === "suggestion" || task.origin === "copilot");
+  const taskVerdict = state.feedback?.[`task:${task.id}`] ?? null;
   const requirementId = requirementIdFromTask(task.description);
   const requirement = requirementId ? state.tessiant?.requirements.find((item) => item.id === requirementId) : null;
   const pulseOutcome = pulseInsightId
@@ -102,6 +106,16 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
                     sourceEntityIds: requirementId ? [requirementId] : [],
                   });
                   toast("Result recorded in Pulse. Value can be added separately if evidence exists.");
+                  return;
+                }
+                if (qikoMade && !resultNote.trim() && !taskVerdict) {
+                  setAwaitingResult(true);
+                  toast("Tell Qiko how it went — one line or a verdict is enough", "info");
+                  return;
+                }
+                if (qikoMade && resultNote.trim()) {
+                  crm.setTaskStatus(task.id, "completed", `Outcome: ${resultNote.trim()}`);
+                  toast("Task completed and outcome noted");
                   return;
                 }
                 setStatus("completed", "Task completed");
@@ -229,6 +243,29 @@ function TaskDrawerBody({ task, onClose }: { task: Task; onClose: () => void }) 
             />
           </label>
           {awaitingResult && !resultNote.trim() ? <p className="muted">Add a short result before completing.</p> : null}
+        </section>
+      ) : null}
+
+      {qikoMade ? (
+        <section className={styles.section}>
+          <h3 className="kicker">Close the loop</h3>
+          <p className={styles.historyNote}>
+            Qiko {task.origin === "suggestion" ? "suggested" : "created"} this task. Say what happened and whether the call was right so it learns what to put in front of you.
+          </p>
+          {!closed ? (
+            <label className="field">
+              <span>What happened?</span>
+              <textarea
+                className="textarea"
+                rows={2}
+                value={resultNote}
+                onChange={(event) => setResultNote(event.target.value)}
+                placeholder="e.g. Spoke to Priya, proposal moved to Negotiation."
+              />
+            </label>
+          ) : null}
+          <FeedbackThumbs feedbackKey={`task:${task.id}`} context="task" label="Was this the right call?" />
+          {awaitingResult && !resultNote.trim() && !taskVerdict ? <p className="muted">Add a line or a verdict before completing.</p> : null}
         </section>
       ) : null}
 

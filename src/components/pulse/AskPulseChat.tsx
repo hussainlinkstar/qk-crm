@@ -36,7 +36,7 @@ export default function AskPulseChat({
     }
     setActive({
       question: custom.trim(),
-      answer: "Not supported from the Tessiant demo dataset. Ask about capability gaps, ending assignments, sector demand, thin coverage, or commercial follow-ups.",
+      answer: "Not supported from the Tessiant records. Ask about capability gaps, ending assignments, sector demand, thin coverage, or commercial follow-ups.",
       links: [{ label: "Browse insights", href: "/pulse/insights" }],
     });
     setCustom("");
@@ -117,7 +117,7 @@ export default function AskPulseChat({
       {open ? (
         <Drawer kicker="Qiko Pulse" title="Chat with Pulse" onClose={() => setOpen(false)} width={420}>
           <p className="muted" style={{ marginBottom: 12 }}>
-            Answers stay inside Pulse and only use Tessiant demo records.
+            Answers stay inside Pulse and only use Tessiant records.
           </p>
           {body}
         </Drawer>

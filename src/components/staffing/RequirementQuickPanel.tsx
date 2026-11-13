@@ -10,6 +10,8 @@ import { formatDate } from "@/lib/format";
 import RecordInsightChip from "@/components/pulse/RecordInsightChip";
 import { formatCandidateProgress, mapRequirementToOpsStage } from "@/lib/tessiant-insights";
 import { daysOpen, requirementPriority, requisitionCounts } from "@/lib/requisition";
+import { requirementInsight } from "@/lib/record-insights";
+import RecordInsight from "@/components/ui/RecordInsight";
 import styles from "@/components/leads/Leads.module.css";
 
 export default function RequirementQuickPanel({
@@ -53,6 +55,18 @@ export default function RequirementQuickPanel({
         </Link>
       }
     >
+      <RecordInsight
+        subject="requirement"
+        data={requirementInsight(state, requirement)}
+        actions={
+          <Link href={`/staffing/requirements/${requirement.id}`} onClick={onClose}>
+            <Button size="small" variant="qiko" iconRight="arrowRight">
+              Work the shortlist
+            </Button>
+          </Link>
+        }
+      />
+
       <RecordInsightChip requirementId={requirement.id} accountId={requirement.accountId} />
 
       <div className={styles.panelMeta}>

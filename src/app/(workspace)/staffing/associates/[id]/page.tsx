@@ -23,18 +23,21 @@ import {
 import { shortlistLabel } from "@/lib/tessiant-matching";
 import type { AvailabilityStatus, AssociateStatus, WorkingMode } from "@/lib/tessiant-types";
 import styles from "../../staffing.module.css";
+import IntroductionsPanel from "@/components/staffing/IntroductionsPanel";
+import { availabilityConfidence, recordAvailabilityConfirmation } from "@/lib/availability-confidence";
 import talent from "../talent.module.css";
 
-type Tab = "overview" | "documents" | "experience" | "assignments" | "recruitment" | "commercials" | "notes";
+type Tab = "overview" | "documents" | "experience" | "assignments" | "introductions" | "recruitment" | "commercials" | "notes";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "overview", label: "Overview" },
-  { key: "documents", label: "CV & Documents" },
+  { key: "documents", label: "CV & docs" },
   { key: "experience", label: "Experience" },
   { key: "assignments", label: "Assignments" },
-  { key: "recruitment", label: "Recruitment activity" },
+  { key: "introductions", label: "Introductions" },
+  { key: "recruitment", label: "Recruitment" },
   { key: "commercials", label: "Commercials" },
-  { key: "notes", label: "Notes & activity" },
+  { key: "notes", label: "Notes" },
 ];
 
 const RATE_KEY = "tessiant-show-rates";
@@ -246,6 +249,32 @@ export default function AssociateDetailPage() {
                 <b>Bench</b>
               )}
             </div>
+            {state ? (() => {
+              const confidence = availabilityConfidence(state, associate);
+              return (
+                <div className={styles.profileFact}>
+                  <div className={styles.profileFactLabel}>Availability confidence</div>
+                  <b>
+                    <span className={`chip ${confidence.band === "high" ? "chip-success" : confidence.band === "medium" ? "chip-warning" : "chip-danger"}`}>
+                      {confidence.score} · {confidence.label}
+                    </span>
+                  </b>
+                  <div className="muted">{confidence.reasons[0]?.text}</div>
+                  {confidence.band !== "high" ? (
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={() => {
+                        recordAvailabilityConfirmation(associate.id, associate.availability === "unknown" ? "available" : associate.availability, associate.nextAvailableDate, "team");
+                        toast("Availability confirmed and dated today", "success");
+                      }}
+                    >
+                      Confirm as recorded
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })() : null}
             <div className={styles.profileFact}>
               <div className={styles.profileFactLabel}>CV status</div>
               <b>{cv ? `${cv.name} · v${cv.version}` : "No CV"}</b>
@@ -574,6 +603,8 @@ export default function AssociateDetailPage() {
               </div>
             </section>
           )}
+
+          {tab === "introductions" && state && <IntroductionsPanel state={state} associate={associate} />}
 
           {tab === "recruitment" && (
             <section className="card">

@@ -371,7 +371,7 @@ export function estimatedMargin(
   }
   const amount = client.amount - cost.amount;
   const pct = client.amount === 0 ? null : Math.round((amount / client.amount) * 100);
-  return { label: "Estimated margin (demo)", amount, pct };
+  return { label: "Estimated margin", amount, pct };
 }
 
 const LEGACY_SHORTLIST: Record<string, ShortlistStatus> = {

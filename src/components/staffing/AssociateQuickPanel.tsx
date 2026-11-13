@@ -11,8 +11,11 @@ import { EmptyState, useWorkspaceData } from "@/components/ui/bits";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { associateCommittedCapacity } from "@/lib/assignments";
-import { formatDate, initials, timeAgo } from "@/lib/format";
+import { avatarStyle, formatDate, initials, timeAgo } from "@/lib/format";
 import { formatRate } from "@/lib/tessiant-insights";
+import { associateInsight } from "@/lib/record-insights";
+import { availabilityConfidence } from "@/lib/availability-confidence";
+import RecordInsight from "@/components/ui/RecordInsight";
 import {
   currentAssignmentLabel,
   engagementStatus,
@@ -36,7 +39,7 @@ export default function AssociateQuickPanel({
 }) {
   const router = useRouter();
   const { state } = useWorkspaceData();
-  const { toast } = useWorkspace();
+  const { toast, askQiko } = useWorkspace();
   const tessiant = state?.tessiant;
   const raw = tessiant?.associates.find((item) => item.id === associateId);
   const [shortlistReqId, setShortlistReqId] = useState("");
@@ -91,7 +94,9 @@ export default function AssociateQuickPanel({
       kicker="Associate"
       title={
         <span className={styles.panelTitle}>
-          <span className="avatar">{initials(associate.name)}</span>
+          <span className="avatar" style={avatarStyle(associate.name)}>
+            {initials(associate.name)}
+          </span>
           <span>
             {associate.name}
             <small>
@@ -108,8 +113,26 @@ export default function AssociateQuickPanel({
         </Link>
       }
     >
+      <RecordInsight
+        subject="associate"
+        data={associateInsight(state, associate)}
+        actions={
+          <Button size="small" variant="qiko" icon="sparkles" onClick={() => askQiko(`Who is ${associate.name} and which open requirements could they fit?`)}>
+            Ask Qiko
+          </Button>
+        }
+      />
+
       <div className={styles.panelMeta}>
         <span className="chip chip-dot">{associate.availability}</span>
+        {(() => {
+          const confidence = availabilityConfidence(state, associate);
+          return (
+            <span className={`chip ${confidence.band === "high" ? "chip-success" : confidence.band === "medium" ? "chip-warning" : "chip-danger"}`} title={confidence.reasons.map((item) => item.text).join(" · ")}>
+              {confidence.score} · {confidence.label}
+            </span>
+          );
+        })()}
         <span className="chip">{engagement}</span>
         <span className="chip tabular">{freeCapacity}% free</span>
         <span className="chip">{associate.verifiedAt ? "Verified" : "Unverified"}</span>

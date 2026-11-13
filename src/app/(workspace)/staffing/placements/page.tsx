@@ -6,6 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AssignmentQuickPanel from "@/components/staffing/AssignmentQuickPanel";
 import AssignmentRecommendedActions from "@/components/staffing/AssignmentRecommendedActions";
 import { EmptyState, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
+import BarList from "@/components/ui/BarList";
+import CountUp from "@/components/ui/CountUp";
+import IconTile from "@/components/ui/IconTile";
+import InsightSignals from "@/components/sales/InsightSignals";
+import { assignmentSignals } from "@/lib/staffing-intelligence";
+import { plural } from "@/lib/format";
+import salesStyles from "@/app/(workspace)/sales/sales.module.css";
 import {
   assignmentDashboard,
   assignmentRoleTitle,
@@ -19,6 +26,8 @@ import {
 import { formatDate, toDateKey } from "@/lib/format";
 import { assignmentRenewalStatus } from "@/lib/tessiant-insights";
 import styles from "../staffing.module.css";
+
+const INITIAL_NOW = Date.now();
 
 const VIEWS: { id: AssignmentListView; label: string }[] = [
   { id: "all", label: "All" },
@@ -43,12 +52,13 @@ export default function AssignmentsPage() {
   const [layout, setLayout] = useState<"assignments" | "clients">(viewParam === "clients" ? "clients" : "assignments");
   const [previewId, setPreviewId] = useState<string | null>(null);
 
-  const today = toDateKey(new Date(now || Date.now()));
+  const today = toDateKey(new Date(now || INITIAL_NOW));
   const view = layout === "clients" ? "clients" : viewParam === "clients" ? "all" : viewParam;
 
   const dashboard = useMemo(() => (state ? assignmentDashboard(state, today) : null), [state, today]);
   const rows = useMemo(() => (state ? filterAssignments(state, view, today) : []), [state, view, today]);
   const clientRows = useMemo(() => (state ? clientDeploymentViews(state, today) : []), [state, today]);
+  const signals = useMemo(() => (state ? assignmentSignals(state, today) : []), [state, today]);
 
   if (!state || !tessiant || !dashboard) {
     return (
@@ -87,26 +97,85 @@ export default function AssignmentsPage() {
         </div>
       </header>
 
-      <AssignmentRecommendedActions state={state} compact />
-
       <section className="metric-grid metric-grid-4" aria-label="Assignment KPIs">
         <Link href="/staffing/placements?view=active" className="metric-card">
-          <span className="metric-label">Active</span>
-          <b className="tabular">{dashboard.active}</b>
+          <IconTile name="briefcase" tone="brand" className="metric-icon" />
+          <span className="metric-label">Deployed</span>
+          <b className="tabular">
+            <CountUp value={dashboard.active} />
+          </b>
+          <span className="metric-delta">{plural(dashboard.clientsWithDeployments, "client")}</span>
         </Link>
         <Link href="/staffing/placements?view=upcoming" className="metric-card">
+          <IconTile name="rocket" tone="info" className="metric-icon" />
           <span className="metric-label">Starting soon</span>
-          <b className="tabular">{dashboard.startingSoon}</b>
+          <b className="tabular">
+            <CountUp value={dashboard.startingSoon} />
+          </b>
+          <span className="metric-delta">next 30 days</span>
         </Link>
         <Link href="/staffing/placements?view=ending30" className="metric-card">
+          <IconTile name="calendar" tone="warning" className="metric-icon" />
           <span className="metric-label">Ending soon</span>
-          <b className="tabular">{dashboard.ending30}</b>
+          <b className="tabular">
+            <CountUp value={dashboard.ending30} />
+          </b>
+          <span className={`metric-delta ${dashboard.ending30 ? "warning" : ""}`}>{dashboard.ending60} within 60 days</span>
         </Link>
         <Link href="/staffing/placements?view=renewals" className="metric-card">
+          <IconTile name="refresh" tone="danger" className="metric-icon" />
           <span className="metric-label">Pending renewal</span>
-          <b className="tabular">{dashboard.renewals}</b>
+          <b className="tabular">
+            <CountUp value={dashboard.renewals} />
+          </b>
+          <span className="metric-delta">no decision recorded</span>
         </Link>
       </section>
+
+      <div className={salesStyles.intelGrid}>
+        <InsightSignals
+          title="Assignment intelligence"
+          summary="Renewals without a decision, engagements ending within 30 days and starts to prepare. Each signal opens the assignment."
+          items={signals.map((signal) => ({
+            id: signal.id,
+            kind: signal.kind,
+            title: signal.title,
+            detail: signal.detail,
+            actionLabel: signal.actionLabel,
+            onClick: () => setPreviewId(signal.assignmentId),
+          }))}
+          emptyTitle="No renewals pending, nothing ending within 30 days, no starts to prepare."
+        />
+        <section className="card">
+          <div className="card-head">
+            <div>
+              <h2>Deployed by client</h2>
+              <p className="card-sub">Associates on live assignments per account. Click to open the account.</p>
+            </div>
+          </div>
+          <div className="card-body">
+            {clientRows.length === 0 ? (
+              <p className="muted">No live deployments.</p>
+            ) : (
+              <BarList
+                label="Deployed associates per client"
+                max={Math.max(3, ...clientRows.map((row) => row.associateCount))}
+                rows={clientRows.slice(0, 6).map((row) => ({
+                  key: row.accountId,
+                  label: row.accountName,
+                  value: row.associateCount,
+                  display: plural(row.associateCount, "associate"),
+                  caption: row.endingSoonCount ? `${row.endingSoonCount} ending soon` : row.renewalCount ? `${row.renewalCount} renewal due` : "stable",
+                  tone: row.endingSoonCount || row.renewalCount ? ("warning" as const) : ("brand" as const),
+                  href: `/sales/accounts/${row.accountId}`,
+                }))}
+              />
+            )}
+          </div>
+        </section>
+      </div>
+
+      <AssignmentRecommendedActions state={state} compact />
 
       {layout === "clients" ? (
         <section className="card">

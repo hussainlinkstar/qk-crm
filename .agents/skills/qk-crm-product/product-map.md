@@ -25,20 +25,22 @@ Auth and shell:
 | Route | Role |
 |---|---|
 | `/login` | Any email signs in. `LoginView.tsx` calls `signIn` |
-| `/` | Home. Greeting, Ask Qiko, Tessiant priorities, open tasks, recent activity |
-| `/tasks` | My Tasks. Cross-workspace action list |
-| `/settings` | Profile, team members, connector status (all demo/future), reset demo data |
+| `/` | Home. Greeting + data lede, compact Ask Qiko, four outcome tiles (`homeOutcomes`), ranked "What matters now" (`buildTessiantHomePriorities`, limit 5), Pulse "best next move" (accept → task), my tasks, what changed this week |
+| `/tasks` | My Tasks. Cross-workspace action list. Top-level nav item with open-task count |
+| `/settings` | Profile, team members, automation rules (on/off, `#automations`), connector status (all demo/future), reset demo data |
+| `/brief` | Morning brief outside the shell: same numbers, best move, priorities, proposals and changes as Home, printable, "Copy as text". `lib/morning-brief.ts` |
+| `/confirm/[id]` | Associate-facing one-tap availability confirm page (no shell). Writes through `recordAvailabilityConfirmation` so the team's view updates at once |
 
 Sales (`src/app/(workspace)/sales/`, layout sets `data-product="signal"`):
 
 | Route | Nav label | Role |
 |---|---|---|
-| `/sales` | — | Sales overview (not a nav child; `/sales/leads` is the Sales landing child) |
-| `/sales/leads` | Leads | Searchable lead list. Add via shell `openAddLead` |
+| `/sales` | Overview | Sales overview: commercial position (separate money buckets), Qiko spotlight signals, journeys, next deals, pipeline by stage, pricing & margin intelligence (`PricingIntelligence`: margin per engagement, win rate by rate band, scarcity premium), follow-ups |
+| `/sales/leads` | Leads | Lead-source strip, origination queue (`OriginationQueue`: ending engagements, unbought interests, quiet stakeholders, SIA introduction asks, won-with-nothing-behind; "Add as lead" / "Create task"), searchable lead list. Lead panel records "Introduced by" for network-sourced leads |
 | `/sales/leads/[id]` | — | Lead profile, timeline, notes, messages, conversion |
-| `/sales/pipeline` | Opportunities | Stage pipeline. Amounts are pipeline, not revenue |
+| `/sales/pipeline` | Opportunities | Stage pipeline. Amounts are pipeline, not revenue. Proposal/Negotiation cards carry the pre-sales capacity check chip; the panel shows the full `CapacityCheck` (verified, bench by start, names, open requirement / run sweep) |
 | `/sales/accounts` | Accounts | `ClientAccount` directory |
-| `/sales/accounts/[id]` | — | Client 360: contacts, opportunities, requirements, assignments |
+| `/sales/accounts/[id]` | — | Client 360: `RecordHeader` (`BrandMark`), "Qiko on this account" signals (founder-dependency score with trend and drivers, re-engage, expansion), relationship map (`RelationshipMap`, nodes for owners, stakeholders, associates, SIAs, deals, requirements, introduction paths), tabs for contacts, opportunities, staffing, activity |
 | `/sales/contacts` | Contacts | Stakeholders on accounts |
 | `/sales/actions` | Activities | Calls, meetings, email, notes, follow-ups |
 
@@ -46,28 +48,29 @@ Staffing (`src/app/(workspace)/staffing/`):
 
 | Route | Nav label | Role |
 |---|---|---|
-| `/staffing` | Staffing Overview | KPIs, open requirements, command centre |
-| `/staffing/associates` | Talent Network | Associate directory, filters |
-| `/staffing/associates/[id]` | — | Talent profile, documents, availability, notes |
-| `/staffing/requirements` | Client Requirements | Requisition list / board, create |
-| `/staffing/requirements/[id]` | — | Stage, matches, shortlist, commercials, timeline |
-| `/staffing/placements` | Assignments | Deployment desk. Query e.g. `?view=active` |
+| `/staffing` | Overview | KPIs, "Needs attention" findings, recommended actions, journeys, network mix, bench vs demand timeline (`BenchTimeline`, 30/60/90 by skill or sector, cell detail rail), supply vs demand, pipeline |
+| `/staffing/associates` | Talent Network | Confirm queue (`ConfirmQueue`: lowest availability confidence ranked by brief need; confirm, date, copy one-tap link), network intelligence signals, verified supply by sector, directory (cards show `Portrait`), Add associate with the CV parser (`CvParser`, paste text → skills/sectors/seniority/rate/summary) |
+| `/staffing/associates/[id]` | — | Talent profile (availability-confidence fact with "Confirm as recorded"), CV & docs, experience, assignments, Introductions tab (`IntroductionsPanel`: doors opened, requests waiting, showcase reach), recruitment, commercials, notes |
+| `/staffing/requirements` | Requirements | KPI tiles, requirement intelligence signals (`staffing-intelligence.ts`), demand by sector chart, requisition list / board, create |
+| `/staffing/requirements/[id]` | — | Journey, sourcing sweep (with before/after toggle), named introducers (`Introducers`: request intro → task tagged `[intro-request:associate:requirement]`), matches, shortlist, Interviews tab with `ScorecardComparison` + `InterviewScorecard` per candidate, Commercials tab with `PricingGuidance`, timeline |
+| `/staffing/placements` | Assignments | KPI tiles, assignment intelligence signals (renewal due, ending soon, starting soon), deployed-by-client chart, recommended actions, deployment desk. Query e.g. `?view=active` |
 | `/staffing/placements/[id]` | — | One assignment |
+| `/staffing/offerings` | Offerings | Directory list (same row pattern as Accounts): each offering with pool (free now), accounts (bought), won, margin and a health flag. A row opens `OfferingQuickPanel` (drawer): "The decision" first (network share, bench gap, open briefs), then who can deliver it, who wants it, deals, margin. `lib/offerings.ts` (`offeringCatalogue`, `offeringDecision`) |
 | `/staffing/clients` | — | Older clients view of the same accounts. Primary account UI is `/sales/accounts`. Do not fork the data |
 
 Pulse (`src/components/pulse/PulseSubnav.tsx`, sets `data-product="pulse"`):
 
 | Route | Label |
 |---|---|
-| `/pulse` | Cockpit |
+| `/pulse` | Cockpit: decisions tiles (high-intent, open, awaiting your OK, right-call rate), associate growth, roles, CRM activity, open signals by knowledge block, four-block knowledge map, live ticker, insight review |
 | `/pulse/knowledge` | Knowledge (4 blocks) |
 | `/pulse/knowledge/[id]` | One block: `network`, `augmentation`, `commercial`, `capability` |
 | `/pulse/insights` | Generated insights |
 | `/pulse/actions` | To-dos created from accepted insights |
-| `/pulse/value` | Realised / pipeline / estimate, anti-double-count |
+| `/pulse/value` | Realised / pipeline / estimate, anti-double-count, plus Qiko's record strip (raised, acted on, outcomes, right-call rate from the feedback ledger; four verdicts seeded) |
 | `/pulse/connections` | Connector status. Not live integrations |
 
-Nav source of truth: `NAV` plus the Intelligence and Account blocks in `src/components/shell/AppShell.tsx`. Sales and Staffing items show attention counts (open sales work, open unfilled requirements). Pulse is a top-level Intelligence link, not a child of Sales.
+Nav source of truth: `NAV` plus the Intelligence and Account blocks in `src/components/shell/AppShell.tsx`. Home and My Tasks are flat items; Sales and Staffing disclose their children only while active. My Tasks, Sales and Staffing show counts (my open tasks, open sales work, open unfilled requirements). Pulse is a top-level Intelligence link that opens in a new browser tab (its own product surface), not a child of Sales.
 
 ## Entities
 
@@ -151,25 +154,49 @@ Shell helpers (`useWorkspace()`): `toast`, `askQiko`, `openTaskForm`, `openTask`
 | `lib/assignment-recommendations.ts` | Renewal and redeploy recommendations |
 | `lib/talent-network.ts` | Profile enrichment for legacy associate rows |
 | `lib/talent-network-intel.ts` | Directory attention cards |
+| `lib/staffing-intelligence.ts` | Requirement and assignment list-page signals, demand by sector |
+| `lib/network-mix.ts` | Client-brief shares (SIA revenue share, retail share, Government experience), sector mix, pool vs offerings |
+| `lib/deal-journey.ts` | Deal → requirement → placement chain from recorded links (`linkedOpportunityId`, `requirementId`). Rendered by `components/journey/DealJourney` (ribbon) and `JourneysInFlight` (overview list) |
+| `lib/showcase-signals.ts` | Showcase layer (tagged demo): second-degree network reach for thin briefs, past-client hiring signals, rate benchmarks. Reads `networkStats.secondaryMembers` and `secondDegreeBySkill` from the seed; never names unrecorded people |
+| `lib/sourcing-sweep.ts` | Sourcing sweep plan: recorded CV and first-degree counts from the matcher, demo second-degree and LinkedIn figures, manual-hours comparison. Rendered by `SourcingSweep` on open requirement pages; completion calls `crm.findMatches` |
+| `lib/contact-intelligence.ts` | Contact signals and stakeholder coverage |
+| `lib/activity-intelligence.ts` | Sales activity signals and logged-interaction mix |
 | `lib/supply-demand.ts` | Supply vs demand snapshot |
 | `lib/pulse-adapter.ts` | `createDomainEvent`, `getPulseSnapshot` |
 | `lib/tessiant-pulse-types.ts` | Insight, review, outcome, value types |
-| `lib/tessiant-pulse-rules.ts` | Rule config and `generateTessiantInsights` |
+| `lib/tessiant-pulse-rules.ts` | Rule config and `generateTessiantInsights`. Rules: coverage_gap, stalled_requirement, expiring_availability, offering_mismatch, relationship_concentration, possible_cross_sell, sia_contribution, plus (13 Nov) founder_dependency, proposal_without_brief, bench_gap, offering_gap, sia_dormant, each read from the CRM libs (`founder-dependency`, `bench-timeline`, `offerings`) |
 | `lib/tessiant-knowledge.ts` | Four knowledge-block definitions and live metrics |
 | `lib/pulse-journey.ts` | Insight id embedded in task text; contextual chips |
 | `lib/pulse-presentation.ts` | Evidence labels, Ask Pulse catalog |
 | `lib/pulse-overview-charts.ts` | Cockpit chart series |
 | `lib/network-intelligence.ts` | Network intelligence dashboard data |
 | `lib/format.ts` | Dates, `uid`, greeting, plurals. Use these, do not reimplement |
-| `lib/record-intelligence.ts` | Per-record insight chips |
+| `lib/record-intelligence.ts` | Per-record insight chips, `previewRequirement` (brief from an opportunity) |
+| `lib/record-insights.ts` | `RecordInsight` builders; every exported builder wraps a core and adds `unknowns` ("what Qiko doesn't know") |
+| `lib/qiko-track-record.ts` | Qiko's scorecard: raised, accepted, acted on, outcomes, value, feedback accuracy. Reads `state.feedback` |
+| `lib/relationship-map.ts` | Account relationship graph: nodes, edges, introduction paths from `lead.introducedByAssociateId` |
+| `lib/founder-dependency.ts` | Founder-dependency score (ownership, stakeholder breadth, interaction concentration) with a six-month trend |
+| `lib/origination.ts` | Lead origination queue |
+| `lib/introductions.ts` | Introductions made, introducers for a brief, intro-request tasks |
+| `lib/bench-timeline.ts` | 30/60/90 bench vs demand by skill or sector; `benchDate` |
+| `lib/capacity-check.ts` | Pre-sales capacity check for Proposal/Negotiation deals |
+| `lib/pricing-intelligence.ts` | Placement margins, win rate by band, scarcity premiums, per-brief pricing guidance |
+| `lib/availability-confidence.ts` | Availability confidence score, confirm queue, `recordAvailabilityConfirmation`, confirm link |
+| `lib/cv-parser.ts` | Deterministic CV-to-profile parser (demo) |
+| `lib/offerings.ts` | Offerings catalogue |
+| `lib/automations.ts` | Human-in-the-loop rules and proposals; decisions stored under `auto:` keys |
+| `lib/morning-brief.ts` | Brief data and plain-text rendering |
 
 ## UI composition
 
 - Pages are client components that read `useWorkspaceData()` and call `crm.*`.
 - Cross-page UI (copilot, task form, task drawer, add lead, toasts, confirm sign-out) is owned by `AppShell`, not the page.
-- Quick panels: `LeadQuickPanel`, `AccountQuickPanel`, `ContactQuickPanel`, `OpportunityQuickPanel`, `AssociateQuickPanel`, `RequirementQuickPanel`, `AssignmentQuickPanel`.
+- Quick panels: `LeadQuickPanel`, `AccountQuickPanel`, `ContactQuickPanel`, `OpportunityQuickPanel`, `AssociateQuickPanel`, `RequirementQuickPanel`, `AssignmentQuickPanel`. Every one opens with `RecordInsight` ("Qiko on this …": verdict, labelled facts, next step, one action) fed by the matching builder in `src/lib/record-insights.ts`. Add a builder there before adding a panel.
 - Shared primitives: `src/components/ui/` (`Button`, `Icon`, `Overlay`, `Select`, `TagMultiSelect`, `EntityCard`, `bits`).
 - Feature CSS is a CSS module next to the feature. Global tokens live in `src/app/globals.css`.
+- Feedback ledger: `FeedbackThumbs` (`src/components/ui/FeedbackThumbs.tsx`) writes `crm.recordFeedback(key, context, verdict)`; keys are `priority:<id>`, `signal:<id>`, `task:<id>`, `origination:<id>`, `pricing:<id>`, `offering:<key>`. Home's `QikoTrackRecord` reads it. `TaskDrawer` asks Qiko-made tasks (origin suggestion/copilot) for an outcome line or verdict before completing.
+- Automations: `AutomationInbox` on Home proposes; approve runs the action; `Settings#automations` toggles rules. `DemoTour` (`src/components/shell/DemoTour.tsx`) spotlights elements by `data-tour` attribute across pages; start from the top-bar compass or the first-visit offer.
+- Illustrative identity: `Portrait` (people) and `BrandMark` (organisations) are seeded SVGs, not photos or logos; the demo stores neither.
 
 ## Explicitly absent
 

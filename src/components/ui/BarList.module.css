@@ -1,0 +1,114 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  margin: 0 -8px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.rowHit {
+  cursor: pointer;
+}
+
+.rowHit:hover {
+  background: var(--surface-muted);
+  color: inherit;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.label small {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.head b {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.track {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--well);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+  transform-origin: left center;
+  animation: barGrow var(--duration-slow) var(--ease-out) both;
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.fill[data-tone="qiko"] {
+  background: var(--qiko-accent);
+}
+
+.fill[data-tone="success"] {
+  background: var(--success);
+}
+
+.fill[data-tone="warning"] {
+  background: #f59e0b;
+}
+
+.fill[data-tone="muted"] {
+  background: var(--line-strong);
+}
+
+.rowHit:hover .fill {
+  filter: brightness(1.08);
+}
+
+@keyframes barGrow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    animation: none;
+  }
+}

@@ -9,6 +9,11 @@ import { talentSupplyVsDemand, type SectorBalance } from "@/lib/supply-demand";
 import type { CrmState } from "@/lib/types";
 import styles from "@/app/(workspace)/staffing/staffing.module.css";
 
+/** Coverage above 100% reads as "100%+": the bar is full and the number stops meaning anything past that. */
+function coverageLabel(pct: number) {
+  return pct > 100 ? "100%+" : `${pct}%`;
+}
+
 export default function SupplyDemand({ state }: { state: CrmState }) {
   const { openTaskForm, toast } = useWorkspace();
   const rows = useMemo(() => talentSupplyVsDemand(state).slice(0, 6), [state]);
@@ -73,7 +78,7 @@ export default function SupplyDemand({ state }: { state: CrmState }) {
                   <span className={styles.meterFill} style={{ width: `${fill}%` }} />
                 </span>
                 <span className={styles.supplyCaption}>
-                  {row.verifiedAvailable} verified available · {row.demandHeadcount} open headcount · {row.coveragePct}%
+                  {row.verifiedAvailable} verified available · {row.demandHeadcount} open headcount · {coverageLabel(row.coveragePct)}
                 </span>
               </button>
             </li>
@@ -123,14 +128,14 @@ export default function SupplyDemand({ state }: { state: CrmState }) {
             <section className={styles.supplyCoverage}>
               <div className={styles.supplyCoverageHead}>
                 <span>Indicative sector coverage</span>
-                <b className="tabular">{selected.coveragePct}%</b>
+                <b className="tabular">{coverageLabel(selected.coveragePct)}</b>
               </div>
               <span className={`${styles.meter} ${styles.supplyDrawerMeter}`} aria-hidden="true">
                 <span className={styles.meterFill} style={{ width: `${Math.min(100, Math.max(0, selected.coveragePct))}%` }} />
               </span>
               <p>
-                {selected.verifiedAvailable} verified available associates against {selected.demandHeadcount} open headcount ({selected.coveragePct}%
-                indicative sector supply). Gap {Math.max(selected.gapHeadcount, 0)}.
+                {selected.verifiedAvailable} verified available associates against {selected.demandHeadcount} open headcount (
+                {coverageLabel(selected.coveragePct)} indicative sector supply). Gap {Math.max(selected.gapHeadcount, 0)}.
               </p>
             </section>
             <section className={styles.supplyDetailCard}>

@@ -71,4 +71,23 @@ export function uid(prefix: string): string {
 export function plural(count: number, one: string, many = `${one}s`): string {
   return `${count} ${count === 1 ? one : many}`;
 }
+
+const AVATAR_PALETTE: Array<[string, string]> = [
+  ["#dbeafe", "#1e3a8a"],
+  ["#fce7f3", "#9d174d"],
+  ["#ffedd5", "#9a3412"],
+  ["#dcfce7", "#14532d"],
+  ["#ede9fe", "#4c1d95"],
+  ["#cffafe", "#155e75"],
+  ["#fef3c7", "#92400e"],
+  ["#e0e7ff", "#312e81"],
+];
+
+/** Stable soft colour pair for a person's avatar so people read as people, not grey initials. */
+export function avatarStyle(name: string | null | undefined): { background: string; color: string } {
+  let hash = 0;
+  for (const char of name ?? "") hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  const [background, color] = AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
+  return { background, color };
+}
 import type { TaskStatus } from "./types";

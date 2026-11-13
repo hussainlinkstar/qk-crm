@@ -147,7 +147,7 @@ export default function CopilotPanel({ initialQuestion, contextLeadId, onClose }
                       </div>
                     </section>
                   )}
-                  <p className={styles.footnote}>Grounded in demo workspace data · {formatDateTime(answer.at)}</p>
+                  <p className={styles.footnote}>Grounded in workspace records · {formatDateTime(answer.at)}</p>
                 </article>
             </div>
           ))}

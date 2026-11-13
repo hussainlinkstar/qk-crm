@@ -13,6 +13,7 @@ import { Drawer } from "@/components/ui/Overlay";
 import { EmptyState, MemberAvatar, PriorityChip, SkeletonRows, TaskStatusChip, useWorkspaceData } from "@/components/ui/bits";
 import SuggestionCard from "@/components/tasks/SuggestionCard";
 import TaskCard from "@/components/tasks/TaskCard";
+import SalesActivityIntelligence from "@/components/sales/SalesActivityIntelligence";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import styles from "./ActionWorkspace.module.css";
 
@@ -120,10 +121,6 @@ export function ActionWorkspace({
   const counts = { ...taskCounts(scopedTasks), dismissed: scopedTasks.filter((task) => task.status === "dismissed").length };
   const today = todayKey();
   const useBoard = layout === "board" && view !== "dismissed";
-  const openScopedTasks = scopedTasks.filter(isOpen);
-  const overdueScopedTasks = sortTasks(openScopedTasks.filter((task) => task.due !== null && task.due < today));
-  const unassignedScopedTasks = openScopedTasks.filter((task) => !task.ownerId);
-  const priorityTask = overdueScopedTasks[0] ?? sortTasks(openScopedTasks)[0] ?? null;
 
   const relatedFor = (task: Task) => {
     const reqMatch = task.description.match(/\[requirement:([^\]]+)\]/);
@@ -191,27 +188,7 @@ export function ActionWorkspace({
         </Select>
       </section>
 
-      {scope === "sales" && (
-        <button
-          type="button"
-          className={styles.intelligence}
-          disabled={!priorityTask}
-          onClick={() => priorityTask && openTask(priorityTask.id)}
-        >
-          <span>
-            <small>Sales activity insight</small>
-            <b>
-              {overdueScopedTasks.length > 0
-                ? `${overdueScopedTasks.length} overdue ${overdueScopedTasks.length === 1 ? "activity needs" : "activities need"} attention`
-                : `${openScopedTasks.length} open sales ${openScopedTasks.length === 1 ? "activity" : "activities"} are on schedule`}
-            </b>
-          </span>
-          <span>
-            {priorityTask ? `Start with “${priorityTask.title}”${unassignedScopedTasks.length ? ` · ${unassignedScopedTasks.length} unassigned` : ""}` : "No open sales activity requires action."}
-          </span>
-          {priorityTask ? <Icon name="arrowRight" size={15} /> : null}
-        </button>
-      )}
+      {scope === "sales" && <SalesActivityIntelligence state={state} workspace={workspace} />}
 
       <section className={styles.toolbar}>
         <label className={styles.search}>

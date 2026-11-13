@@ -31,7 +31,7 @@ export default function PulseConnectionsPage() {
   const sources = [
     {
       name: "Tessiant CRM",
-      note: `Live demo fixture · same associates, requirements and assignments as Staffing · refreshed ${timeAgo(snapshot.generatedAt)}`,
+      note: `Local fixture · same associates, requirements and assignments as Staffing · refreshed ${timeAgo(snapshot.generatedAt)}`,
       status: "Connected",
       tone: "connected" as const,
     },
@@ -43,13 +43,13 @@ export default function PulseConnectionsPage() {
     },
     {
       name: "SharePoint / CV repository",
-      note: "No personal documents processed in this demo.",
+      note: "No personal documents processed.",
       status: "Not connected",
       tone: "proposed" as const,
     },
     {
       name: "LinkedIn",
-      note: "No scraping. This source stays outside the demo.",
+      note: "No scraping. Not connected.",
       status: "Out of scope",
       tone: "blocked" as const,
     },
@@ -79,7 +79,7 @@ export default function PulseConnectionsPage() {
         <header className={styles.pulseHeadExact}>
           <div className={styles.pulseHeadCopyExact}>
             <h1>Connections</h1>
-            <p>Where Tessiant Pulse reads business data. Each card shows the real demo status — nothing here is a live send.</p>
+            <p>Where Tessiant Pulse reads business data. Each card shows the real connection status; nothing here is a live send.</p>
           </div>
           <div className={styles.pulseHeadToolsExact}>
             <AskPulseChat state={state} realised={snapshot.financials.realised} />

@@ -241,7 +241,7 @@ export function getPulseSnapshot(state: CrmState, now = new Date()): PulseStaffi
       agreed: 0,
       realised: 0,
       currency: "GBP",
-      note: "DEMO — suggested/pipeline/agreed/realised kept distinct. No Tessiant staffing data loaded.",
+      note: "Suggested, pipeline, agreed and realised kept distinct. No Tessiant staffing data loaded.",
     },
     recentEvents: [],
   };
@@ -294,7 +294,7 @@ export function getPulseSnapshot(state: CrmState, now = new Date()): PulseStaffi
         id: "sig_sap_capacity",
         kind: "capacity_gap",
         title: "SAP architecture capacity gap",
-        detail: `Only ${verifiedAvailable} verified available associate(s) matched the SAP request. DEMO signal for Pulse.`,
+        detail: `Only ${verifiedAvailable} verified available associate(s) matched the SAP request.`,
         requirementId: sapReq.id,
       });
     }
@@ -309,7 +309,7 @@ export function getPulseSnapshot(state: CrmState, now = new Date()): PulseStaffi
       id: "sig_public_coverage",
       kind: "sector_coverage",
       title: "Public-sector coverage below target offerings",
-      detail: `Sample shows ${coverage} public-sector-aligned associates vs stated expansion interest. DEMO capability-development signal.`,
+      detail: `Sample shows ${coverage} public-sector-aligned associates vs stated expansion interest.`,
       requirementId: publicReq.id,
     });
   }
@@ -320,7 +320,7 @@ export function getPulseSnapshot(state: CrmState, now = new Date()): PulseStaffi
         id: `sig_founder_${account.id}`,
         kind: "founder_dependency",
         title: `Founder relationship concentration · ${account.name}`,
-        detail: "Primary relationship owner set with no documented secondary owner. DEMO growth insight for Pulse.",
+        detail: "Primary relationship owner set with no documented secondary owner.",
         accountId: account.id,
       });
     }

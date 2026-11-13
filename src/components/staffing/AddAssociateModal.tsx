@@ -9,6 +9,7 @@ import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { useWorkspaceData } from "@/components/ui/bits";
 import { crm } from "@/lib/crm-store";
 import { specialisationsBeyondSkills } from "@/lib/talent-network";
+import CvParser from "@/components/staffing/CvParser";
 import type { AssociateRoleType, AvailabilityStatus, SeniorityLevel, WorkingMode } from "@/lib/tessiant-types";
 import staffing from "@/app/(workspace)/staffing/staffing.module.css";
 
@@ -117,6 +118,24 @@ export default function AddAssociateModal({
       }
     >
       <div className={staffing.formSections}>
+        <CvParser
+          vocabulary={{ skills: skillOptions, sectors: sectorOptions }}
+          onApply={(parsed) =>
+            setForm((current) => ({
+              ...current,
+              name: parsed.name ?? current.name,
+              headline: parsed.headline ?? current.headline,
+              seniority: parsed.seniority,
+              skills: parsed.skills.length ? parsed.skills : current.skills,
+              sectors: parsed.sectors.length ? parsed.sectors : current.sectors,
+              location: parsed.location ?? current.location,
+              workingMode: parsed.location?.includes("remote") ? "remote" : parsed.location?.includes("hybrid") ? "hybrid" : current.workingMode,
+              rateAmount: parsed.rate ? String(parsed.rate) : current.rateAmount,
+              summary: parsed.summary ?? current.summary,
+              cvLabel: current.cvLabel || "Parsed CV",
+            }))
+          }
+        />
         <section>
           <h3 className={staffing.formSectionTitle}>Basic information</h3>
           <div className={staffing.formGrid}>

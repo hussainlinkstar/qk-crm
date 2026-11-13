@@ -117,6 +117,14 @@ export default function PulseKnowledgeDetailPage() {
   const metrics = getKnowledgeBlockLiveMetrics(block.id, { mix, funnel, snapshot, state });
   const mark = BLOCK_MARK[block.id] ?? { initials: block.title.slice(0, 2).toUpperCase(), role: block.owner };
   const isNetwork = block.id === "network";
+  // Flow diagram shows Tessiant CRM surfaces that feed the worker — not invented external connectors.
+  const FLOW_EXTRAS: Record<string, string[]> = {
+    network: ["requirements", "assignments", "skills & sectors", "placements", "candidates"],
+    augmentation: ["associates", "availability", "stage history", "offerings"],
+    commercial: ["placements", "opportunities", "CRM leads", "relationship owners"],
+    capability: ["associates", "requirements", "sector mix", "open demand"],
+  };
+  const flowSources = Array.from(new Set([...block.dataSources, ...(FLOW_EXTRAS[block.id] ?? [])])).slice(0, 9);
   const maxStage = Math.max(1, ...(funnel?.stages.map((row) => row.count) ?? [1]));
   const maxSector = Math.max(1, ...Object.values(mix?.bySector ?? { _: 1 }));
   const showNetworkTrends = block.id === "network" || block.id === "capability";
@@ -186,7 +194,7 @@ export default function PulseKnowledgeDetailPage() {
   const connectionSources = [
     {
       name: "Tessiant CRM",
-      note: `Live demo fixture · associates, requirements and assignments · refreshed ${timeAgo(snapshot?.generatedAt ?? block.updatedAt)}`,
+      note: `Local fixture · associates, requirements and assignments · refreshed ${timeAgo(snapshot?.generatedAt ?? block.updatedAt)}`,
       status: "Connected",
       tone: "#059669",
     },
@@ -204,7 +212,7 @@ export default function PulseKnowledgeDetailPage() {
     },
     {
       name: "LinkedIn",
-      note: "No scraping. Outside this demo.",
+      note: "No scraping. Not connected.",
       status: "Out of scope",
       tone: "#64748b",
     },
@@ -483,10 +491,18 @@ export default function PulseKnowledgeDetailPage() {
               <section className={`${styles.cardExact} ${styles.kbSection}`}>
                 <div className={styles.kbCardHead}>
                   <h3>How this block works</h3>
-                  <span>Confirmed Tessiant sources → reviewable insights → tracked outcomes</span>
+                  <span>Click a source</span>
                 </div>
                 <div className={styles.kbFlowPad}>
-                  <KnowledgeFlow blockTitle={block.title} sources={block.dataSources} variant="overview" />
+                  <KnowledgeFlow
+                    blockTitle={block.title}
+                    sources={flowSources}
+                    variant="overview"
+                    mark={mark.initials}
+                    subtitle={`${counts.pending} pending · ${counts.accepted} accepted`}
+                    outcomeLabel="Tracked"
+                    outcomeStatus="Proposed"
+                  />
                 </div>
               </section>
             </div>
@@ -645,7 +661,7 @@ export default function PulseKnowledgeDetailPage() {
               <div className={styles.kbPanelHead}>
                 <div>
                   <h2 className={styles.kbPanelTitle}>Connections and channels</h2>
-                  <p className={styles.kbPanelSub}>The same card for every source on this worker. Demo honesty stays visible.</p>
+                  <p className={styles.kbPanelSub}>The same card for every source on this worker. Status stays visible.</p>
                 </div>
               </div>
               <div className={styles.sourcesGrid}>
@@ -684,8 +700,20 @@ export default function PulseKnowledgeDetailPage() {
                 </div>
               </div>
               <section className={styles.cardExact}>
+                <div className={styles.kbCardHead}>
+                  <h3>How this block works</h3>
+                  <span>Click a source</span>
+                </div>
                 <div className={styles.kbFlowPad}>
-                  <KnowledgeFlow blockTitle={block.title} sources={block.dataSources} />
+                  <KnowledgeFlow
+                    blockTitle={block.title}
+                    sources={flowSources}
+                    variant="overview"
+                    mark={mark.initials}
+                    subtitle={`${counts.pending} pending · ${counts.accepted} accepted`}
+                    outcomeLabel="Tracked"
+                    outcomeStatus="Proposed"
+                  />
                   <p className={styles.journeyFoot} style={{ marginTop: 14 }}>
                     Accepting an insight creates a to-do. Completing it can record outcomes — realised revenue stays separate
                     from pipeline potential and agreed commercial value.
@@ -724,7 +752,7 @@ export default function PulseKnowledgeDetailPage() {
                     <input className="input" value={block.priority} readOnly />
                   </label>
                   <p className={styles.journeyFoot}>
-                    Read only for this demo. Changes to prompts and tone live under Locked learnings, and those controls stay
+                    Read only here. Changes to prompts and tone live under Locked learnings, and those controls stay
                     closed.
                   </p>
                 </div>

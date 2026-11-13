@@ -94,7 +94,7 @@ export function rulePlainLanguage(ruleId: string): string {
 }
 
 export function confidenceNote(insight: TessiantInsight): string {
-  if (insight.confidence === "verified") return "Based on verified CRM fields in the Tessiant demo sample.";
+  if (insight.confidence === "verified") return "Based on verified CRM fields in the Tessiant records.";
   if (insight.confidence === "partial") return "Partially grounded — some inputs are incomplete; treat as directional.";
   return "Needs review — supporting fields are thin or stale.";
 }
@@ -208,7 +208,7 @@ export function askPulseCatalog(state: CrmState, realised: number): AskPulseAnsw
     },
     {
       question: "Can Pulse forecast next quarter win rate?",
-      answer: "Not supported in this demo. Tessiant Pulse answers only grounded, deterministic questions from CRM records. There is no predictive win-rate model.",
+      answer: "Not supported. Tessiant Pulse answers only grounded, deterministic questions from CRM records. There is no predictive win-rate model.",
       links: [{ label: "Insights", href: "/pulse/insights" }],
     },
   ];

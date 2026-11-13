@@ -2,14 +2,39 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { addDays, formatDate, todayKey } from "@/lib/format";
+import { addDays, formatDate, plural, todayKey } from "@/lib/format";
 import { commercialBuckets, isOpenLead } from "@/lib/sales-crm";
+import { compactMoney } from "@/lib/home-tessiant";
 import { opportunityBrief } from "@/lib/record-intelligence";
 import { isOpen, sortTasks } from "@/lib/insights";
 import Button from "@/components/ui/Button";
+import BarList from "@/components/ui/BarList";
+import CountUp from "@/components/ui/CountUp";
+import IconTile from "@/components/ui/IconTile";
+import Icon, { type IconName } from "@/components/ui/Icon";
+
+const DEAL_TYPE_ICON: Record<string, IconName> = {
+  augmentation: "users",
+  consultancy: "compass",
+  advisory: "star",
+  "project team": "layers",
+  mixed: "layers",
+};
+
+/** Collapse the brief's "why" into one short chip so the row reads at a glance. */
+function dealSignalChip(why: string): { label: string; chip: string } {
+  if (why.startsWith("Coverage")) return { label: "Coverage gap", chip: "chip-high" };
+  if (why.startsWith("Closing")) return { label: why, chip: "chip-new" };
+  if (why.startsWith("Stalled")) return { label: "Stalled", chip: "chip-medium" };
+  if (why.startsWith("Advisory")) return { label: "Advisory · pipeline only", chip: "chip-ai" };
+  return { label: why.split(" · ")[0], chip: "" };
+}
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
+import { OPPORTUNITY_STAGES } from "@/lib/types";
 import OpportunityQuickPanel from "@/components/sales/OpportunityQuickPanel";
 import GrowthOpportunities from "@/components/sales/GrowthOpportunities";
+import JourneysInFlight from "@/components/journey/JourneysInFlight";
+import PricingIntelligence from "@/components/sales/PricingIntelligence";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import styles from "./sales.module.css";
 
@@ -58,6 +83,18 @@ export default function SalesOverviewPage() {
 
   const accountName = (accountId: string) => state.tessiant?.accounts.find((item) => item.id === accountId)?.name ?? "Account";
   const closingSoon = openOpps.filter((item) => item.expectedCloseDate <= addDays(21)).length;
+  const stageRows = OPPORTUNITY_STAGES.filter((stage) => stage !== "Closed Won" && stage !== "Closed Lost").map((stage) => {
+    const items = openOpps.filter((item) => item.stage === stage);
+    const amount = items.reduce((sum, item) => sum + item.amount, 0);
+    return {
+      key: stage,
+      label: stage,
+      value: amount,
+      display: compactMoney(amount),
+      caption: items.length ? plural(items.length, "deal") : "empty",
+      href: "/sales/pipeline",
+    };
+  });
 
   return (
     <div className="page">
@@ -74,19 +111,51 @@ export default function SalesOverviewPage() {
       </header>
 
       {buckets && (
-        <p className="muted">
-          Open pipeline <b className="tabular">£{buckets.pipeline.toLocaleString("en-GB")}</b>
-          {" · "}
-          Weighted <b className="tabular">£{buckets.weighted.toLocaleString("en-GB")}</b>
-          {" · "}
-          Closing soon <b className="tabular">{closingSoon}</b>
-          {" · "}
-          Follow-ups <b className="tabular">{followUps.length + attentionLeads.length}</b>
-        </p>
+        <section className="metric-grid metric-grid-4" aria-label="Commercial position">
+          <Link href="/sales/pipeline" className="metric-card">
+            <IconTile name="trendUp" tone="brand" className="metric-icon" />
+            <span className="metric-label">Open pipeline</span>
+            <b className="tabular">
+              <CountUp value={buckets.pipeline} format={(n) => compactMoney(n)} />
+            </b>
+            <span className="metric-delta">
+              {plural(openOpps.length, "deal")} · {closingSoon} closing in 21d
+            </span>
+          </Link>
+          <Link href="/sales/pipeline" className="metric-card">
+            <IconTile name="chart" tone="info" className="metric-icon" />
+            <span className="metric-label">Weighted pipeline</span>
+            <b className="tabular">
+              <CountUp value={buckets.weighted} format={(n) => compactMoney(n)} />
+            </b>
+            <span className="metric-delta">Amount × stage probability</span>
+          </Link>
+          <Link href="/sales/pipeline" className="metric-card">
+            <IconTile name="handshake" tone="success" className="metric-icon" />
+            <span className="metric-label">Agreed contracts</span>
+            <b className="tabular">
+              <CountUp value={buckets.agreed} format={(n) => compactMoney(n)} />
+            </b>
+            <span className="metric-delta">Closed won · not yet recognised</span>
+          </Link>
+          <Link href="/sales/actions" className="metric-card">
+            <IconTile name="tasks" tone="warning" className="metric-icon" />
+            <span className="metric-label">Follow-ups due</span>
+            <b className="tabular">
+              <CountUp value={followUps.length + attentionLeads.length} />
+            </b>
+            <span className={`metric-delta ${buckets.recognised > 0 ? "positive" : ""}`}>
+              Recognised revenue {compactMoney(buckets.recognised)}
+            </span>
+          </Link>
+        </section>
       )}
 
       <GrowthOpportunities state={state} onOpenOpportunity={(opportunity) => setPreviewId(opportunity.id)} />
 
+      <JourneysInFlight state={state} limit={3} />
+
+      <div className={styles.overviewGrid}>
       <section className="card">
         <div className="card-head">
           <h2>Next deals</h2>
@@ -101,13 +170,12 @@ export default function SalesOverviewPage() {
             <div className={styles.dealsTable} role="table" aria-label="Next deals">
               <div className={styles.dealsHead} role="row">
                 <span>Deal</span>
-                <span>Type</span>
-                <span>Why</span>
-                <span>Missing</span>
-                <span>Next</span>
+                <span>Signal</span>
+                <span>Next step</span>
               </div>
               {nextDeals.map((opportunity) => {
                 const brief = opportunityBrief(state, opportunity);
+                const signal = dealSignalChip(brief.why);
                 return (
                   <button
                     key={opportunity.id}
@@ -116,18 +184,23 @@ export default function SalesOverviewPage() {
                     role="row"
                     onClick={() => setPreviewId(opportunity.id)}
                   >
-                    <span>
-                      <b>{opportunity.name}</b>
-                      <small>
-                        {accountName(opportunity.accountId)} · £{opportunity.amount.toLocaleString("en-GB")}
-                      </small>
+                    <span className={styles.dealCell}>
+                      <IconTile name={DEAL_TYPE_ICON[brief.type] ?? "layers"} tone="muted" size="sm" />
+                      <span className={styles.dealCopy}>
+                        <b>{opportunity.name}</b>
+                        <small>
+                          {accountName(opportunity.accountId)} · {compactMoney(opportunity.amount)} · {brief.type}
+                        </small>
+                      </span>
                     </span>
-                    <span className={styles.dealType} data-type={brief.type}>
-                      {brief.type}
+                    <span className={styles.dealSignal}>
+                      <span className={`chip ${signal.chip}`}>{signal.label}</span>
+                      {brief.missing !== "Nothing blocking" ? <small>{brief.missing}</small> : null}
                     </span>
-                    <span>{brief.why}</span>
-                    <span className="muted">{brief.missing}</span>
-                    <span>{brief.next}</span>
+                    <span className={styles.dealNext}>
+                      {brief.next}
+                      <Icon name="arrowRight" size={13} />
+                    </span>
                   </button>
                 );
               })}
@@ -135,6 +208,23 @@ export default function SalesOverviewPage() {
           )}
         </div>
       </section>
+
+      <section className="card">
+        <div className="card-head">
+          <div>
+            <h2>Pipeline by stage</h2>
+            <p className="card-sub">
+              Open amount per stage. Weighted total {buckets ? compactMoney(buckets.weighted) : "—"}. Not revenue.
+            </p>
+          </div>
+        </div>
+        <div className="card-body">
+          <BarList rows={stageRows} label="Open pipeline by stage" />
+        </div>
+      </section>
+      </div>
+
+      <PricingIntelligence state={state} />
 
       <section className="card">
         <div className="card-head">

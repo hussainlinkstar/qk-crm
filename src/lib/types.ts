@@ -75,6 +75,8 @@ export interface Lead {
   accountId?: string | null;
   convertedOpportunityId?: string | null;
   convertedContactId?: string | null;
+  /** Associate or SIA who made the introduction, when the lead came through the network. */
+  introducedByAssociateId?: string | null;
 }
 
 /** Client stakeholder — belongs to an account. */
@@ -262,6 +264,20 @@ export interface CrmState {
   decisions: Record<string, SuggestionDecision>;
   /** Tessiant staff-augmentation demo slice (optional on legacy stored state). */
   tessiant?: TessiantStateSlice;
+  /** "Was this right?" ledger: the user's verdict on priorities, signals and Qiko-made tasks. */
+  feedback?: Record<string, QikoFeedback>;
+  /** Automation rules switched off by the user; absent means on. */
+  automationPrefs?: Record<string, boolean>;
+}
+
+export type FeedbackVerdict = "right" | "partly" | "wrong";
+
+export interface QikoFeedback {
+  key: string;
+  context: "priority" | "signal" | "task" | "insight";
+  verdict: FeedbackVerdict;
+  reason?: string;
+  at: string;
 }
 
 export interface Session {

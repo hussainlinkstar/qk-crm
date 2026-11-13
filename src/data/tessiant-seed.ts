@@ -29,10 +29,10 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       nextAvailableDate: day(7),
       rate: { amount: 950, currency: "GBP", unit: "day" },
       source: "network",
-      cvRef: "demo://cv/elena-vos",
+      cvRef: "files://cv/elena-vos",
       verifiedAt: ago(240),
       ownerId: "me",
-      notes: "DEMO — strong prior UK retail placements.",
+      notes: "Strong prior UK retail placements.",
       tags: ["verified", "retail"],
       status: "active",
       languages: ["English", "Dutch"],
@@ -53,10 +53,10 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       nextAvailableDate: day(45),
       rate: { amount: 875, currency: "GBP", unit: "day" },
       source: "network",
-      cvRef: "demo://cv/marcus-chen",
+      cvRef: "files://cv/marcus-chen",
       verifiedAt: ago(400),
       ownerId: "me",
-      notes: "DEMO — promising but booked through next month.",
+      notes: "Promising but booked through next month.",
       tags: ["unavailable"],
       status: "active",
       languages: ["English"],
@@ -77,10 +77,10 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       nextAvailableDate: day(3),
       rate: { amount: 800, currency: "GBP", unit: "day" },
       source: "network",
-      cvRef: "demo://cv/priya-nair",
+      cvRef: "files://cv/priya-nair",
       verifiedAt: ago(120),
       ownerId: "m_sarah",
-      notes: "DEMO — sector mismatch for retail request.",
+      notes: "Sector mismatch for retail request.",
       tags: ["public-sector"],
       status: "active",
       languages: ["English"],
@@ -102,10 +102,10 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       nextAvailableDate: day(21),
       rate: { amount: 1200, currency: "GBP", unit: "day" },
       source: "network",
-      cvRef: "demo://cv/jonas-berg",
+      cvRef: "files://cv/jonas-berg",
       verifiedAt: ago(80),
       ownerId: "me",
-      notes: "DEMO — only verified SAP architect with partial availability.",
+      notes: "Only verified SAP architect with partial availability.",
       tags: ["sap", "scarce"],
       status: "active",
       languages: ["English", "German"],
@@ -126,10 +126,10 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       nextAvailableDate: day(60),
       rate: { amount: 900, currency: "GBP", unit: "day" },
       source: "internal",
-      cvRef: "demo://cv/tara-okonkwo",
+      cvRef: "files://cv/tara-okonkwo",
       verifiedAt: null,
       ownerId: "m_ali",
-      notes: "DEMO — unverified + unavailable.",
+      notes: "Unverified + unavailable.",
       tags: ["sap", "unverified"],
       status: "unverified",
       languages: ["English"],
@@ -151,10 +151,10 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       nextAvailableDate: day(14),
       rate: { amount: 2500, currency: "GBP", unit: "day" },
       source: "network",
-      cvRef: "demo://cv/helen-cartwright",
+      cvRef: "files://cv/helen-cartwright",
       verifiedAt: ago(600),
       ownerId: "me",
-      notes: "DEMO — SIA intro may unlock advisory engagement (not booked revenue).",
+      notes: "SIA intro may unlock advisory engagement (not booked revenue).",
       tags: ["SIA", "board"],
       status: "active",
       languages: ["English"],
@@ -175,10 +175,10 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       nextAvailableDate: day(10),
       rate: { amount: 2200, currency: "GBP", unit: "day" },
       source: "network",
-      cvRef: "demo://cv/david-okello",
+      cvRef: "files://cv/david-okello",
       verifiedAt: ago(300),
       ownerId: "m_sarah",
-      notes: "DEMO",
+      notes: "",
       tags: ["SIA", "public-sector"],
       status: "active",
       languages: ["English"],
@@ -189,12 +189,12 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
 
   // Expand to ~48 sample profiles with synthetic but labelled DEMO variants
   const templates: Array<Omit<(typeof associates)[number], "id" | "name"> & { name: string; idBase: string }> = [
-    { idBase: "as_sam", name: "Samira Khalil", roleType: "consultant", headline: "Change & programme lead", seniority: "senior", skills: ["Change management", "Programme management"], sectors: ["Retail"], location: "Leeds, UK", workingMode: "hybrid", availability: "available", nextAvailableDate: day(5), rate: { amount: 820, currency: "GBP", unit: "day" }, source: "network", cvRef: "demo://cv/samira", verifiedAt: ago(90), ownerId: "me", notes: "DEMO", tags: ["retail"], status: "active", languages: ["English", "Arabic"], offerings: ["Change & transformation"], priorPlacementCount: 2 },
-    { idBase: "as_owen", name: "Owen Blake", roleType: "specialist", headline: "Data platform engineer", seniority: "senior", skills: ["Data platforms", "Azure", "Governance"], sectors: ["Financial services"], location: "Remote · UK", workingMode: "remote", availability: "available", nextAvailableDate: day(2), rate: { amount: 900, currency: "GBP", unit: "day" }, source: "external", cvRef: "demo://cv/owen", verifiedAt: ago(40), ownerId: "m_ali", notes: "DEMO", tags: ["data"], status: "active", languages: ["English"], offerings: ["Technology specialists"], priorPlacementCount: 0 },
-    { idBase: "as_nina", name: "Nina Forsberg", roleType: "programme_manager", headline: "PMO lead · complex programmes", seniority: "principal", skills: ["PMO", "Programme management", "Risk"], sectors: ["Energy", "Public sector", "Retail"], location: "Stockholm / Remote", workingMode: "remote", availability: "limited", nextAvailableDate: day(18), rate: { amount: 980, currency: "GBP", unit: "day" }, source: "network", cvRef: "demo://cv/nina", verifiedAt: ago(200), ownerId: "me", notes: "DEMO", tags: ["pmo", "retail"], status: "active", languages: ["English", "Swedish"], offerings: ["Programme leadership"], priorPlacementCount: 6 },
-    { idBase: "as_leo", name: "Leo Martins", roleType: "specialist", headline: "Cybersecurity architect", seniority: "principal", skills: ["Cybersecurity", "Zero trust", "Architecture"], sectors: ["Public sector", "Financial services"], location: "Lisbon / Remote", workingMode: "remote", availability: "available", nextAvailableDate: day(1), rate: { amount: 1100, currency: "GBP", unit: "day" }, source: "network", cvRef: "demo://cv/leo", verifiedAt: ago(55), ownerId: "m_sarah", notes: "DEMO", tags: ["security"], status: "active", languages: ["English", "Portuguese"], offerings: ["Technology specialists"], priorPlacementCount: 3 },
-    { idBase: "as_amy", name: "Amy Rhodes", roleType: "consultant", headline: "HR transformation consultant", seniority: "senior", skills: ["HR transformation", "Change management"], sectors: ["Retail", "Consumer"], location: "London, UK", workingMode: "hybrid", availability: "available", nextAvailableDate: day(8), rate: { amount: 780, currency: "GBP", unit: "day" }, source: "internal", cvRef: "demo://cv/amy", verifiedAt: ago(150), ownerId: "me", notes: "DEMO", tags: ["hr"], status: "active", languages: ["English"], offerings: ["Change & transformation"], priorPlacementCount: 2 },
-    { idBase: "as_vik", name: "Vikram Desai", roleType: "specialist", headline: "SAP Basis & cloud ops", seniority: "mid", skills: ["SAP", "Basis", "Azure"], sectors: ["Manufacturing"], location: "Reading, UK", workingMode: "onsite", availability: "unknown", nextAvailableDate: null, rate: null, source: "external", cvRef: "demo://cv/vikram", verifiedAt: null, ownerId: null, notes: "DEMO — missing rate/availability", tags: ["sap", "missing-data"], status: "unverified", languages: ["English"], offerings: ["SAP delivery"], priorPlacementCount: 0 },
+    { idBase: "as_sam", name: "Samira Khalil", roleType: "consultant", headline: "Change & programme lead", seniority: "senior", skills: ["Change management", "Programme management"], sectors: ["Retail"], location: "Leeds, UK", workingMode: "hybrid", availability: "available", nextAvailableDate: day(5), rate: { amount: 820, currency: "GBP", unit: "day" }, source: "network", cvRef: "files://cv/samira", verifiedAt: ago(90), ownerId: "me", notes: "", tags: ["retail"], status: "active", languages: ["English", "Arabic"], offerings: ["Change & transformation"], priorPlacementCount: 2 },
+    { idBase: "as_owen", name: "Owen Blake", roleType: "specialist", headline: "Data platform engineer", seniority: "senior", skills: ["Data platforms", "Azure", "Governance"], sectors: ["Financial services"], location: "Remote · UK", workingMode: "remote", availability: "available", nextAvailableDate: day(2), rate: { amount: 900, currency: "GBP", unit: "day" }, source: "external", cvRef: "files://cv/owen", verifiedAt: ago(40), ownerId: "m_ali", notes: "", tags: ["data"], status: "active", languages: ["English"], offerings: ["Technology specialists"], priorPlacementCount: 0 },
+    { idBase: "as_nina", name: "Nina Forsberg", roleType: "programme_manager", headline: "PMO lead · complex programmes", seniority: "principal", skills: ["PMO", "Programme management", "Risk"], sectors: ["Energy", "Public sector", "Retail"], location: "Stockholm / Remote", workingMode: "remote", availability: "limited", nextAvailableDate: day(18), rate: { amount: 980, currency: "GBP", unit: "day" }, source: "network", cvRef: "files://cv/nina", verifiedAt: ago(200), ownerId: "me", notes: "", tags: ["pmo", "retail"], status: "active", languages: ["English", "Swedish"], offerings: ["Programme leadership"], priorPlacementCount: 6 },
+    { idBase: "as_leo", name: "Leo Martins", roleType: "specialist", headline: "Cybersecurity architect", seniority: "principal", skills: ["Cybersecurity", "Zero trust", "Architecture"], sectors: ["Public sector", "Financial services"], location: "Lisbon / Remote", workingMode: "remote", availability: "available", nextAvailableDate: day(1), rate: { amount: 1100, currency: "GBP", unit: "day" }, source: "network", cvRef: "files://cv/leo", verifiedAt: ago(55), ownerId: "m_sarah", notes: "", tags: ["security"], status: "active", languages: ["English", "Portuguese"], offerings: ["Technology specialists"], priorPlacementCount: 3 },
+    { idBase: "as_amy", name: "Amy Rhodes", roleType: "consultant", headline: "HR transformation consultant", seniority: "senior", skills: ["HR transformation", "Change management"], sectors: ["Retail", "Consumer"], location: "London, UK", workingMode: "hybrid", availability: "available", nextAvailableDate: day(8), rate: { amount: 780, currency: "GBP", unit: "day" }, source: "internal", cvRef: "files://cv/amy", verifiedAt: ago(150), ownerId: "me", notes: "", tags: ["hr"], status: "active", languages: ["English"], offerings: ["Change & transformation"], priorPlacementCount: 2 },
+    { idBase: "as_vik", name: "Vikram Desai", roleType: "specialist", headline: "SAP Basis & cloud ops", seniority: "mid", skills: ["SAP", "Basis", "Azure"], sectors: ["Manufacturing"], location: "Reading, UK", workingMode: "onsite", availability: "unknown", nextAvailableDate: null, rate: null, source: "external", cvRef: "files://cv/vikram", verifiedAt: null, ownerId: null, notes: "Missing rate/availability", tags: ["sap", "missing-data"], status: "unverified", languages: ["English"], offerings: ["SAP delivery"], priorPlacementCount: 0 },
   ];
 
   for (let i = 0; i < templates.length; i++) {
@@ -225,43 +225,113 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
     });
   }
 
-  // Fill remaining sample slots with clearly fictional people (not a dump of the 500+ network).
-  const sectors = ["Retail", "Public sector", "Manufacturing", "Financial services", "Energy", "Healthcare", "Professional services", "Consumer"];
-  const skillsPool = ["Programme management", "Change management", "SAP", "Architecture", "PMO", "Data platforms", "Cybersecurity", "Advisory", "Procurement"];
-  const firstNames = ["Jordan", "Casey", "Riley", "Morgan", "Avery", "Quinn", "Harper", "Rowan", "Sage", "Blair", "Drew", "Skyler", "Cameron", "Finley", "Reese", "Parker", "Hayden", "Elliot", "Charlie", "Alex", "Sam", "Jamie", "Taylor", "Robin", "Dana", "Leslie", "Kerry", "Pat", "Chris", "Lee", "Shannon", "Tracy", "Adrian", "Julian", "Noel", "Frankie"];
-  const lastNames = ["Whitaker", "Langford", "Nguyen", "Okorie", "Bergstrom", "Patel", "Morales", "Kowalski", "Okafor", "Singh", "Brennan", "Fujimoto", "Ibrahim", "Costa", "Novak", "Hughes", "Rahman", "Keller", "Duarte", "Andersen", "Yilmaz", "Moreau", "Hassan", "Petrov", "Walsh", "Cho", "Diaz", "Murphy", "Silva", "Jensen", "Ali", "Hart", "Vogel", "Krishnan", "Booth", "Nilsen"];
-  for (let i = associates.length; i < 48; i++) {
-    const sector = sectors[i % sectors.length];
-    const skill = skillsPool[i % skillsPool.length];
-    const name = `${firstNames[i % firstNames.length]} ${lastNames[(i * 3) % lastNames.length]}`;
+  // Fill the directory to ~511 clearly fictional profiles so it reads as the "500+ network" the
+  // client described. Deterministic, weighted so the mix looks like a real consultancy bench:
+  // retail-heavy, a public-sector minority, a small SIA / executive-advisor tier, most people deployed.
+  const SAMPLE_TARGET = 511;
+  // Weighted sector draw: Retail ~26%, Financial services 15%, Manufacturing 12%, Consumer 10%,
+  // Professional services 10%, Healthcare 8%, Energy 8%, Public sector ~7%, Technology 4%.
+  const sectorWeights: Array<[string, number]> = [
+    ["Retail", 26],
+    ["Financial services", 15],
+    ["Manufacturing", 12],
+    ["Consumer", 10],
+    ["Professional services", 10],
+    ["Healthcare", 8],
+    ["Energy", 8],
+    ["Public sector", 7],
+    ["Technology", 4],
+  ];
+  const sectorTable = sectorWeights.flatMap(([sector, weight]) => Array.from({ length: weight }, () => sector));
+  const skillsPool = [
+    "Programme management",
+    "Change management",
+    "SAP",
+    "S/4HANA",
+    "Solution architecture",
+    "Architecture",
+    "PMO",
+    "Data platforms",
+    "Cybersecurity",
+    "Advisory",
+    "Procurement",
+    "Finance transformation",
+    "Operating model",
+    "Agile delivery",
+    "HR transformation",
+    "Retail transformation",
+    "Stakeholder management",
+    "Board advisory",
+  ];
+  const headlineByRole: Record<string, string[]> = {
+    SIA: ["Former CFO · board advisor", "Ex-COO · transformation advisor", "Former CIO · technology advisor", "Non-executive director · growth advisor"],
+    executive_advisor: ["Former MD · advisory", "Ex-partner · strategy advisor"],
+    programme_manager: ["Programme director", "PMO lead", "Transformation programme manager", "Delivery lead"],
+    specialist: ["Solution architect", "Data platform engineer", "Security architect", "SAP consultant", "Integration specialist"],
+    consultant: ["Change consultant", "Operating-model consultant", "Business analyst", "Transformation consultant", "Process consultant"],
+  };
+  const firstNames = ["Jordan", "Casey", "Riley", "Morgan", "Avery", "Quinn", "Harper", "Rowan", "Sage", "Blair", "Drew", "Skyler", "Cameron", "Finley", "Reese", "Parker", "Hayden", "Elliot", "Charlie", "Alex", "Sam", "Jamie", "Taylor", "Robin", "Dana", "Leslie", "Kerry", "Pat", "Chris", "Lee", "Shannon", "Tracy", "Adrian", "Julian", "Noel", "Frankie", "Imogen", "Tobias", "Farah", "Kwame", "Ingrid", "Mateo", "Anika", "Lucas", "Zara", "Hugo", "Leila", "Oscar"];
+  const lastNames = ["Whitaker", "Langford", "Nguyen", "Okorie", "Bergstrom", "Patel", "Morales", "Kowalski", "Okafor", "Singh", "Brennan", "Fujimoto", "Ibrahim", "Costa", "Novak", "Hughes", "Rahman", "Keller", "Duarte", "Andersen", "Yilmaz", "Moreau", "Hassan", "Petrov", "Walsh", "Cho", "Diaz", "Murphy", "Silva", "Jensen", "Ali", "Hart", "Vogel", "Krishnan", "Booth", "Nilsen", "Adeyemi", "Lindqvist", "Marchetti", "Osei", "Haddad", "Brady", "Sato", "Fernandes", "Byrne", "Varga", "Mensah", "Doyle"];
+  const locations = ["London, UK", "Manchester, UK", "Edinburgh, UK", "Birmingham, UK", "Leeds, UK", "Bristol, UK", "Remote · UK", "Remote · EU", "Dublin, IE", "Amsterdam, NL", "Glasgow, UK", "Cardiff, UK"];
+  const offeringsFor = (skill: string, sector: string) => {
+    const list: string[] = [];
+    if (/sap|s\/4/i.test(skill)) list.push("SAP delivery");
+    else if (/advisory|board/i.test(skill)) list.push("Senior Industry Advisors", "Advisory");
+    else if (/change|hr|operating/i.test(skill)) list.push("Change & transformation");
+    else if (/programme|pmo|agile/i.test(skill)) list.push("Programme leadership");
+    else if (/data|cyber|architect/i.test(skill)) list.push("Technology specialists");
+    else list.push("Staff augmentation");
+    if (sector === "Public sector") list.push("Public sector expansion");
+    if (sector === "Professional services" && !list.includes("Consultancy")) list.push("Consultancy");
+    return list;
+  };
+
+  for (let i = associates.length; i < SAMPLE_TARGET; i++) {
+    // Deterministic pseudo-random scatter so columns do not line up on i.
+    const r = (salt: number) => ((i * 2654435761 + salt * 40503) >>> 0) % 1000;
+    const sector = sectorTable[r(1) % sectorTable.length];
+    const secondSector = r(2) % 3 === 0 ? sectorTable[r(3) % sectorTable.length] : null;
+    const roleType: (typeof associates)[number]["roleType"] =
+      r(4) < 55 ? "SIA" : r(4) < 75 ? "executive_advisor" : r(4) < 220 ? "programme_manager" : r(4) < 560 ? "specialist" : "consultant";
+    const skill = roleType === "SIA" || roleType === "executive_advisor" ? (r(5) % 2 === 0 ? "Board advisory" : "Advisory") : skillsPool[r(5) % skillsPool.length];
+    const secondSkill = skillsPool[r(6) % skillsPool.length];
+    const thirdSkill = r(7) % 2 === 0 ? skillsPool[r(8) % skillsPool.length] : null;
+    const skills = [...new Set([skill, secondSkill, thirdSkill].filter(Boolean) as string[])];
+    const headlines = headlineByRole[roleType];
+    const name = `${firstNames[i % firstNames.length]} ${lastNames[Math.floor(i / firstNames.length) % lastNames.length]}`;
+    // Availability: ~24% available, ~19% limited, ~51% deployed/unavailable, ~6% unknown.
+    const availability: (typeof associates)[number]["availability"] =
+      r(9) < 240 ? "available" : r(9) < 430 ? "limited" : r(9) < 940 ? "unavailable" : "unknown";
+    const verified = r(10) < 720;
+    // Profile freshness: ~80% touched within the last 90 days, the rest older (they show as "re-verify").
+    const profileUpdatedAt = verified ? ago(24 * (r(26) < 800 ? 3 + (r(27) % 80) : 100 + (r(27) % 300))) : undefined;
+    const seniority: (typeof associates)[number]["seniority"] =
+      roleType === "SIA" || roleType === "executive_advisor" ? "executive" : r(11) < 250 ? "mid" : r(11) < 700 ? "senior" : "principal";
+    const baseRate = seniority === "executive" ? 1800 : seniority === "principal" ? 1000 : seniority === "senior" ? 780 : 600;
     associates.push({
       id: `as_demo_${i + 1}`,
       name,
-      roleType: i % 11 === 0 ? "SIA" : i % 13 === 0 ? "executive_advisor" : i % 5 === 0 ? "programme_manager" : i % 3 === 0 ? "specialist" : "consultant",
-      headline: `${skill} · ${sector}`,
-      seniority: (["mid", "senior", "principal", "executive"] as const)[i % 4],
-      skills: [skill, skillsPool[(i + 2) % skillsPool.length]],
-      sectors: [sector],
-      location: i % 2 === 0 ? "UK" : "Remote · EU",
-      workingMode: (["remote", "hybrid", "onsite"] as const)[i % 3],
-      availability: (["available", "limited", "unavailable", "unknown"] as const)[i % 4],
-      nextAvailableDate: i % 4 === 2 ? day(30 + (i % 20)) : day(i % 14),
-      rate: i % 5 === 0 ? null : { amount: 700 + (i % 10) * 50, currency: "GBP", unit: "day" },
-      source: (["internal", "network", "external"] as const)[i % 3],
-      cvRef: `demo://cv/associate-${i + 1}`,
-      verifiedAt: i % 4 === 0 ? null : ago(50 + i * 3),
-      ownerId: i % 5 === 0 ? null : "me",
-      notes: "Fictional Tessiant sample profile — not a real person.",
-      tags: ["demo-sample", "fictional"],
-      status: i % 4 === 0 ? "unverified" : "active",
-      languages: ["English"],
-      offerings:
-        sector === "Public sector"
-          ? ["Public sector expansion"]
-          : sector === "Professional services"
-            ? ["Advisory", "Consultancy"]
-            : ["Staff augmentation"],
-      priorPlacementCount: i % 6,
+      roleType,
+      headline: `${headlines[r(12) % headlines.length]} · ${sector}`,
+      seniority,
+      skills,
+      sectors: secondSector && secondSector !== sector ? [sector, secondSector] : [sector],
+      location: locations[r(13) % locations.length],
+      workingMode: (["remote", "hybrid", "onsite"] as const)[r(14) % 3],
+      availability,
+      nextAvailableDate: availability === "unavailable" ? day(20 + (r(15) % 160)) : availability === "limited" ? day(7 + (r(15) % 40)) : availability === "available" ? day(r(15) % 14) : null,
+      rate: r(16) < 120 ? null : { amount: baseRate + (r(17) % 8) * 50, currency: "GBP", unit: "day" },
+      source: r(18) < 450 ? "network" : r(18) < 800 ? "internal" : "external",
+      cvRef: `files://cv/associate-${i + 1}`,
+      verifiedAt: verified ? ago(24 * (5 + (r(19) % 420))) : null,
+      profileUpdatedAt,
+      ownerId: r(20) < 150 ? null : (["me", "m_sarah", "m_ali", "m_maya"] as const)[r(21) % 4],
+      notes: "",
+      tags: ["network-sample"],
+      status: verified || r(22) < 700 ? "active" : "unverified",
+      languages: r(23) < 700 ? ["English"] : ["English", (["French", "German", "Spanish", "Portuguese", "Arabic", "Hindi", "Swedish"] as const)[r(24) % 7]],
+      offerings: offeringsFor(skill, sector),
+      priorPlacementCount: r(25) % 7,
     });
   }
 
@@ -291,7 +361,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       offeringInterests: ["SAP architecture"],
       servicesPurchased: ["SAP architecture"],
       linkedLeadId: null,
-      notes: "DEMO — SAP capacity pressure.",
+      notes: "SAP capacity pressure.",
       status: "active",
       website: "https://helix.example",
       billingCurrency: "GBP",
@@ -306,7 +376,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       offeringInterests: ["Senior Industry Advisors", "Advisory"],
       servicesPurchased: ["Advisory"],
       linkedLeadId: "l_felix",
-      notes: "DEMO — single relationship owner (founder-dependency signal for Pulse).",
+      notes: "Single relationship owner (founder-dependency signal for Pulse).",
       status: "active",
       website: "https://crest.example",
       billingCurrency: "GBP",
@@ -321,7 +391,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       offeringInterests: ["Public sector expansion", "Change & transformation"],
       servicesPurchased: ["Change & transformation"],
       linkedLeadId: null,
-      notes: "Fictional public-sector account — expansion coverage gap vs Tessiant offerings.",
+      notes: "Public-sector account — expansion coverage gap vs Tessiant offerings.",
       status: "prospect",
       website: null,
       billingCurrency: "GBP",
@@ -336,7 +406,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       offeringInterests: ["Consultancy", "Advisory", "Staff augmentation"],
       servicesPurchased: ["Consultancy"],
       linkedLeadId: null,
-      notes: "Fictional professional-services firm — consulting retainer and augmentation pipeline.",
+      notes: "Professional-services firm — consulting retainer and augmentation pipeline.",
       status: "active",
       website: "https://meridian-partners.example",
       billingCurrency: "GBP",
@@ -366,7 +436,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "me",
       requestDate: toDateKey(new Date(now - 48 * HOUR)),
-      notes: "DEMO storyline 1 — verified match, unavailable candidate, sector mismatch.",
+      notes: "Verified match, unavailable candidate, sector mismatch.",
       stage: "Sourcing",
       outcome: "active",
       outcomeReason: null,
@@ -403,7 +473,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "m_sarah",
       requestDate: toDateKey(new Date(now - 72 * HOUR)),
-      notes: "DEMO storyline 2 — capacity gap signal for Pulse. Hard-to-fill.",
+      notes: "Capacity gap signal for Pulse. Hard-to-fill.",
       stage: "Validation",
       outcome: "active",
       outcomeReason: null,
@@ -441,7 +511,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "me",
       requestDate: toDateKey(new Date(now - 24 * HOUR)),
-      notes: "DEMO storyline 3 — potential advisory only.",
+      notes: "Potential advisory only.",
       stage: "Interview",
       outcome: "active",
       outcomeReason: null,
@@ -480,7 +550,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "m_sarah",
       requestDate: toDateKey(new Date(now - 96 * HOUR)),
-      notes: "DEMO storyline 4 — low coverage vs target offerings.",
+      notes: "Low coverage vs target offerings.",
       stage: "New Requirement",
       outcome: "active",
       outcomeReason: null,
@@ -497,7 +567,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       accountId: "acc_northbridge",
       title: "Retail PMO lead (active assignment)",
       category: "augmentation",
-      description: "Filled DEMO assignment — Nina Forsberg currently deployed.",
+      description: "Filled assignment — Nina Forsberg currently deployed.",
       sector: "Retail",
       mustHaveSkills: ["PMO", "Programme management"],
       preferredSkills: ["Risk"],
@@ -514,7 +584,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "me",
       requestDate: toDateKey(new Date(now - 90 * 24 * HOUR)),
-      notes: "DEMO filled requirement powering assignment desk.",
+      notes: "Filled requirement; assignment live.",
       stage: "Placed",
       outcome: "active",
       outcomeReason: null,
@@ -528,6 +598,44 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       archived: false,
       createdAt: ago(90 * 24),
       updatedAt: ago(10),
+    },
+    {
+      id: "req_sia_won",
+      accountId: "acc_civic",
+      title: "Finance transformation advisory (SIA, delivered)",
+      category: "advisory",
+      description: "Completed advisory engagement introduced and delivered by an SIA — the recorded example of SIA-driven revenue.",
+      sector: "Public sector",
+      mustHaveSkills: ["Board advisory", "Finance transformation"],
+      preferredSkills: ["Public sector"],
+      seniority: "executive",
+      roleType: "SIA",
+      location: "Edinburgh / Remote",
+      workingMode: "hybrid",
+      startDate: day(-120),
+      durationWeeks: 8,
+      headcount: 1,
+      rateMin: 2000,
+      rateMax: 2600,
+      currency: "GBP",
+      rateUnit: "day",
+      ownerId: "m_sarah",
+      requestDate: toDateKey(new Date(now - 130 * 24 * HOUR)),
+      notes: "SIA introduction that became a won advisory engagement. Counts toward SIA revenue contribution.",
+      stage: "Placed",
+      outcome: "active",
+      outcomeReason: null,
+      priority: "low",
+      linkedOpportunityId: "opp_civic_sia_won",
+      stageHistory: [
+        { stage: "New Requirement", at: ago(130 * 24), actorId: "m_sarah" },
+        { stage: "Commercials", at: ago(126 * 24), actorId: "m_sarah", reason: "Day-rate agreed with client" },
+        { stage: "Placed", at: ago(125 * 24), actorId: "m_sarah", reason: "Advisory engagement confirmed" },
+      ],
+      offeringAlignment: ["Senior Industry Advisors", "Advisory"],
+      archived: false,
+      createdAt: ago(130 * 24),
+      updatedAt: ago(60 * 24),
     },
     {
       id: "req_filled_change",
@@ -551,7 +659,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "m_sarah",
       requestDate: toDateKey(new Date(now - 120 * 24 * HOUR)),
-      notes: "DEMO ending-soon assignment.",
+      notes: "Assignment ending soon.",
       stage: "Placed",
       outcome: "active",
       outcomeReason: null,
@@ -588,7 +696,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "me",
       requestDate: toDateKey(new Date(now - 10 * 24 * HOUR)),
-      notes: "DEMO offer/commercials stage.",
+      notes: "Offer and commercials stage.",
       stage: "Commercials",
       outcome: "active",
       outcomeReason: null,
@@ -625,7 +733,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "me",
       requestDate: toDateKey(new Date(now - 14 * 24 * HOUR)),
-      notes: "Fictional filled requirement — powers upcoming Leo Martins assignment.",
+      notes: "Filled requirement — powers upcoming Leo Martins assignment.",
       stage: "Placed",
       outcome: "active",
       outcomeReason: null,
@@ -663,7 +771,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "m_ali",
       requestDate: toDateKey(new Date(now - 5 * 24 * HOUR)),
-      notes: "Fictional professional-services demand — consulting + augmentation.",
+      notes: "Professional-services demand — consulting + augmentation.",
       stage: "Validation",
       outcome: "active",
       outcomeReason: null,
@@ -684,7 +792,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       accountId: "acc_civic",
       title: "Local authority change support (completed)",
       category: "augmentation",
-      description: "Historical completed engagement — keeps assignment history visible in demos.",
+      description: "Historical completed engagement.",
       sector: "Public sector",
       mustHaveSkills: ["Change management", "Public sector"],
       preferredSkills: ["Communications"],
@@ -701,7 +809,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rateUnit: "day",
       ownerId: "m_sarah",
       requestDate: toDateKey(new Date(now - 220 * 24 * HOUR)),
-      notes: "Fictional completed placement history.",
+      notes: "Completed placement history.",
       stage: "Placed",
       outcome: "active",
       outcomeReason: null,
@@ -834,7 +942,16 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
         notes: "Advisory day-rate indicative only",
         verifiedAt: ago(14),
       },
-      interview: { heldAt: ago(6), outcome: "positive", summary: "Strong chemistry. Potential follow-on consulting — not booked." },
+      interview: {
+        heldAt: ago(6),
+        outcome: "positive",
+        summary: "Strong chemistry. Potential follow-on consulting — not booked.",
+        ratings: { technical: 5, communication: 4, fit: 5 },
+        recommend: "advance",
+        by: "team",
+        strengths: "Ran two retail board programmes; clear on where the board will push back.",
+        concerns: "Capacity is limited until December; confirm days per month before offer.",
+      },
       quotedClientRate: null,
       createdAt: ago(18),
       updatedAt: ago(6),
@@ -879,6 +996,30 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       interview: { heldAt: ago(65 * 24), outcome: "positive", summary: "Selected" },
       quotedClientRate: { amount: 1250, currency: "GBP", unit: "day" },
       createdAt: ago(70 * 24),
+      updatedAt: ago(60 * 24),
+    },
+    {
+      id: "cand_sia_david_won",
+      requirementId: "req_sia_won",
+      associateId: "as_sia_david",
+      matchScore: 94,
+      matchReasons: ["Introduced the client", "Ex-CFO · public sector", "Verified"],
+      matchGaps: [],
+      matchFlags: ["verified"],
+      shortlistStatus: "placed",
+      rankOverride: 1,
+      overrideReason: null,
+      sourcedExternally: false,
+      validation: {
+        availabilityConfirmed: true,
+        costConfirmed: true,
+        indicativeCost: { amount: 2200, currency: "GBP", unit: "day" },
+        notes: "Advisory engagement delivered",
+        verifiedAt: ago(126 * 24),
+      },
+      interview: { heldAt: ago(127 * 24), outcome: "positive", summary: "Chemistry meeting with the finance director — proceed" },
+      quotedClientRate: { amount: 2600, currency: "GBP", unit: "day" },
+      createdAt: ago(130 * 24),
       updatedAt: ago(60 * 24),
     },
     {
@@ -1032,21 +1173,21 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
   if (nina) {
     nina.availability = "unavailable";
     nina.nextAvailableDate = day(80);
-    nina.notes = `${nina.notes} Currently on client assignment at 100% capacity (DEMO).`;
+    nina.notes = `${nina.notes} Currently on client assignment at 100% capacity.`;
     nina.tags = [...nina.tags, "deployed"];
   }
   const amy = associates.find((item) => item.id === "as_amy");
   if (amy) {
     amy.availability = "limited";
     amy.nextAvailableDate = day(18);
-    amy.notes = `${amy.notes} On assignment at 80% capacity — renewal decision due soon (fictional).`;
+    amy.notes = `${amy.notes} On assignment at 80% capacity — renewal decision due soon.`;
     amy.tags = [...amy.tags, "deployed"];
   }
   const leo = associates.find((item) => item.id === "as_leo");
   if (leo) {
     leo.availability = "limited";
     leo.nextAvailableDate = day(12);
-    leo.notes = `${leo.notes} Upcoming Crest advisory at 40% capacity — still partially bookable (fictional).`;
+    leo.notes = `${leo.notes} Upcoming Crest advisory at 40% capacity — still partially bookable.`;
     leo.tags = [...leo.tags, "upcoming-assignment"];
   }
 
@@ -1068,14 +1209,14 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
           id: "adoc_nina_contract",
           name: "Northbridge PMO contract",
           kind: "contract",
-          ref: "demo://assignment/plc_nina_pmo/contract",
+          ref: "files://assignment/plc_nina_pmo/contract",
           uploadedAt: ago(60 * 24),
         },
         {
           id: "adoc_nina_sow",
           name: "Statement of work",
           kind: "sow",
-          ref: "demo://assignment/plc_nina_pmo/sow",
+          ref: "files://assignment/plc_nina_pmo/sow",
           uploadedAt: ago(58 * 24),
         },
       ],
@@ -1135,7 +1276,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
           id: "adoc_amy_contract",
           name: "Helix change assignment contract",
           kind: "contract",
-          ref: "demo://assignment/plc_amy_change/contract",
+          ref: "files://assignment/plc_amy_change/contract",
           uploadedAt: ago(100 * 24),
         },
       ],
@@ -1172,6 +1313,59 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       updatedAt: ago(48),
     },
     {
+      id: "plc_sia_david_won",
+      requirementId: "req_sia_won",
+      associateId: "as_sia_david",
+      candidateId: "cand_sia_david_won",
+      accountId: "acc_civic",
+      roleTitle: "Finance transformation advisor (SIA)",
+      ownerId: "m_sarah",
+      workingPattern: "hybrid",
+      capacityPercent: 20,
+      renewalDate: null,
+      assignmentStatus: "completed",
+      documents: [
+        {
+          id: "adoc_sia_david_sow",
+          name: "Advisory SOW · Civic Services",
+          kind: "sow",
+          ref: "files://assignment/plc_sia_david_won/sow",
+          uploadedAt: ago(125 * 24),
+        },
+      ],
+      engagementNotes: [
+        {
+          id: "anote_sia_david_1",
+          body: "SIA-introduced engagement. David brought the client in and delivered the advisory work at 20% capacity.",
+          authorId: "m_sarah",
+          createdAt: ago(125 * 24),
+          kind: "placement",
+        },
+        {
+          id: "anote_sia_david_2",
+          body: "Completed on plan. Recorded as SIA revenue contribution.",
+          authorId: "m_sarah",
+          createdAt: ago(60 * 24),
+          kind: "status",
+        },
+      ],
+      followUpTaskId: null,
+      confirmedAvailableDate: day(-60),
+      status: "closed",
+      terms: {
+        associateCost: { amount: 2200, currency: "GBP", unit: "day" },
+        clientRate: { amount: 2600, currency: "GBP", unit: "day" },
+        startDate: day(-120),
+        endDate: day(-64),
+        notes: "Completed SIA advisory engagement (closed, counts toward SIA contribution)",
+      },
+      placementDate: ago(125 * 24),
+      outcome: "completed",
+      renewalStatus: "ending",
+      createdAt: ago(130 * 24),
+      updatedAt: ago(60 * 24),
+    },
+    {
       id: "plc_month_demo",
       requirementId: "req_filled_pmo",
       associateId: "as_owen",
@@ -1188,7 +1382,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
           id: "adoc_owen_contract",
           name: "Closed surge SOW",
           kind: "sow",
-          ref: "demo://assignment/plc_month_demo/sow",
+          ref: "files://assignment/plc_month_demo/sow",
           uploadedAt: ago(40 * 24),
         },
       ],
@@ -1216,7 +1410,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
         clientRate: { amount: 1150, currency: "GBP", unit: "day" },
         startDate: day(-40),
         endDate: day(-5),
-        notes: "DEMO — closed earlier this month (counts toward placements-this-month, not active deployment)",
+        notes: "Closed earlier this month (counts toward placements-this-month, not active deployment)",
       },
       placementDate: ago(8 * 24),
       outcome: "completed",
@@ -1279,7 +1473,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
           id: "adoc_priya_hist",
           name: "Closed civic SOW",
           kind: "sow",
-          ref: "demo://assignment/plc_priya_civic_hist/sow",
+          ref: "files://assignment/plc_priya_civic_hist/sow",
           uploadedAt: ago(180 * 24),
         },
       ],
@@ -1307,7 +1501,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
         clientRate: { amount: 980, currency: "GBP", unit: "day" },
         startDate: day(-180),
         endDate: day(-40),
-        notes: "Fictional completed public-sector assignment.",
+        notes: "Completed public-sector assignment.",
       },
       placementDate: ago(180 * 24),
       outcome: "completed",
@@ -1546,7 +1740,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
           id: "doc_elena_cv2",
           kind: "cv",
           name: "Elena Vos CV — 2026",
-          ref: "demo://cv/elena-vos-v2",
+          ref: "files://cv/elena-vos-v2",
           uploadedAt: ago(48),
           verifiedAt: ago(36),
           version: 2,
@@ -1555,7 +1749,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
           id: "doc_elena_cv1",
           kind: "cv",
           name: "Elena Vos CV — archive",
-          ref: "demo://cv/elena-vos",
+          ref: "files://cv/elena-vos",
           uploadedAt: ago(400),
           verifiedAt: ago(400),
           version: 1,
@@ -1563,8 +1757,8 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
         {
           id: "doc_elena_cert",
           kind: "certificate",
-          name: "MSP Practitioner (DEMO)",
-          ref: "demo://cert/elena-msp",
+          name: "MSP Practitioner",
+          ref: "files://cert/elena-msp",
           uploadedAt: ago(200),
           verifiedAt: ago(200),
           version: 1,
@@ -1574,7 +1768,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
         {
           id: "exp_elena_1",
           title: "Programme Director — Omnichannel",
-          organisation: "DEMO UK Retail Group",
+          organisation: "UK Retail Group",
           sector: "Retail",
           startDate: "2022-03",
           endDate: "2025-09",
@@ -1583,7 +1777,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
         {
           id: "exp_elena_2",
           title: "Senior Programme Manager",
-          organisation: "DEMO Consumer Co",
+          organisation: "Consumer Co",
           sector: "Consumer",
           startDate: "2018-01",
           endDate: "2022-02",
@@ -1593,14 +1787,14 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       enriched.activityNotes = [
         {
           id: "an_elena_1",
-          body: "Availability confirmed for Northbridge shortlist (DEMO).",
+          body: "Availability confirmed for Northbridge shortlist.",
           authorId: "me",
           createdAt: ago(20),
           kind: "availability",
         },
         {
           id: "an_elena_2",
-          body: "Strong retail references on file — fictional DEMO notes only.",
+          body: "Strong retail references on file.",
           authorId: "m_sarah",
           createdAt: ago(100),
           kind: "note",
@@ -1610,7 +1804,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
     }
     if (associate.id === "as_nina") {
       enriched.agreedRate = { amount: 1250, currency: "GBP", unit: "day" };
-      enriched.contractNotes = "DEMO active assignment — client day rate agreed; associate cost 980 GBP/day.";
+      enriched.contractNotes = "Active assignment — client day rate agreed; associate cost 980 GBP/day.";
     }
     return enriched;
   });
@@ -1622,6 +1816,21 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       activeSample: talent.filter((a) => a.status === "active").length,
       siaSample: talent.filter((a) => a.roleType === "SIA" || a.roleType === "executive_advisor").length,
       verifiedSample: talent.filter((a) => Boolean(a.verifiedAt)).length,
+      // Showcase figures: the network one introduction away. Used for reach, never for named people.
+      secondaryMembers: 3_100,
+      secondDegreeBySkill: {
+        SAP: 7,
+        "S/4HANA": 5,
+        "Solution architecture": 6,
+        "Change management": 9,
+        "Public sector": 8,
+        "Programme management": 11,
+        "Retail transformation": 6,
+        Cybersecurity: 4,
+        "Board advisory": 3,
+        "Finance transformation": 4,
+        PMO: 5,
+      },
     },
     associates: talent,
     accounts,
@@ -1660,7 +1869,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
             directCostSavings: 450,
             qualitativeBenefit: "Reduced single-owner dependency on a strategic account",
             currency: "GBP",
-            notes: "DEMO — coherent Tessiant Pulse outcome example",
+            notes: "Coherent Tessiant Pulse outcome example",
             sourceEntityIds: ["acc_crest"],
           },
           createdAt: ago(18),
@@ -1679,7 +1888,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
             directCostSavings: null,
             qualitativeBenefit: "Pipeline potential only — not realised revenue",
             currency: "GBP",
-            notes: "DEMO — pending value confirmation",
+            notes: "Pending value confirmation",
             sourceEntityIds: ["req_sia", "acc_crest"],
           },
           createdAt: ago(6),

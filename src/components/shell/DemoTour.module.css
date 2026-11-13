@@ -1,0 +1,170 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
+/* The spotlight: a ring over the target, and the dim everywhere else via a huge box-shadow. */
+.dim {
+  position: fixed;
+  z-index: 90;
+  background: rgb(15 23 42 / 0.42);
+  pointer-events: auto;
+}
+
+.spot {
+  position: fixed;
+  z-index: 91;
+  border-radius: 16px;
+  box-shadow: 0 0 0 2px var(--qiko-accent), 0 0 24px rgb(79 70 229 / 0.35);
+  transition: top 260ms var(--ease-out), left 260ms var(--ease-out), width 260ms var(--ease-out), height 260ms var(--ease-out);
+}
+
+.card {
+  position: fixed;
+  z-index: 92;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 360px;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-hover);
+  pointer-events: auto;
+  animation: cardIn 240ms var(--ease-out) both;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.counter {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--canvas);
+}
+
+.counter i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--qiko-accent);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.card small {
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.card b {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.card p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.nav {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.offer {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 440px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--qiko-accent) 30%, var(--line));
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-hover);
+  animation: offerIn 320ms var(--ease-out) both;
+}
+
+@keyframes offerIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.offerOrb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--qiko-accent);
+  color: #fff;
+}
+
+.offer b {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.offer small {
+  display: block;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.offerDismiss {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--subtle);
+  cursor: pointer;
+}
+
+.offerDismiss:hover {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .card {
+    width: calc(100vw - 24px);
+    left: 12px !important;
+  }
+
+  .offer {
+    right: 20px;
+  }
+}

@@ -20,6 +20,22 @@ const BUBBLE_TONE: Record<
   gap: { border: "#f87171", bg: "#fff", text: "#dc2626", fill: "#f87171", dashed: true },
 };
 
+/** Fit circle title/sub so full names stay readable without "Program..." ellipsis. */
+function bubbleTextSizes(size: number, title: string, sub: string) {
+  const usable = Math.max(36, size * 0.68);
+  const longestWord = Math.max(...title.split(/\s+/).map((part) => part.length), 1);
+  let titleSize = Math.min(13, Math.max(9, Math.round(size * 0.145)));
+  while (titleSize > 8 && longestWord * titleSize * 0.62 > usable) {
+    titleSize -= 1;
+  }
+  if (title.length > 10) titleSize = Math.min(titleSize, 10);
+  const subSize = Math.max(8, Math.min(10, Math.round(Math.min(titleSize * 0.88, size * 0.11))));
+  if (sub.length > 14) {
+    return { titleSize, subSize: Math.min(subSize, 8) };
+  }
+  return { titleSize, subSize };
+}
+
 export default function BlockKnowledgeMap({
   blockTitle,
   bubbles,
@@ -95,8 +111,7 @@ export default function BlockKnowledgeMap({
               const on = selected.id === bubble.id;
               const title = bubble.mapLabel || bubble.label;
               const sub = bubble.mapSub || bubble.sub;
-              const fs = Math.max(9, Math.min(12, Math.round(bubble.size * 0.13)));
-              const fsub = Math.max(8, Math.min(10, Math.round(bubble.size * 0.1)));
+              const { titleSize, subSize } = bubbleTextSizes(bubble.size, title, sub);
               return (
                 <button
                   key={bubble.id}
@@ -104,6 +119,7 @@ export default function BlockKnowledgeMap({
                   className={styles.analyticsBubble}
                   data-active={on}
                   title={bubble.label}
+                  aria-label={`${bubble.label}. ${sub}`}
                   style={{
                     left: `${bubble.x}%`,
                     top: `${bubble.y}%`,
@@ -115,17 +131,26 @@ export default function BlockKnowledgeMap({
                     borderColor: t.border,
                     background: t.bg,
                     color: t.text,
-                    fontSize: fs,
                   }}
                   onClick={() => setSelectedId(bubble.id)}
                 >
-                  <b style={{ fontSize: fs }}>{title}</b>
-                  <span style={{ fontSize: fsub }}>{sub}</span>
+                  <span className={styles.analyticsBubbleInner}>
+                    <b style={{ fontSize: titleSize }}>{title}</b>
+                    <span style={{ fontSize: subSize }}>{sub}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
           <div className={styles.analyticsMapLegend}>
+            <span>
+              <i className={styles.legendGrowing} />
+              Growing
+            </span>
+            <span>
+              <i className={styles.legendEstablished} />
+              Established
+            </span>
             <span>
               <i className={styles.legendAttention} />
               Needs attention
@@ -164,10 +189,10 @@ export default function BlockKnowledgeMap({
               </p>
             ) : null}
             <div className={styles.analyticsActions}>
-              <Button variant="primary" fullWidth onClick={acceptInsight}>
+              <Button variant="primary" onClick={acceptInsight}>
                 {alreadyAccepted ? "Open linked to-do" : "Accept into Insight Tracker"}
               </Button>
-              <Button variant="secondary" fullWidth onClick={openTodo}>
+              <Button variant="secondary" onClick={openTodo}>
                 Open To-Do
               </Button>
             </div>

@@ -182,7 +182,7 @@ export function opportunityTypeFromInterest(interest: string): OpportunityType {
   return "mixed";
 }
 
-function previewRequirement(state: CrmState, opportunity: Opportunity): ClientRequirement | null {
+export function previewRequirement(state: CrmState, opportunity: Opportunity): ClientRequirement | null {
   const existing = (state.tessiant?.requirements ?? []).find((item) => item.linkedOpportunityId === opportunity.id);
   if (existing) return existing;
   const account = state.tessiant?.accounts.find((item) => item.id === opportunity.accountId);

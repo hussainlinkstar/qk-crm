@@ -33,40 +33,42 @@ export default function NetworkIntelligenceDashboard({
     <div className={styles.networkDash}>
       <BlockKnowledgeMap blockTitle="Network Intelligence" bubbles={bubbles} insights={insights} />
 
-      <p className={styles.networkBanner}>{view.sampleNote}</p>
-
-      <section className={styles.kpis} aria-label="Network headline metrics">
-        <div className={styles.kpi}>
-          <span>Verified available associates</span>
-          <b className="tabular">{view.verifiedAvailable}</b>
-          <small>In the seeded sample of {view.sampleSize}</small>
-        </div>
-        <div className={styles.kpi}>
-          <span>Available capacity against open demand</span>
-          <b className="tabular">
-            {view.verifiedAvailable}
-            <span className={styles.kpiOver}> / {view.openDemandHeadcount}</span>
-          </b>
-          <small>Verified available vs open headcount in sample</small>
-        </div>
-        <div className={styles.kpi}>
-          <span>Requirements with insufficient coverage</span>
-          <b className="tabular">{view.thinCoverageCount}</b>
-          <small>
-            Of {view.openRequirementCount} open · fewer than 2 verified available matches
-          </small>
-        </div>
-      </section>
-
-      <section aria-label="Network analytics">
+      <section className={styles.networkBook} aria-label="Network book">
         <div className={styles.analyticsSectionHead}>
-          <h3>Network analytics</h3>
-          <p>Skills in the sample and open demand against verified available capacity.</p>
+          <h3>Network book</h3>
+          <p>
+            Verified capacity, open demand, and skills in the Tessiant sample. {view.sampleNote}
+          </p>
         </div>
+
+        <section className={styles.networkMetricStrip} aria-label="Network headline metrics">
+          <article className={styles.networkMetricCard}>
+            <span>Verified available associates</span>
+            <b className="tabular">{view.verifiedAvailable}</b>
+            <small>In the seeded sample of {view.sampleSize}</small>
+          </article>
+          <article className={styles.networkMetricCard}>
+            <span>Available capacity against open demand</span>
+            <b className="tabular">
+              {view.verifiedAvailable}
+              <span className={styles.kpiOver}> / {view.openDemandHeadcount}</span>
+            </b>
+            <small>Verified available vs open headcount in sample</small>
+          </article>
+          <article className={styles.networkMetricCard}>
+            <span>Requirements with insufficient coverage</span>
+            <b className="tabular">{view.thinCoverageCount}</b>
+            <small>
+              Of {view.openRequirementCount} open · fewer than 2 verified available matches
+            </small>
+          </article>
+        </section>
+
         <div className={styles.chartsGridExact}>
           <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
             <div className={styles.pulseChartHeadExact}>
               <div>
+                <p className={styles.pulseChartKickerExact}>Skills</p>
                 <h2 className={styles.pulseChartTitleExact}>Skills in the sample</h2>
                 <p className={styles.pulseChartSubExact}>
                   Distribution across {view.sampleSize} seeded profiles — not the {view.networkTotal} illustrative total.
@@ -90,6 +92,7 @@ export default function NetworkIntelligenceDashboard({
           <article className={`${styles.cardExact} ${styles.pulseChartCardExact}`}>
             <div className={styles.pulseChartHeadExact}>
               <div>
+                <p className={styles.pulseChartKickerExact}>Coverage</p>
                 <h2 className={styles.pulseChartTitleExact}>Demand vs verified available</h2>
                 <p className={styles.pulseChartSubExact}>Open must-have skills against verified available associates in sample.</p>
               </div>
@@ -129,14 +132,12 @@ export default function NetworkIntelligenceDashboard({
         </div>
       </section>
 
-      <section className={`card ${styles.pulseCard}`} aria-label="Key findings">
-        <div className="card-head">
-          <div>
-            <h2>Key findings</h2>
-            <p className="card-sub">Up to three live Pulse recommendations. Review opens the original insight.</p>
-          </div>
+      <section className={`${styles.cardExact} ${styles.networkFindings}`} aria-label="Key findings">
+        <div className={styles.kbCardHead}>
+          <h3>Key findings</h3>
+          <span>Up to three live Pulse recommendations. Review opens the original insight.</span>
         </div>
-        <div className="card-body">
+        <div className={styles.kbCardBody}>
           {findings.length === 0 ? (
             <EmptyState title="No open network recommendations" icon="checkCircle">
               Missing inputs suppress rules rather than inventing numbers.

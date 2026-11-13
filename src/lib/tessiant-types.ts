@@ -264,10 +264,26 @@ export interface CandidateValidation {
   verifiedAt: string | null;
 }
 
+export type InterviewRecommendation = "advance" | "hold" | "reject";
+
+export interface InterviewRatings {
+  /** 1–5 each. */
+  technical: number;
+  communication: number;
+  fit: number;
+}
+
 export interface InterviewFeedback {
   heldAt: string | null;
   outcome: "pending" | "positive" | "neutral" | "negative";
   summary: string;
+  /** Structured scorecard, when the interviewer filled one in. */
+  ratings?: InterviewRatings;
+  recommend?: InterviewRecommendation;
+  /** Who gave the feedback: the Tessiant interviewer or the client panel. */
+  by?: "team" | "client";
+  strengths?: string;
+  concerns?: string;
 }
 
 export interface RequirementCandidate {
@@ -422,6 +438,10 @@ export interface NetworkStats {
   activeSample: number;
   siaSample: number;
   verifiedSample: number;
+  /** Showcase: people reachable through one introduction from the network. Demo figure. */
+  secondaryMembers?: number;
+  /** Showcase: second-degree profiles per skill, used for "could fill" reach. Demo figures. */
+  secondDegreeBySkill?: Record<string, number>;
 }
 
 export interface TessiantStateSlice {

@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useMemo, useState, type DragEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
+import Icon from "@/components/ui/Icon";
 import { EmptyState, MemberAvatar, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
+import { mapRequirementToOpsStage } from "@/lib/tessiant-insights";
 import OpportunityQuickPanel from "@/components/sales/OpportunityQuickPanel";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import { addDays, formatDate, todayKey } from "@/lib/format";
 import { opportunitySignal } from "@/lib/commercial-intelligence";
+import { capacityCheck, needsCapacityCheck } from "@/lib/capacity-check";
 import { OPPORTUNITY_STAGES, type Opportunity, type OpportunityStage } from "@/lib/types";
 import styles from "./pipeline.module.css";
 
@@ -61,6 +64,11 @@ export default function OpportunitiesPipelinePage() {
 
   const accountName = (accountId: string) => state.tessiant?.accounts.find((item) => item.id === accountId)?.name ?? "Account";
   const ownerOf = (ownerId: string | null) => state.members.find((item) => item.id === ownerId) ?? null;
+  const linkedRequirement = (opportunityId: string) => {
+    const requirement = state.tessiant?.requirements.find((item) => item.linkedOpportunityId === opportunityId && !item.archived);
+    if (!requirement) return null;
+    return requirement.stage === "Placed" ? "Placed" : mapRequirementToOpsStage(requirement);
+  };
 
   const onDrop = (event: DragEvent, stage: OpportunityStage) => {
     event.preventDefault();
@@ -238,6 +246,11 @@ export default function OpportunitiesPipelinePage() {
                           <span className="tabular">£{opportunity.amount.toLocaleString("en-GB")}</span>
                         </div>
                         <div className={styles.oppAccount}>{accountName(opportunity.accountId)}</div>
+                        {linkedRequirement(opportunity.id) ? (
+                          <span className={styles.oppLinked}>
+                            <Icon name="flag" size={11} /> {linkedRequirement(opportunity.id)}
+                          </span>
+                        ) : null}
                         <div className={styles.oppFoot}>
                           <span className={styles.oppOwner}>
                             <MemberAvatar member={owner} />
@@ -246,6 +259,16 @@ export default function OpportunitiesPipelinePage() {
                           <span className={styles.oppClose}>{formatDate(opportunity.expectedCloseDate)}</span>
                         </div>
                         {risk ? <span className={styles.risk}>{risk}</span> : null}
+                        {needsCapacityCheck(opportunity)
+                          ? (() => {
+                              const check = capacityCheck(state, opportunity);
+                              return check.status === "n/a" ? null : (
+                                <span className={styles.capacity} data-status={check.status} title={check.headline}>
+                                  <Icon name={check.status === "covered" ? "shield" : check.status === "advisory" ? "star" : "alert"} size={11} /> {check.label}
+                                </span>
+                              );
+                            })()
+                          : null}
                       </article>
                     );
                   })

@@ -15,6 +15,8 @@ import {
 } from "@/lib/assignments";
 import { addDays, formatDate, todayKey } from "@/lib/format";
 import { assignmentRenewalStatus } from "@/lib/tessiant-insights";
+import { assignmentInsight } from "@/lib/record-insights";
+import RecordInsight from "@/components/ui/RecordInsight";
 import styles from "@/components/leads/Leads.module.css";
 
 export default function AssignmentQuickPanel({
@@ -25,7 +27,7 @@ export default function AssignmentQuickPanel({
   onClose: () => void;
 }) {
   const { state } = useWorkspaceData();
-  const { toast } = useWorkspace();
+  const { toast, openTask } = useWorkspace();
   if (!state?.tessiant) return null;
 
   const assignment = state.tessiant.placements.find((item) => item.id === assignmentId);
@@ -61,6 +63,32 @@ export default function AssignmentQuickPanel({
         </Link>
       }
     >
+      <RecordInsight
+        subject="assignment"
+        data={assignmentInsight(state, assignment, today)}
+        actions={
+          live && ending ? (
+            <Button
+              size="small"
+              variant="qiko"
+              icon="tasks"
+              onClick={() => {
+                const existing = assignment.followUpTaskId;
+                const taskId = crm.ensureAssignmentRenewalFollowUp(assignment.id);
+                if (existing) {
+                  openTask(existing);
+                  return;
+                }
+                toast(taskId ? "Renewal follow-up created" : "Follow-up already exists or end date missing", taskId ? "success" : "info");
+                if (taskId) openTask(taskId);
+              }}
+            >
+              {assignment.followUpTaskId ? "Open renewal follow-up" : "Create renewal follow-up"}
+            </Button>
+          ) : null
+        }
+      />
+
       <div className={styles.panelMeta}>
         <span className="chip">{assignmentStatusLabel(status)}</span>
         <span className={`chip ${ending ? "chip-high" : ""}`}>{renewal.replaceAll("_", " ")}</span>

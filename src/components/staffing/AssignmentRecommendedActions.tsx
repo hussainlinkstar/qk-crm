@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import Button from "@/components/ui/Button";
+import IconTile from "@/components/ui/IconTile";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { crm } from "@/lib/crm-store";
 import {
@@ -100,17 +101,23 @@ export default function AssignmentRecommendedActions({
   return (
     <section className={compact ? styles.recCompact : styles.recSection} aria-label="Recommended actions">
       <div className={styles.recHead}>
-        <div>
-          <p className="kicker">Qiko</p>
-          <h2>Recommended actions</h2>
+        <div className={styles.recHeadCopy}>
+          <IconTile name="sparkles" tone="qiko" size="lg" />
+          <div>
+            <p className="kicker kicker-qiko">Qiko</p>
+            <h2>Recommended actions</h2>
+          </div>
         </div>
       </div>
       <div className={compact ? styles.recActionStack : styles.recActionGrid}>
         {recs.map(({ item, status }) => (
           <article key={item.id} className={styles.recActionCard} data-status={status}>
             <div className={styles.recActionTop}>
-              <span className={`chip ${status === "new" ? "chip-high" : ""}`}>{STATUS_LABEL[status]}</span>
+              <IconTile name={item.kind === "renewal" ? "refresh" : "rocket"} tone={item.kind === "renewal" ? "warning" : "qiko"} size="sm" />
               <span className={styles.recKind}>{item.kind === "renewal" ? "Assignment renewal" : "Redeployment"}</span>
+              <span className={`chip ${status === "new" ? "chip-high" : ""}`} style={{ marginLeft: "auto" }}>
+                {STATUS_LABEL[status]}
+              </span>
             </div>
             <p className={styles.recDetected}>{item.detected}</p>
             <p className={styles.recWhy}>{item.why}</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import DemoTour from "@/components/shell/DemoTour";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
@@ -32,17 +33,22 @@ interface NavItem {
   children?: NavChild[];
 }
 
-/** Tessiant workspace IA — Accounts live under Sales only (same entities as staffing clients). */
+/**
+ * Tessiant workspace IA. Home and My Tasks are flat; Sales and Staffing disclose their
+ * sections only while active. Accounts live under Sales only (same rows as staffing clients).
+ */
 const NAV: NavItem[] = [
   {
     href: "/",
     label: "Home",
     icon: "home",
-    match: (path) => path === "/" || path.startsWith("/tasks"),
-    children: [
-      { href: "/", label: "Home", match: (path) => path === "/" },
-      { href: "/tasks", label: "My Tasks", match: (path) => path.startsWith("/tasks") },
-    ],
+    match: (path) => path === "/",
+  },
+  {
+    href: "/tasks",
+    label: "My Tasks",
+    icon: "tasks",
+    match: (path) => path.startsWith("/tasks"),
   },
   {
     href: "/sales",
@@ -50,6 +56,7 @@ const NAV: NavItem[] = [
     icon: "sales",
     match: (path) => path.startsWith("/sales"),
     children: [
+      { href: "/sales", label: "Overview", match: (path) => path === "/sales" },
       { href: "/sales/leads", label: "Leads", match: (path) => path.startsWith("/sales/leads") },
       { href: "/sales/pipeline", label: "Opportunities", match: (path) => path.startsWith("/sales/pipeline") },
       { href: "/sales/accounts", label: "Accounts", match: (path) => path.startsWith("/sales/accounts") },
@@ -63,10 +70,11 @@ const NAV: NavItem[] = [
     icon: "users",
     match: (path) => path.startsWith("/staffing"),
     children: [
-      { href: "/staffing", label: "Staffing Overview", match: (path) => path === "/staffing" },
+      { href: "/staffing", label: "Overview", match: (path) => path === "/staffing" },
       { href: "/staffing/associates", label: "Talent Network", match: (path) => path.startsWith("/staffing/associates") },
-      { href: "/staffing/requirements", label: "Client Requirements", match: (path) => path.startsWith("/staffing/requirements") },
+      { href: "/staffing/requirements", label: "Requirements", match: (path) => path.startsWith("/staffing/requirements") },
       { href: "/staffing/placements", label: "Assignments", match: (path) => path.startsWith("/staffing/placements") },
+      { href: "/staffing/offerings", label: "Offerings", match: (path) => path.startsWith("/staffing/offerings") },
     ],
   },
 ];
@@ -83,6 +91,7 @@ function pageTitle(pathname: string): string {
   if (pathname.startsWith("/staffing/associates")) return "Talent Network";
   if (pathname.startsWith("/staffing/requirements")) return "Client Requirements";
   if (pathname.startsWith("/staffing/placements")) return "Assignments";
+  if (pathname.startsWith("/staffing/offerings")) return "Offerings";
   if (pathname.startsWith("/staffing/clients")) return "Accounts";
   if (pathname.startsWith("/staffing")) return "Staffing Overview";
   if (pathname.startsWith("/sales/pipeline")) return "Opportunities";
@@ -153,10 +162,25 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
     () => ({
       session,
       toast,
-      askQiko: (question, leadId) => setCopilot((current) => ({ open: true, question, leadId: leadId ?? null, nonce: current.nonce + 1 })),
-      openTaskForm: (request) => setTaskForm(request ?? {}),
-      openTask: (taskId) => setOpenTaskId(taskId),
-      openAddLead: () => setAddLeadOpen(true),
+      askQiko: (question, leadId) => {
+        setOpenTaskId(null);
+        setTaskForm(null);
+        setCopilot((current) => ({ open: true, question, leadId: leadId ?? null, nonce: current.nonce + 1 }));
+      },
+      openTaskForm: (request) => {
+        setCopilot((current) => ({ ...current, open: false }));
+        setOpenTaskId(null);
+        setTaskForm(request ?? {});
+      },
+      openTask: (taskId) => {
+        setCopilot((current) => ({ ...current, open: false }));
+        setTaskForm(null);
+        setOpenTaskId(taskId);
+      },
+      openAddLead: () => {
+        setCopilot((current) => ({ ...current, open: false }));
+        setAddLeadOpen(true);
+      },
     }),
     [session, toast],
   );
@@ -170,6 +194,8 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
     const onKey = (event: KeyboardEvent) => {
       if ((isMac ? event.metaKey : event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        setOpenTaskId(null);
+        setTaskForm(null);
         setCopilot((current) => ({ open: !current.open, nonce: current.nonce + 1 }));
       }
       if (event.key === "Escape") setMenu(null);
@@ -188,7 +214,17 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
     const overdue = workspace.tasks.filter((task) => isOpen(task) && task.due && task.due < today);
     const groups = buildPriorities(workspace).filter((group) => group.id !== "tasks");
     return [
-      ...overdue.map((task) => ({ id: task.id, icon: "clock" as IconName, title: task.title, meta: "Overdue task", onClick: () => setOpenTaskId(task.id) })),
+      ...overdue.map((task) => ({
+        id: task.id,
+        icon: "clock" as IconName,
+        title: task.title,
+        meta: "Overdue task",
+        onClick: () => {
+          setCopilot((current) => ({ ...current, open: false }));
+          setTaskForm(null);
+          setOpenTaskId(task.id);
+        },
+      })),
       ...groups.map((group) => ({ id: group.id, icon: "sparkles" as IconName, title: group.title, meta: "Suggested by Qiko", onClick: () => router.push("/tasks") })),
     ];
   }, [workspace, router]);
@@ -197,6 +233,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
   const tessiantAttention = state?.tessiant
     ? state.tessiant.requirements.filter((req) => !req.archived && req.outcome === "active" && req.stage !== "Placed").length
     : 0;
+  const myOpenTasks = state ? state.tasks.filter((task) => isOpen(task) && (task.ownerId === "me" || task.ownerId === null)).length : 0;
   const onStaffing = pathname.startsWith("/staffing");
   const onPulse = pathname.startsWith("/pulse");
   const currentLabel = pageTitle(pathname);
@@ -275,6 +312,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                     <Link href={item.href} className={`${styles.navItem} ${active ? styles.active : ""}`} aria-current={pathname === item.href ? "page" : undefined} onClick={() => setMobileOpen(false)} title={collapsed ? item.label : undefined}>
                       <Icon name={item.icon} size={17} />
                       <span className={styles.hideCollapsed}>{item.label}</span>
+                      {item.label === "My Tasks" && myOpenTasks > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{myOpenTasks}</span>}
                       {item.label === "Sales" && salesAttention > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{salesAttention}</span>}
                       {item.label === "Staffing" && tessiantAttention > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{tessiantAttention}</span>}
                     </Link>
@@ -299,17 +337,18 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                 <Link
                   href="/pulse"
                   target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${styles.navItem} ${pathname.startsWith("/pulse") ? styles.active : ""}`}
+                  rel="noopener"
+                  className={`${styles.navItem} ${styles.navIntel} ${pathname.startsWith("/pulse") ? styles.active : ""}`}
                   onClick={() => setMobileOpen(false)}
-                  title={collapsed ? "Qiko Pulse" : undefined}
+                  title={collapsed ? "Qiko Pulse (opens in a new tab)" : "Opens in a new tab"}
                 >
                   <Icon name="pulse" size={17} />
                   <span className={styles.hideCollapsed}>Qiko Pulse</span>
+                  <Icon name="external" size={12} className={`${styles.navExternal} ${styles.hideCollapsed}`} />
                 </Link>
               </li>
               <li>
-                <button type="button" className={styles.navItem} onClick={() => { setMobileOpen(false); api.askQiko(); }} title={collapsed ? "Ask Qiko" : undefined}>
+                <button type="button" className={`${styles.navItem} ${styles.navIntel}`} onClick={() => { setMobileOpen(false); api.askQiko(); }} title={collapsed ? "Ask Qiko" : undefined}>
                   <Icon name="sparkles" size={17} />
                   <span className={styles.hideCollapsed}>Ask Qiko</span>
                   <kbd className={`${styles.kbd} ${styles.hideCollapsed}`}>{macPlatform ? "⌘K" : "Ctrl K"}</kbd>
@@ -384,6 +423,9 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                 <Icon name="sparkles" size={14} />
                 <span>Ask Qiko</span>
               </button>
+              <button type="button" className={styles.iconButton} aria-label="Take the tour" title="Take the tour" onClick={() => window.dispatchEvent(new Event("qiko:tour"))}>
+                <Icon name="compass" size={18} />
+              </button>
               <div className={styles.menuWrap}>
                 <button type="button" className={styles.iconButton} aria-label={`Notifications (${notifications.length})`} aria-expanded={menu === "notifications"} onClick={() => setMenu(menu === "notifications" ? null : "notifications")}>
                   <Icon name="bell" size={18} />
@@ -443,7 +485,19 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
             )}
           </header>
           <main className={styles.content}>{children}</main>
+          <DemoTour />
         </div>
+
+        {!copilot.open && (
+          <button type="button" className={styles.qikoFab} onClick={() => api.askQiko()} aria-label="Ask Qiko">
+            <span className={styles.qikoFabBubble} aria-hidden="true">
+              Need a hand? Ask Qiko
+            </span>
+            <span className={styles.qikoFabMark}>
+              <Icon name="sparkles" size={20} />
+            </span>
+          </button>
+        )}
 
         <div className={styles.toasts} aria-live="polite">
           {toasts.map((item) => (

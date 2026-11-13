@@ -263,10 +263,31 @@
   border-style: solid;
 }
 
+.insightSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+.insightHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.insightHead h2 {
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
 .insightStrip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .insightCard {
@@ -274,11 +295,10 @@
   grid-template-columns: auto 1fr;
   align-items: baseline;
   gap: 4px 8px;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  padding: 13px 14px;
+  border: 1px solid color-mix(in srgb, var(--qiko-accent) 22%, var(--line));
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--qiko-accent-soft), var(--surface) 48%);
 }
 
 .insightCard b {

@@ -11,10 +11,14 @@ import { opportunitiesForAccount } from "@/lib/sales-crm";
 import { salesRelationshipIntel } from "@/lib/sales-relationship";
 import RecordInsightChip from "@/components/pulse/RecordInsightChip";
 import RelationshipIntelligence from "@/components/sales/RelationshipIntelligence";
+import RecordInsight from "@/components/ui/RecordInsight";
+import { useWorkspace } from "@/components/shell/WorkspaceContext";
+import { accountInsight } from "@/lib/record-insights";
 import styles from "@/components/leads/Leads.module.css";
 
 export default function AccountQuickPanel({ accountId, onClose }: { accountId: string; onClose: () => void }) {
   const { state } = useWorkspaceData();
+  const { askQiko } = useWorkspace();
   if (!state?.tessiant) return null;
 
   const account = state.tessiant.accounts.find((item) => item.id === accountId);
@@ -53,6 +57,16 @@ export default function AccountQuickPanel({ accountId, onClose }: { accountId: s
         </Link>
       }
     >
+      <RecordInsight
+        subject="account"
+        data={accountInsight(state, account.id)}
+        actions={
+          <Button size="small" variant="qiko" icon="sparkles" onClick={() => askQiko(`Tell me everything about ${account.name}`)}>
+            Ask Qiko
+          </Button>
+        }
+      />
+
       <RecordInsightChip accountId={account.id} />
 
       {ending ? (

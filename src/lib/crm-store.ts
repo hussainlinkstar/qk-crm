@@ -23,6 +23,7 @@ import type {
   OpportunityStage,
   OpportunityType,
   Priority,
+  QikoFeedback,
   Session,
   Suggestion,
   Task,
@@ -42,6 +43,7 @@ import type {
   RequirementStage,
   ShortlistStatus,
   TessiantStateSlice,
+  InterviewFeedback,
 } from "./tessiant-types";
 import { findTaskForInsight, insightIdFromTask } from "./pulse-journey";
 import { addDays, todayKey, uid } from "./format";
@@ -850,8 +852,14 @@ export const crm = {
     }));
   },
 
-  setTaskStatus(taskId: string, status: TaskStatus) {
+  setTaskStatus(taskId: string, status: TaskStatus, note?: string) {
     crm.updateTask(taskId, { status });
+    if (note?.trim()) {
+      update((s) => ({
+        ...s,
+        tasks: s.tasks.map((task) => (task.id === taskId ? { ...task, history: [...task.history, { at: nowIso(), actorId: "me", action: note.trim() }] } : task)),
+      }));
+    }
     const task = readCrm()?.tasks.find((item) => item.id === taskId);
     const insightId = task ? insightIdFromTask(task.description) : null;
     if (!task || !insightId) return;
@@ -917,6 +925,31 @@ export const crm = {
     update((s) => ({ ...s, decisions: { ...s.decisions, [suggestion.id]: { decision: "done", at: nowIso(), taskId } } }));
   },
 
+
+  /** "Was this right?" on a priority, signal, insight or Qiko-made task. One verdict per key; re-recording replaces it. */
+  recordFeedback(key: string, context: QikoFeedback["context"], verdict: QikoFeedback["verdict"], reason?: string) {
+    update((s) => ({
+      ...s,
+      feedback: { ...(s.feedback ?? {}), [key]: { key, context, verdict, reason, at: nowIso() } },
+    }));
+  },
+
+  setAutomationPref(ruleId: string, enabled: boolean) {
+    update((s) => ({ ...s, automationPrefs: { ...(s.automationPrefs ?? {}), [ruleId]: enabled } }));
+  },
+
+  /** Approve or dismiss an automation proposal. Approvals carry the task or record they created. */
+  recordAutomationDecision(key: string, decision: "done" | "dismissed", taskId?: string) {
+    update((s) => ({ ...s, decisions: { ...s.decisions, [key]: { decision, at: nowIso(), taskId } } }));
+  },
+
+  clearFeedback(key: string) {
+    update((s) => {
+      const next = { ...(s.feedback ?? {}) };
+      delete next[key];
+      return { ...s, feedback: next };
+    });
+  },
 
   addMember(member: Omit<Member, "id">): string {
     const id = uid("m");
@@ -986,7 +1019,7 @@ export const crm = {
       nextAvailableDate: null,
       rate: input.rateAmount != null ? { amount: input.rateAmount, currency: "GBP", unit: "day" } : null,
       source: "network",
-      cvRef: `demo://cv/${id}`,
+      cvRef: `files://cv/${id}`,
       verifiedAt: null,
       ownerId: "me",
       notes: input.notes?.trim() || "",
@@ -1120,7 +1153,7 @@ export const crm = {
           priority: input.priority ?? "medium",
           linkedOpportunityId: input.linkedOpportunityId ?? null,
           archived: false,
-          stageHistory: [{ stage: "New Requirement", at, actorId: "me", reason: "Created in Tessiant CRM demo" }],
+          stageHistory: [{ stage: "New Requirement", at, actorId: "me", reason: "Created in Tessiant CRM" }],
           createdAt: at,
           updatedAt: at,
         };
@@ -1634,10 +1667,10 @@ export const crm = {
           nextAvailableDate: null,
           rate: input.rateAmount != null ? { amount: input.rateAmount, currency: "GBP", unit: "day" } : null,
           source: "external",
-          cvRef: "demo://cv/external",
+          cvRef: "files://cv/external",
           verifiedAt: null,
           ownerId: "me",
-          notes: input.notes?.trim() || "DEMO — recorded as externally sourced (not previously in Tessiant network).",
+          notes: input.notes?.trim() || "Recorded as externally sourced (not previously in the Tessiant network).",
           tags: ["external", "sourced"],
           status: "unverified",
           languages: ["English"],
@@ -1836,7 +1869,18 @@ export const crm = {
     );
   },
 
-  completeInterview(candidateId: string, input: { outcome: "positive" | "neutral" | "negative" | "pending"; summary: string }) {
+  completeInterview(
+    candidateId: string,
+    input: {
+      outcome: "positive" | "neutral" | "negative" | "pending";
+      summary: string;
+      ratings?: InterviewFeedback["ratings"];
+      recommend?: InterviewFeedback["recommend"];
+      by?: InterviewFeedback["by"];
+      strengths?: string;
+      concerns?: string;
+    },
+  ) {
     const at = nowIso();
     update((s) =>
       withTessiant(s, (slice) => {
@@ -1849,7 +1893,16 @@ export const crm = {
               ? {
                   ...item,
                   shortlistStatus: "interview" as const,
-                  interview: { heldAt: at, outcome: input.outcome, summary: input.summary.trim() },
+                  interview: {
+                    heldAt: at,
+                    outcome: input.outcome,
+                    summary: input.summary.trim(),
+                    ratings: input.ratings ?? item.interview.ratings,
+                    recommend: input.recommend ?? item.interview.recommend,
+                    by: input.by ?? item.interview.by,
+                    strengths: input.strengths?.trim() || item.interview.strengths,
+                    concerns: input.concerns?.trim() || item.interview.concerns,
+                  },
                   updatedAt: at,
                 }
               : item,
@@ -2020,9 +2073,9 @@ export const crm = {
             documents: existing?.documents ?? [
               {
                 id: uid("adoc"),
-                name: "DEMO contract pack",
+                name: "Contract pack",
                 kind: "contract",
-                ref: `demo://assignment/${placementId}/contract`,
+                ref: `files://assignment/${placementId}/contract`,
                 uploadedAt: at,
               },
             ],
@@ -2684,7 +2737,7 @@ export const crm = {
             id: uid("doc"),
             kind: "cv",
             name: name.trim() || `${associate.name} CV v${version}`,
-            ref: `demo://cv/${associate.id}-v${version}`,
+            ref: `files://cv/${associate.id}-v${version}`,
             uploadedAt: at,
             verifiedAt: at,
             version,
@@ -2754,7 +2807,7 @@ export const crm = {
       reqEvidence ? `[requirement:${reqEvidence.entityId}]` : "",
       insight.summary,
       `Recommended: ${insight.recommendedAction.label}`,
-      "DEMO — feedback captured for future rule review; no automatic model training claimed.",
+      "Feedback captured for future rule review.",
     ]
       .filter(Boolean)
       .join("\n");
@@ -2847,8 +2900,8 @@ export const crm = {
             qualitativeBenefit: input.qualitativeBenefit ?? null,
             currency: "GBP" as const,
             notes: already
-              ? "DEMO — financial fields suppressed to avoid double counting prior attribution"
-              : "DEMO — attribution from Tessiant Pulse outcome",
+              ? "Financial fields suppressed to avoid double counting prior attribution"
+              : "Attribution from Tessiant Pulse outcome",
             sourceEntityIds: input.sourceEntityIds,
           },
           createdAt: existing?.createdAt ?? at,

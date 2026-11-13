@@ -2,7 +2,10 @@
 
 import type { CrmState } from "./types";
 import { PULSE_TENANT_ID, type TessiantInsight } from "./tessiant-pulse-types";
-import { addDays } from "./format";
+import { addDays, formatDate } from "./format";
+import { founderDependency } from "./founder-dependency";
+import { benchTimeline } from "./bench-timeline";
+import { offeringCatalogue } from "./offerings";
 
 const DAY_MS = 86_400_000;
 
@@ -355,6 +358,144 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
     );
   }
 
+  // Rule: founder_dependency — the recorded dependency score, not just "one owner".
+  for (const account of tessiant.accounts.filter((item) => item.status !== "inactive")) {
+    const score = founderDependency(state, account.id, now);
+    if (!score || score.band !== "high") continue;
+    insights.push(
+      applyReview(
+        {
+          id: `ins_founder_${account.id}`,
+          tenantId: PULSE_TENANT_ID,
+          knowledgeBlockId: "commercial",
+          ruleId: "founder_dependency",
+          title: `${account.name} rests on ${score.keyPerson ?? "one person"}`,
+          summary: `Founder dependency ${score.score}/100${score.delta > 0 ? `, up ${score.delta} in three months` : ""}. ${score.drivers.map((item) => item.label).join("; ")}. Widen the relationship before it is tested.`,
+          priority: "high",
+          evidence: [
+            { entityType: "account", entityId: account.id, field: "founderDependency", observedValue: score.score, href: `/sales/accounts/${account.id}` },
+            ...score.drivers.map((driver) => ({ entityType: "account" as const, entityId: account.id, field: driver.label, observedValue: `+${driver.points}` })),
+          ],
+          generatedAt: asOf,
+          dataAsOf: asOf,
+          confidence: "verified",
+          recommendedAction: { type: "widen_relationship", label: "Add a second owner and a second stakeholder", suggestedOwnerId: account.primaryOwnerId ?? "me" },
+          reviewStatus: "pending",
+        },
+        tessiant.pulse,
+      ),
+    );
+  }
+
+  // Rule: proposal_without_brief — a staffing deal at Proposal or Negotiation with no requirement behind it.
+  for (const opportunity of (state.opportunities ?? []).filter((item) => (item.stage === "Proposal" || item.stage === "Negotiation") && item.type !== "advisory" && item.type !== "consultancy")) {
+    if (tessiant.requirements.some((req) => req.linkedOpportunityId === opportunity.id)) continue;
+    const account = tessiant.accounts.find((item) => item.id === opportunity.accountId);
+    insights.push(
+      applyReview(
+        {
+          id: `ins_proposal_${opportunity.id}`,
+          tenantId: PULSE_TENANT_ID,
+          knowledgeBlockId: "augmentation",
+          ruleId: "proposal_without_brief",
+          title: `${opportunity.name} is at ${opportunity.stage} with no brief behind it`,
+          summary: `£${opportunity.amount.toLocaleString("en-GB")} at ${opportunity.stage} for ${account?.name ?? "the client"}, expected ${formatDate(opportunity.expectedCloseDate)}. No staffing requirement is linked, so nobody is sourcing for a deal that may close.`,
+          priority: opportunity.stage === "Negotiation" ? "high" : "medium",
+          evidence: [
+            { entityType: "opportunity", entityId: opportunity.id, field: "stage", observedValue: opportunity.stage, href: `/sales/pipeline?opportunity=${opportunity.id}` },
+            { entityType: "opportunity", entityId: opportunity.id, field: "amount", observedValue: opportunity.amount },
+          ],
+          generatedAt: asOf,
+          dataAsOf: asOf,
+          confidence: "verified",
+          recommendedAction: { type: "open_requirement", label: "Open the requirement so sourcing starts before the deal closes", suggestedOwnerId: opportunity.ownerId ?? "me" },
+          reviewStatus: "pending",
+        },
+        tessiant.pulse,
+      ),
+    );
+  }
+
+  // Rule: bench_gap — a skill where briefs start inside 60 days and the bench runs short.
+  const timeline = benchTimeline(state, "skill");
+  for (const row of timeline.rows.filter((item) => item.cells[60].gap > 0)) {
+    const cell = row.cells[60];
+    insights.push(
+      applyReview(
+        {
+          id: `ins_bench_${row.key.replace(/[^a-z0-9]+/gi, "_")}`,
+          tenantId: PULSE_TENANT_ID,
+          knowledgeBlockId: "capability",
+          ruleId: "bench_gap",
+          title: `${row.label}: ${cell.gap} short inside 60 days`,
+          summary: `${cell.demand} seat${cell.demand === 1 ? "" : "s"} start within 60 days against ${cell.supply} on the bench by then (${cell.freeingUp} freeing up). Source or introduce before the start dates, not after.`,
+          priority: cell.gap >= 2 ? "high" : "medium",
+          evidence: cell.requirements.slice(0, 3).map((req) => ({ entityType: "requirement" as const, entityId: req.id, field: "startDate", observedValue: req.startDate, href: `/staffing/requirements/${req.id}` })),
+          generatedAt: asOf,
+          dataAsOf: asOf,
+          confidence: "verified",
+          recommendedAction: { type: "source_ahead", label: `Run the sweep and request introductions for ${row.label}`, suggestedOwnerId: "me" },
+          reviewStatus: "pending",
+        },
+        tessiant.pulse,
+      ),
+    );
+  }
+
+  // Rule: offering_gap — an offering clients want with nobody free to deliver it.
+  for (const offering of offeringCatalogue(state).filter((item) => item.health === "demand-exceeds-pool")) {
+    insights.push(
+      applyReview(
+        {
+          id: `ins_offering_${offering.key.replace(/[^a-z0-9]+/gi, "_")}`,
+          tenantId: PULSE_TENANT_ID,
+          knowledgeBlockId: "capability",
+          ruleId: "offering_gap",
+          title: `${offering.name}: demand exceeds the pool`,
+          summary: `${offering.interested.length + offering.openDeals.length} demand signal${offering.interested.length + offering.openDeals.length === 1 ? "" : "s"} against ${offering.availableNow} available of ${offering.pool.length} who record the offering. Sell carefully until sourcing catches up.`,
+          priority: "medium",
+          evidence: [
+            ...offering.interested.slice(0, 2).map((account) => ({ entityType: "account" as const, entityId: account.id, field: "offeringInterest", observedValue: offering.name, href: `/sales/accounts/${account.id}` })),
+            ...offering.pool.slice(0, 2).map((associate) => ({ entityType: "associate" as const, entityId: associate.id, field: "availability", observedValue: associate.availability, href: `/staffing/associates/${associate.id}` })),
+          ],
+          generatedAt: asOf,
+          dataAsOf: asOf,
+          confidence: "verified",
+          recommendedAction: { type: "grow_pool", label: `Grow the ${offering.name} pool before the next proposal`, suggestedOwnerId: "me" },
+          reviewStatus: "pending",
+        },
+        tessiant.pulse,
+      ),
+    );
+  }
+
+  // Rule: sia_dormant — SIAs whose sector has prospects and who have introduced nobody.
+  const introduced = new Set(state.leads.map((lead) => lead.introducedByAssociateId).filter(Boolean));
+  const prospectSectors = new Set(tessiant.accounts.filter((item) => item.status !== "active").map((item) => item.sector));
+  const dormant = tessiant.associates.filter((item) => item.roleType === "SIA" && item.status === "active" && !introduced.has(item.id) && item.sectors.some((sector) => prospectSectors.has(sector)));
+  if (dormant.length) {
+    insights.push(
+      applyReview(
+        {
+          id: "ins_sia_dormant",
+          tenantId: PULSE_TENANT_ID,
+          knowledgeBlockId: "network",
+          ruleId: "sia_dormant",
+          title: `${dormant.length} SIA${dormant.length === 1 ? "" : "s"} with prospects in their sector and no introduction on record`,
+          summary: `${dormant.slice(0, 3).map((item) => item.name).join(", ")}${dormant.length > 3 ? ` and ${dormant.length - 3} more` : ""} advise in sectors where Tessiant has prospects. SIA-sourced revenue is the number to move; an introduction ask costs one conversation.`,
+          priority: "medium",
+          evidence: dormant.slice(0, 4).map((item) => ({ entityType: "associate" as const, entityId: item.id, field: "introductions", observedValue: 0, href: `/staffing/associates/${item.id}` })),
+          generatedAt: asOf,
+          dataAsOf: asOf,
+          confidence: "verified",
+          recommendedAction: { type: "request_introduction", label: "Ask the SIAs for one introduction each", suggestedOwnerId: "me" },
+          reviewStatus: "pending",
+        },
+        tessiant.pulse,
+      ),
+    );
+  }
+
   // Deduplicate by id; sort by priority
   const rank = { high: 0, medium: 1, low: 2 };
   const unique = new Map<string, TessiantInsight>();
@@ -416,17 +557,17 @@ export function demoChatAnswers(): { question: string; answer: string }[] {
     {
       question: "Where are our biggest staffing capacity gaps?",
       answer:
-        "DEMO grounded answer: Pulse rules currently flag SAP specialist scarcity and public-sector coverage vs open demand using the shared Tessiant CRM sample. Open the Network and Augmentation knowledge blocks for evidence-linked insights — numbers are computed from fixture records, not invented.",
+        "Pulse rules currently flag SAP specialist scarcity and public-sector coverage vs open demand using the shared Tessiant CRM sample. Open the Network and Augmentation knowledge blocks for evidence-linked insights — numbers are computed from fixture records, not invented.",
     },
     {
       question: "Which accounts have founder relationship risk?",
       answer:
-        "DEMO grounded answer: Accounts with a primary owner and no secondary owner trigger the relationship_concentration rule. In seed data, Crest Consumer Brands is the example. Accepting that insight creates a continuity task; it does not message the client.",
+        "Accounts with a primary owner and no secondary owner trigger the relationship_concentration rule. In seed data, Crest Consumer Brands is the example. Accepting that insight creates a continuity task; it does not message the client.",
     },
     {
       question: "How much revenue has Pulse generated?",
       answer:
-        "DEMO grounded answer: Pulse does not invent revenue. The Value page separates realised (confirmed placements/outcomes), pipeline potential (unclosed), and estimated time saved. Quoted CRM pipeline is never treated as realised.",
+        "Pulse does not invent revenue. The Value page separates realised (confirmed placements/outcomes), pipeline potential (unclosed), and estimated time saved. Quoted CRM pipeline is never treated as realised.",
     },
   ];
 }

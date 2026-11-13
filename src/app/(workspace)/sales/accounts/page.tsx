@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import Icon from "@/components/ui/Icon";
+import BrandMark from "@/components/ui/BrandMark";
 import AccountQuickPanel from "@/components/sales/AccountQuickPanel";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
 import CommercialInsights from "@/components/sales/CommercialInsights";
@@ -10,7 +11,8 @@ import { engagementInsights } from "@/lib/commercial-intelligence";
 import { opportunitiesForAccount } from "@/lib/sales-crm";
 import { liveAssignments, resolveAssignmentAccountId } from "@/lib/assignments";
 import { isOpen, sortTasks } from "@/lib/insights";
-import { initials } from "@/lib/format";
+
+import { dependencyLabel, founderDependency } from "@/lib/founder-dependency";
 import directory from "@/components/ui/Directory.module.css";
 import styles from "../sales.module.css";
 
@@ -47,6 +49,7 @@ export default function SalesAccountsPage() {
           primary,
           opps,
           deployed,
+          dependency: founderDependency(state, account.id),
           nextAction: nextTask?.title ?? opps[0]?.nextStep ?? (deployed.length ? "Review deployments" : "Plan next touch"),
         };
       });
@@ -92,6 +95,7 @@ export default function SalesAccountsPage() {
             <span>Account</span>
             <span>Sector / status</span>
             <span>Owner</span>
+            <span>Dependency</span>
             <span>Open / live</span>
             <span>Next action</span>
             <span />
@@ -101,7 +105,7 @@ export default function SalesAccountsPage() {
             <EmptyState title="No accounts match" icon="building" />
           ) : (
             <div className={directory.list}>
-              {rows.map(({ account, primary, opps, deployed, nextAction }) => (
+              {rows.map(({ account, primary, opps, deployed, nextAction, dependency }) => (
                 <button
                   key={account.id}
                   type="button"
@@ -109,7 +113,7 @@ export default function SalesAccountsPage() {
                   onClick={() => setPreviewId(account.id)}
                 >
                   <span className={directory.identity}>
-                    <span className="avatar">{initials(account.name)}</span>
+                    <BrandMark name={account.name} size={36} radius={10} />
                     <span className={directory.copy}>
                       <b>{account.name}</b>
                       <small>{account.industry}</small>
@@ -122,6 +126,16 @@ export default function SalesAccountsPage() {
                   <span className={directory.stat}>
                     <b>{primary?.name ?? "Unassigned"}</b>
                     <small>Relationship owner</small>
+                  </span>
+                  <span className={`${directory.stat} ${styles.dependency}`} data-band={dependency?.band ?? "low"}>
+                    <b className="tabular">
+                      <i style={{ width: `${dependency?.score ?? 0}%` }} />
+                      {dependency?.score ?? 0}
+                      {dependency && dependency.delta !== 0 ? (
+                        <Icon name={dependency.delta > 0 ? "trendUp" : "trendDown"} size={12} />
+                      ) : null}
+                    </b>
+                    <small>{dependency ? dependencyLabel(dependency.band) : "—"}</small>
                   </span>
                   <span className={directory.stat}>
                     <b className="tabular">

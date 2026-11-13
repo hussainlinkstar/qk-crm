@@ -1,0 +1,147 @@
+.lede {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid color-mix(in srgb, var(--qiko-accent) 22%, var(--line));
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--qiko-accent-soft), var(--surface) 60%);
+}
+
+.lede h2 {
+  margin-top: 2px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lede p:last-child {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kpi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.kpi b {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.kpi span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Directory rows: the same grid as the accounts list, with the offering's five numbers. */
+.header,
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(90px, 0.6fr) minmax(90px, 0.6fr) minmax(80px, 0.6fr) minmax(80px, 0.55fr) minmax(130px, 0.8fr) auto;
+  align-items: center;
+  gap: 12px 14px;
+}
+
+.header {
+  padding: 0 4px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.row {
+  width: 100%;
+  padding: 12px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.row:hover,
+.row:focus-visible {
+  background: var(--brand-soft);
+  outline: none;
+}
+
+.health {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.health[data-health="demand-exceeds-pool"] {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.health[data-health="healthy"] {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.health[data-health="pool-idle"] {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.disclosure {
+  color: var(--subtle);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+@media (max-width: 960px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .header {
+    display: none;
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .row > :not(:first-child):not(:last-child) {
+    display: none;
+  }
+}

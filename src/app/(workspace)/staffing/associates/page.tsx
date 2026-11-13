@@ -2,14 +2,20 @@
 
 import Link from "next/link";
 import Select from "@/components/ui/Select";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import AddAssociateModal from "@/components/staffing/AddAssociateModal";
 import AssociateQuickPanel from "@/components/staffing/AssociateQuickPanel";
+import InsightSignals from "@/components/sales/InsightSignals";
+import ConfirmQueue from "@/components/staffing/ConfirmQueue";
+import Portrait from "@/components/ui/Portrait";
+import BarList from "@/components/ui/BarList";
 import { EmptyState, SkeletonRows, useWorkspaceData } from "@/components/ui/bits";
-import { initials } from "@/lib/format";
+import { initials, plural } from "@/lib/format";
+import { talentSupplyVsDemand } from "@/lib/supply-demand";
+import salesStyles from "@/app/(workspace)/sales/sales.module.css";
 import {
   TALENT_PAGE_SIZE,
   TALENT_SAVED_VIEWS,
@@ -46,16 +52,20 @@ export default function AssociatesPage() {
   );
   const [page, setPage] = useState(Number(params.get("page") || 1));
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [layout, setLayout] = useState<"cards" | "table">(params.get("layout") === "cards" ? "cards" : "table");
+  const [layout, setLayout] = useState<"cards" | "table">(params.get("layout") === "table" ? "table" : "cards");
   const [quickId, setQuickId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(params.get("new") === "1");
   const findingRaw = params.get("finding");
   const finding = TALENT_INTEL_FINDINGS.includes(findingRaw as TalentIntelFinding) ? (findingRaw as TalentIntelFinding) : "";
 
-  useEffect(() => {
+  // Deep links (?verified=1, ?new=1) adjust state during render, not in an effect.
+  const paramKey = params.toString();
+  const [seenParamKey, setSeenParamKey] = useState(paramKey);
+  if (paramKey !== seenParamKey) {
+    setSeenParamKey(paramKey);
     if (params.get("verified") === "1") setView("available_now");
     if (params.get("new") === "1") setAddOpen(true);
-  }, [params]);
+  }
 
   const skills = useMemo(() => {
     if (!tessiant) return [];
@@ -67,6 +77,7 @@ export default function AssociatesPage() {
   }, [tessiant]);
 
   const intel = useMemo(() => (state ? talentNetworkIntel(state) : []), [state]);
+  const supply = useMemo(() => (state ? talentSupplyVsDemand(state).slice(0, 6) : []), [state]);
 
   const filtered = useMemo(() => {
     if (!state) return [];
@@ -90,9 +101,13 @@ export default function AssociatesPage() {
   const advancedFilterCount = [skill, sector, roleType, seniority].filter(Boolean).length;
   const activeFilterCount = advancedFilterCount + (availability ? 1 : 0) + (finding ? 1 : 0);
 
-  useEffect(() => {
+  // Any filter change returns to page 1.
+  const filterKey = JSON.stringify([q, skill, sector, seniority, roleType, availability, view, finding]);
+  const [seenFilterKey, setSeenFilterKey] = useState(filterKey);
+  if (filterKey !== seenFilterKey) {
+    setSeenFilterKey(filterKey);
     setPage(1);
-  }, [q, skill, sector, seniority, roleType, availability, view, finding]);
+  }
 
   if (!state || !tessiant) {
     return (
@@ -109,7 +124,7 @@ export default function AssociatesPage() {
     const search = new URLSearchParams();
     if (nextView !== "all") search.set("view", nextView);
     if (nextFinding) search.set("finding", nextFinding);
-    if (nextLayout === "cards") search.set("layout", "cards");
+    if (nextLayout === "table") search.set("layout", "table");
     return `/staffing/associates${search.size ? `?${search}` : ""}`;
   };
 
@@ -251,23 +266,54 @@ export default function AssociatesPage() {
         </div>
       </section>
 
-      {intel.length > 0 ? (
-        <section className={talent.intelStrip} aria-label="Network intelligence">
-          {intel.map((item) => (
-            <article key={item.id} className={talent.intelCard} data-active={finding === item.id}>
-              <div className={talent.intelHead}>
-                <h3>{item.title}</h3>
-                <span className="chip chip-ai">Qiko</span>
-              </div>
-              <b className={talent.intelCount}>{item.count}</b>
-              <p className={talent.intelWhy}>{item.explanation}</p>
-              <button type="button" className={talent.intelAction} onClick={() => applyFinding(item.id)}>
-                {item.action}
-              </button>
-            </article>
-          ))}
+      <ConfirmQueue state={state} />
+
+      <div className={salesStyles.intelGrid}>
+        <InsightSignals
+          title="Network intelligence"
+          summary="What the recorded profiles and assignments say. Each signal filters the directory to the people it is about."
+          items={intel.map((item) => ({
+            id: item.id,
+            kind: item.kind === "conflict" ? "Conflict" : item.kind === "verify" ? "Verify" : "Match",
+            title: `${item.count} · ${item.title}`,
+            detail: item.explanation,
+            actionLabel: finding === item.id ? "Filtering the directory" : item.action,
+            onClick: () => applyFinding(item.id),
+            status: finding === item.id ? "Active filter" : undefined,
+          }))}
+          emptyTitle="Availability is current, assignments are consistent and nothing is waiting on a match."
+        />
+        <section className="card">
+          <div className="card-head">
+            <div>
+              <h2>Verified supply by sector</h2>
+              <p className="card-sub">Verified available associates against open headcount. Click a sector to filter.</p>
+            </div>
+          </div>
+          <div className="card-body">
+            {supply.length === 0 ? (
+              <p className="muted">No open demand recorded.</p>
+            ) : (
+              <BarList
+                label="Verified available associates per sector"
+                max={Math.max(3, ...supply.map((row) => Math.max(row.verifiedAvailable, row.demandHeadcount)))}
+                rows={supply.map((row) => ({
+                  key: row.sector,
+                  label: row.sector,
+                  value: row.verifiedAvailable,
+                  display: `${row.verifiedAvailable} available`,
+                  caption: `${plural(row.demandHeadcount, "open position")}${row.gapHeadcount > 0 ? ` · gap ${row.gapHeadcount}` : ""}`,
+                  tone: row.gapHeadcount > 0 ? ("warning" as const) : ("brand" as const),
+                  onClick: () => {
+                    setSector(row.sector);
+                    setView("all");
+                  },
+                }))}
+              />
+            )}
+          </div>
         </section>
-      ) : null}
+      </div>
 
       <section className="card">
         <div className="card-head">
@@ -300,7 +346,9 @@ export default function AssociatesPage() {
                           {associate.verifiedAt ? <span className={talent.cardMark}>Verified</span> : <span className={talent.cardMarkMuted}>Profile</span>}
                         </div>
                         <button type="button" className={talent.cardHit} onClick={() => setQuickId(associate.id)}>
-                          <span className={talent.cardAvatar}>{initials(associate.name)}</span>
+                          <span className={talent.cardAvatar}>
+                            <Portrait name={associate.name} size={72} ring={associate.availability} />
+                          </span>
                           <span className={talent.statusPill}>{statusLabel}</span>
                           <b className={talent.cardName}>{associate.name}</b>
                           <span className={talent.cardRole}>
@@ -346,7 +394,7 @@ export default function AssociatesPage() {
                         <th>Sector</th>
                         <th>Availability</th>
                         <th>Current assignment</th>
-                        <th>Quick action</th>
+                        <th aria-label="Open" />
                       </tr>
                     </thead>
                     <tbody>
@@ -385,17 +433,8 @@ export default function AssociatesPage() {
                                 <span className="muted">Bench</span>
                               )}
                             </td>
-                            <td onClick={(event) => event.stopPropagation()}>
-                              <div className={styles.rowActions}>
-                                <Button size="small" variant="secondary" onClick={() => setQuickId(associate.id)}>
-                                  Quick view
-                                </Button>
-                                <Link href={`/staffing/associates/${associate.id}`}>
-                                  <Button size="small" variant="ghost">
-                                    Profile
-                                  </Button>
-                                </Link>
-                              </div>
+                            <td className={talent.rowGo}>
+                              <Icon name="chevronRight" size={15} />
                             </td>
                           </tr>
                         );
