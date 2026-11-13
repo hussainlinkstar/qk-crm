@@ -18,6 +18,7 @@ function nextPath() {
 }
 
 
+
 export default function LoginView() {
   const router = useRouter();
   const session = useSession();
