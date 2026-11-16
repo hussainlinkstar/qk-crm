@@ -14,7 +14,7 @@ Snapshot of the running app. Re-read the cited files before editing. Package man
 | Signed-in user | Always `userId: "me"`. Name is derived from the email local-part unless the seed member email matches |
 | Gate | `(workspace)/layout.tsx` → `AppShell`. No session redirects to `/login?next=` |
 | Seed | `createDemoState` in `src/data/demo-seed.ts`. Staffing slice from `createTessiantSlice` in `src/data/tessiant-seed.ts` |
-| Version | `DATA_VERSION` in `demo-seed.ts` (16 at last skill write). Mismatch discards stored CRM state |
+| Version | `DATA_VERSION` in `demo-seed.ts` (27 at last skill write). Mismatch discards stored CRM state |
 
 `CrmState` holds sales records at the root and staffing/Pulse under `tessiant`. `dataMode` is `"demo"`.
 

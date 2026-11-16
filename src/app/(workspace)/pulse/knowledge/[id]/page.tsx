@@ -21,7 +21,9 @@ import {
   rulePlainLanguage,
 } from "@/lib/pulse-presentation";
 import { networkIntelligenceView } from "@/lib/network-intelligence";
-import { timeAgo } from "@/lib/format";
+import { avatarStyle, initials, timeAgo } from "@/lib/format";
+import { buildLockedLearnings, type LockedLearning } from "@/lib/tessiant-locked-learnings";
+import type { InsightEvidence } from "@/lib/tessiant-pulse-types";
 import {
   getKnowledgeBlock,
   getKnowledgeBlockLiveMetrics,
@@ -91,6 +93,12 @@ export default function PulseKnowledgeDetailPage() {
     return state.tessiant.pulse.outcomes.find((item) => item.insightId === selected.id) ?? null;
   }, [selected, state]);
 
+  const locked = useMemo(() => {
+    if (!state) return { confirmed: [], acceptedOpen: [], rejected: [], awaiting: [] as typeof insights };
+    return buildLockedLearnings(state, insights);
+  }, [state, insights]);
+  const lockedTotal = locked.confirmed.length + locked.acceptedOpen.length + locked.rejected.length;
+
   if (!state) {
     return (
       <PulseShell>
@@ -130,9 +138,6 @@ export default function PulseKnowledgeDetailPage() {
   const showNetworkTrends = block.id === "network" || block.id === "capability";
   const showFunnelTrends = block.id === "augmentation" || block.id === "capability";
   const showCommercialTrends = block.id === "commercial";
-  const accepted = insights.filter((item) => item.reviewStatus === "accepted");
-  const rejected = insights.filter((item) => item.reviewStatus === "rejected");
-
   type JourneyStep = { label: string; value: string; hint: string; href: string; focus?: boolean };
   const journey: JourneyStep[] =
     isNetwork && networkView
@@ -379,36 +384,34 @@ export default function PulseKnowledgeDetailPage() {
                         </div>
                         <div className={styles.findingsPaneBodyExact}>
                           <p>{selected.summary}</p>
+                          <p className={styles.evidenceRuleExact}>{rulePlainLanguage(selected.ruleId)}</p>
                           <div className={styles.evidenceMetricsExact}>
                             <div>
-                              <b>{counts.pending}</b>
-                              <span>Pending</span>
+                              <b>{selected.reviewStatus}</b>
+                              <span>Status</span>
                             </div>
                             <div>
                               <b>{selected.priority}</b>
-                              <span>Strength</span>
+                              <span>Priority</span>
                             </div>
                             <div>
-                              <b>{selected.generatedAt.slice(0, 10)}</b>
-                              <span>Generated</span>
+                              <b>{selected.confidence}</b>
+                              <span>Confidence</span>
                             </div>
                             <div>
-                              <b>{selected.evidence[0]?.entityId ?? "tessiant"}</b>
-                              <span>Record</span>
+                              <b>{selected.evidence.length}</b>
+                              <span>Records</span>
                             </div>
                           </div>
-                          <ul className={styles.evidenceListExact}>
-                            {selected.evidence.slice(0, 4).map((item, index) => (
-                              <li key={`${item.entityType}-${item.entityId}-${index}`}>
-                                <span>{evidenceKindLabel(item)}</span>
-                                {item.href ? (
-                                  <Link href={item.href} className="text-link">
-                                    {evidenceLabel(state, item)}
-                                  </Link>
-                                ) : (
-                                  <b>{evidenceLabel(state, item)}</b>
-                                )}
-                              </li>
+                          <div className={styles.evidenceMetaRowExact}>
+                            <span>Rule · {selected.ruleId}</span>
+                            <span>Generated · {selected.generatedAt.slice(0, 10)}</span>
+                            <span>Data as of · {selected.dataAsOf.slice(0, 10)}</span>
+                            <span>Benefit · {expectedBenefit(selected)}</span>
+                          </div>
+                          <ul className={styles.evidencePeople}>
+                            {selected.evidence.slice(0, 6).map((item, index) => (
+                              <EvidencePersonRow key={`${item.entityType}-${item.entityId}-${index}`} state={state} item={item} />
                             ))}
                           </ul>
                           <p className={styles.evidenceNoteExact}>
@@ -422,17 +425,49 @@ export default function PulseKnowledgeDetailPage() {
                         </div>
                         <div className={styles.findingsPaneBodyExact}>
                           {selected.reviewStatus === "rejected" ? (
-                            <p>Rejected. It will not go on the backlog.</p>
+                            <>
+                              <p className={styles.actionTitleExact}>Rejected</p>
+                              <p>
+                                {selected.reviewReason
+                                  ? `Reason: ${selected.reviewReason}. `
+                                  : ""}
+                                This signal will not go on the backlog, and no commercial value was assumed.
+                              </p>
+                              <div className={styles.actionContextExact}>
+                                <p>{rulePlainLanguage(selected.ruleId)}</p>
+                                <p>Original action was: {selected.recommendedAction.label}</p>
+                              </div>
+                            </>
                           ) : selectedOutcome?.status === "completed" ? (
                             <>
+                              <p className={styles.actionTitleExact}>Measured outcome</p>
                               <p>{selectedOutcome.summary}</p>
-                              <Link href="/pulse/value" className={styles.btnPulsePrimary} style={{ marginTop: "1rem", width: "fit-content" }}>
-                                Open Value
-                              </Link>
+                              {selectedOutcome.value.qualitativeBenefit ? (
+                                <p className={styles.actionMetricExact}>{selectedOutcome.value.qualitativeBenefit}</p>
+                              ) : null}
+                              <div className={styles.actionContextExact}>
+                                <p>Accepted action: {selected.recommendedAction.label}</p>
+                                <p>Value tracks {expectedBenefit(selected)} from the completion date.</p>
+                              </div>
+                              <div className={styles.actionRowExact}>
+                                <Link href="/pulse/value" className={styles.btnPulsePrimary}>
+                                  Open Value
+                                </Link>
+                                {selected.taskId ? (
+                                  <button type="button" className={styles.btnPulseSecondary} onClick={() => openTask(selected.taskId!)}>
+                                    Open Task
+                                  </button>
+                                ) : null}
+                              </div>
                             </>
                           ) : selected.reviewStatus === "accepted" ? (
                             <>
-                              <p>Accepted once. It is on the backlog.</p>
+                              <p className={styles.actionTitleExact}>{selected.recommendedAction.label}</p>
+                              <p>Accepted. Follow-through is on the backlog — outcome not measured yet.</p>
+                              <div className={styles.actionContextExact}>
+                                <p>{rulePlainLanguage(selected.ruleId)}</p>
+                                <p>When complete, Value can track {expectedBenefit(selected)}.</p>
+                              </div>
                               <div className={styles.actionRowExact}>
                                 {selected.taskId ? (
                                   <button type="button" className={styles.btnPulsePrimary} onClick={() => openTask(selected.taskId!)}>
@@ -448,9 +483,13 @@ export default function PulseKnowledgeDetailPage() {
                             <>
                               <p className={styles.actionTitleExact}>{selected.recommendedAction.label}</p>
                               <p>{rulePlainLanguage(selected.ruleId)}</p>
-                              <p className={styles.actionMetricExact}>
-                                If this works, Value will track {expectedBenefit(selected)} from the completion date.
-                              </p>
+                              <div className={styles.actionContextExact}>
+                                <p>
+                                  Accept creates a to-do. Completing it can record an outcome — realised revenue stays
+                                  separate from pipeline potential.
+                                </p>
+                                <p>If this works, Value will track {expectedBenefit(selected)} from the completion date.</p>
+                              </div>
                               <div className={styles.actionRowExact}>
                                 <button type="button" className={styles.btnPulsePrimary} onClick={() => accept(selected.id)}>
                                   Accept
@@ -608,51 +647,86 @@ export default function PulseKnowledgeDetailPage() {
                 <div>
                   <p className={styles.lockTitle}>Locked learnings</p>
                   <p className={styles.lockCopy}>
-                    {block.title} trains on accepted and rejected decisions. Prompts, tone, and behaviour cannot be edited
-                    while it is serving Tessiant operators. This is the record of what was accepted and what was rejected.
+                    {block.title} only locks what operators accepted or rejected, then measured. Every statement below is
+                    composed from the insight summary, CRM evidence, and recorded outcome — nothing invented.
                   </p>
                 </div>
               </div>
-              <div className={styles.biGrid}>
-                <section className={styles.cardExact}>
-                  <div className={styles.kbCardBody}>
-                    <h3>Accepted</h3>
-                    <ul className={styles.lockList}>
-                      {accepted.length ? (
-                        accepted.map((item) => (
-                          <li key={item.id}>
-                            <p>{item.title}</p>
-                            <span>
-                              Accepted · {item.taskId ? "on the backlog" : "recorded"} · {item.generatedAt.slice(0, 10)}
-                            </span>
-                          </li>
-                        ))
-                      ) : (
-                        <li className={styles.lockEmpty}>Nothing accepted yet.</li>
-                      )}
-                    </ul>
-                  </div>
-                </section>
-                <section className={styles.cardExact}>
-                  <div className={styles.kbCardBody}>
-                    <h3>Rejected</h3>
-                    <ul className={styles.lockList}>
-                      {rejected.length ? (
-                        rejected.map((item) => (
-                          <li key={item.id}>
-                            <p>{item.title}</p>
-                            <span>
-                              Rejected{item.reviewReason ? ` · ${item.reviewReason}` : ""} · {item.generatedAt.slice(0, 10)}
-                            </span>
-                          </li>
-                        ))
-                      ) : (
-                        <li className={styles.lockEmpty}>Nothing rejected yet.</li>
-                      )}
-                    </ul>
-                  </div>
-                </section>
+
+              <div className={styles.lockStats}>
+                <div>
+                  <b className="tabular">{locked.confirmed.length}</b>
+                  <span>Confirmed</span>
+                </div>
+                <div>
+                  <b className="tabular">{locked.acceptedOpen.length}</b>
+                  <span>Accepted · open</span>
+                </div>
+                <div>
+                  <b className="tabular">{locked.rejected.length}</b>
+                  <span>Rejected</span>
+                </div>
+                <div>
+                  <b className="tabular">{locked.awaiting.length}</b>
+                  <span>Awaiting lock</span>
+                </div>
               </div>
+
+              {lockedTotal === 0 ? (
+                <section className={styles.cardExact}>
+                  <div className={styles.kbCardBody}>
+                    <EmptyState title="No locked learnings yet" icon="sparkles">
+                      Accept or reject an insight on Overview, complete the to-do, and the measured result lands here.
+                    </EmptyState>
+                  </div>
+                </section>
+              ) : (
+                <div className={styles.lockStack}>
+                  {locked.confirmed.length ? (
+                    <LockedLearningSection
+                      title="Confirmed learnings"
+                      hint="Accepted, completed, and measured against CRM evidence"
+                      items={locked.confirmed}
+                      onOpenTask={openTask}
+                    />
+                  ) : null}
+                  {locked.acceptedOpen.length ? (
+                    <LockedLearningSection
+                      title="Accepted · outcome open"
+                      hint="On the backlog or still pending measurement"
+                      items={locked.acceptedOpen}
+                      onOpenTask={openTask}
+                    />
+                  ) : null}
+                  {locked.rejected.length ? (
+                    <LockedLearningSection
+                      title="Rejected"
+                      hint="Operator declines with reason — no commercial value assumed"
+                      items={locked.rejected}
+                      onOpenTask={openTask}
+                    />
+                  ) : null}
+                </div>
+              )}
+
+              {locked.awaiting.length ? (
+                <section className={`${styles.cardExact} ${styles.lockAwaiting}`} aria-label="Signals awaiting lock">
+                  <div className={styles.kbCardHead}>
+                    <h3>Signals awaiting lock</h3>
+                    <span>{locked.awaiting.length} pending · not locked yet</span>
+                  </div>
+                  <ul className={styles.lockAwaitList}>
+                    {locked.awaiting.map((item) => (
+                      <li key={item.id}>
+                        <button type="button" onClick={() => { setSelectedId(item.id); setTab("overview"); }}>
+                          <b>{item.title}</b>
+                          <span>{item.summary}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
             </div>
           ) : null}
 
@@ -804,5 +878,119 @@ export default function PulseKnowledgeDetailPage() {
         </div>
       </div>
     </PulseShell>
+  );
+}
+
+function EvidencePersonRow({
+  state,
+  item,
+}: {
+  state: NonNullable<ReturnType<typeof useWorkspaceData>["state"]>;
+  item: InsightEvidence;
+}) {
+  const label = evidenceLabel(state, item);
+  const kind = evidenceKindLabel(item);
+  const mark = initials(label);
+  const colours = avatarStyle(label);
+  const detail =
+    item.field != null && item.observedValue != null && item.observedValue !== ""
+      ? `${item.field}: ${String(item.observedValue)}`
+      : null;
+  const body = (
+    <>
+      <span className={styles.evidenceAvatar} style={colours} aria-hidden>
+        {mark}
+      </span>
+      <span className={styles.evidencePersonCopy}>
+        <b>{label}</b>
+        <span>
+          {kind}
+          {detail ? ` · ${detail}` : ""}
+        </span>
+      </span>
+    </>
+  );
+
+  return (
+    <li>
+      {item.href ? (
+        <Link href={item.href} className={styles.evidencePerson}>
+          {body}
+        </Link>
+      ) : (
+        <div className={styles.evidencePerson}>{body}</div>
+      )}
+    </li>
+  );
+}
+
+function LockedLearningSection({
+  title,
+  hint,
+  items,
+  onOpenTask,
+}: {
+  title: string;
+  hint: string;
+  items: LockedLearning[];
+  onOpenTask: (taskId: string) => void;
+}) {
+  return (
+    <section className={styles.cardExact} aria-label={title}>
+      <div className={styles.kbCardHead}>
+        <h3>{title}</h3>
+        <span>
+          {items.length} · {hint}
+        </span>
+      </div>
+      <ul className={styles.lockLearningList}>
+        {items.map((item) => (
+          <li key={item.id} className={styles.lockLearningCard} data-kind={item.kind}>
+            <div className={styles.lockLearningTop}>
+              <span className={styles.lockKindChip} data-kind={item.kind}>
+                {item.kind === "confirmed" ? "Confirmed" : item.kind === "accepted" ? "Accepted" : "Rejected"}
+              </span>
+              <span className="chip">{item.priority}</span>
+              <span className="chip">{item.confidence}</span>
+              <span className={styles.lockDate}>{item.decidedAt.slice(0, 10)}</span>
+            </div>
+            <h4>{item.title}</h4>
+            <p className={styles.lockLearningBody}>{item.learning}</p>
+            {item.valueNote ? <p className={styles.lockValueNote}>{item.valueNote}</p> : null}
+            {item.evidence.length ? (
+              <ul className={styles.lockEvidence}>
+                {item.evidence.map((row, index) => (
+                  <li key={`${item.id}-${row.label}-${index}`}>
+                    {row.href ? (
+                      <Link href={row.href}>
+                        {row.kind} · {row.label}
+                      </Link>
+                    ) : (
+                      <span>
+                        {row.kind} · {row.label}
+                      </span>
+                    )}
+                    {row.field != null && row.observedValue != null && row.observedValue !== "" ? (
+                      <em>
+                        {row.field}: {String(row.observedValue)}
+                      </em>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <div className={styles.lockLearningFoot}>
+              <span>Action: {item.action}</span>
+              <span>Rule: {item.ruleId}</span>
+              {item.taskId ? (
+                <button type="button" className="text-link" onClick={() => onOpenTask(item.taskId!)}>
+                  Open linked to-do
+                </button>
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

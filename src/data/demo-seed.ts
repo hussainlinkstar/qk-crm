@@ -17,7 +17,7 @@ import { adaptLeadRecord, normalizeLeadSource, normalizeLeadStatus } from "@/lib
 import { addDays, toDateKey } from "@/lib/format";
 import { createTessiantSlice } from "./tessiant-seed";
 
-export const DATA_VERSION = 24;
+export const DATA_VERSION = 27;
 
 export function demoMessages(ago: (hours: number) => string): ConversationMessage[] {
   return [
@@ -333,7 +333,20 @@ export function createDemoState(owner: { name: string; email: string }): CrmStat
     leadId: "l_felix",
     createdHoursAgo: 20,
   });
-
+  // Network Intelligence locked learning — grounded in sia_dormant evidence (prospect-sector SIAs, zero intros).
+  task({
+    id: "task_pulse_sia_dormant",
+    title: "Ask the SIAs for one introduction each",
+    description:
+      "[pulse-insight:ins_sia_dormant]\nSIAs with prospects in their sector and no introduction on record.\nRecommended: Ask the SIAs for one introduction each",
+    status: "completed",
+    priority: "medium",
+    due: addDays(-1),
+    ownerId: "me",
+    leadId: "l_felix",
+    createdHoursAgo: 96,
+    completedHoursAgo: 30,
+  });
   const contacts: Contact[] = [
     {
       id: "ct_amelia",

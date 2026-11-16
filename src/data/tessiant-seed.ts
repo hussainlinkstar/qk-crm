@@ -30,7 +30,8 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       rate: { amount: 950, currency: "GBP", unit: "day" },
       source: "network",
       cvRef: "files://cv/elena-vos",
-      verifiedAt: ago(240),
+      // Older than availabilityVerificationDays so Network can surface a re-verify signal while shortlisted.
+      verifiedAt: ago(45 * 24),
       ownerId: "me",
       notes: "Strong prior UK retail placements.",
       tags: ["verified", "retail"],
@@ -189,7 +190,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
 
   // Expand to ~48 sample profiles with synthetic but labelled DEMO variants
   const templates: Array<Omit<(typeof associates)[number], "id" | "name"> & { name: string; idBase: string }> = [
-    { idBase: "as_sam", name: "Samira Khalil", roleType: "consultant", headline: "Change & programme lead", seniority: "senior", skills: ["Change management", "Programme management"], sectors: ["Retail"], location: "Leeds, UK", workingMode: "hybrid", availability: "available", nextAvailableDate: day(5), rate: { amount: 820, currency: "GBP", unit: "day" }, source: "network", cvRef: "files://cv/samira", verifiedAt: ago(90), ownerId: "me", notes: "", tags: ["retail"], status: "active", languages: ["English", "Arabic"], offerings: ["Change & transformation"], priorPlacementCount: 2 },
+    { idBase: "as_sam", name: "Samira Khalil", roleType: "consultant", headline: "Change & programme lead", seniority: "senior", skills: ["Change management", "Programme management"], sectors: ["Retail"], location: "Leeds, UK", workingMode: "hybrid", availability: "available", nextAvailableDate: day(5), rate: { amount: 820, currency: "GBP", unit: "day" }, source: "network", cvRef: "files://cv/samira", verifiedAt: ago(50 * 24), ownerId: "me", notes: "", tags: ["retail"], status: "active", languages: ["English", "Arabic"], offerings: ["Change & transformation"], priorPlacementCount: 2 },
     { idBase: "as_owen", name: "Owen Blake", roleType: "specialist", headline: "Data platform engineer", seniority: "senior", skills: ["Data platforms", "Azure", "Governance"], sectors: ["Financial services"], location: "Remote · UK", workingMode: "remote", availability: "available", nextAvailableDate: day(2), rate: { amount: 900, currency: "GBP", unit: "day" }, source: "external", cvRef: "files://cv/owen", verifiedAt: ago(40), ownerId: "m_ali", notes: "", tags: ["data"], status: "active", languages: ["English"], offerings: ["Technology specialists"], priorPlacementCount: 0 },
     { idBase: "as_nina", name: "Nina Forsberg", roleType: "programme_manager", headline: "PMO lead · complex programmes", seniority: "principal", skills: ["PMO", "Programme management", "Risk"], sectors: ["Energy", "Public sector", "Retail"], location: "Stockholm / Remote", workingMode: "remote", availability: "limited", nextAvailableDate: day(18), rate: { amount: 980, currency: "GBP", unit: "day" }, source: "network", cvRef: "files://cv/nina", verifiedAt: ago(200), ownerId: "me", notes: "", tags: ["pmo", "retail"], status: "active", languages: ["English", "Swedish"], offerings: ["Programme leadership"], priorPlacementCount: 6 },
     { idBase: "as_leo", name: "Leo Martins", roleType: "specialist", headline: "Cybersecurity architect", seniority: "principal", skills: ["Cybersecurity", "Zero trust", "Architecture"], sectors: ["Public sector", "Financial services"], location: "Lisbon / Remote", workingMode: "remote", availability: "available", nextAvailableDate: day(1), rate: { amount: 1100, currency: "GBP", unit: "day" }, source: "network", cvRef: "files://cv/leo", verifiedAt: ago(55), ownerId: "m_sarah", notes: "", tags: ["security"], status: "active", languages: ["English", "Portuguese"], offerings: ["Technology specialists"], priorPlacementCount: 3 },
@@ -913,7 +914,8 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
       matchReasons: ["Must-have skills: SAP"],
       matchGaps: ["Profile not yet verified", "Unavailable", "Missing must-have skills: S/4HANA, Solution architecture"],
       matchFlags: ["unverified", "unavailable"],
-      shortlistStatus: "suggested",
+      // Shortlisted so Network Intelligence can surface (and lock) a re-verify signal on real CRM evidence.
+      shortlistStatus: "shortlisted",
       rankOverride: null,
       overrideReason: null,
       sourcedExternally: false,
@@ -1062,8 +1064,8 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
         availabilityConfirmed: true,
         costConfirmed: true,
         indicativeCost: { amount: 820, currency: "GBP", unit: "day" },
-        notes: "Quote with client",
-        verifiedAt: ago(72),
+        notes: "Quote with client — availability verification has gone stale",
+        verifiedAt: ago(50 * 24),
       },
       interview: { heldAt: ago(96), outcome: "positive", summary: "Strong client feedback" },
       quotedClientRate: { amount: 1050, currency: "GBP", unit: "day" },
@@ -1854,6 +1856,28 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
           reviewerId: "me",
           taskId: "task_pulse_cross_sia",
         },
+        ins_sia_dormant: {
+          insightId: "ins_sia_dormant",
+          decision: "accepted",
+          at: ago(30),
+          reviewerId: "me",
+          taskId: "task_pulse_sia_dormant",
+        },
+        ins_coverage_req_public: {
+          insightId: "ins_coverage_req_public",
+          decision: "rejected",
+          at: ago(72),
+          reviewerId: "m_sarah",
+          reason: "Already handled",
+        },
+        // Network Intelligence — rejected re-verify on unverified/unavailable SAP shortlist (Tara).
+        ins_expiry_cand_sap_tara: {
+          insightId: "ins_expiry_cand_sap_tara",
+          decision: "rejected",
+          at: ago(40),
+          reviewerId: "m_sarah",
+          reason: "Poor data",
+        },
       },
       outcomes: [
         {
@@ -1869,7 +1893,7 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
             directCostSavings: 450,
             qualitativeBenefit: "Reduced single-owner dependency on a strategic account",
             currency: "GBP",
-            notes: "Coherent Tessiant Pulse outcome example",
+            notes: "From Tessiant CRM account ownership fields on Crest Consumer Brands",
             sourceEntityIds: ["acc_crest"],
           },
           createdAt: ago(18),
@@ -1888,14 +1912,34 @@ export function createTessiantSlice(now = Date.now()): TessiantStateSlice {
             directCostSavings: null,
             qualitativeBenefit: "Pipeline potential only — not realised revenue",
             currency: "GBP",
-            notes: "Pending value confirmation",
+            notes: "Pending value confirmation from req_sia / Crest evidence",
             sourceEntityIds: ["req_sia", "acc_crest"],
           },
           createdAt: ago(6),
           updatedAt: ago(6),
         },
+        {
+          id: "pout_sia_dormant",
+          insightId: "ins_sia_dormant",
+          taskId: "task_pulse_sia_dormant",
+          status: "completed",
+          summary:
+            "Introduction asks logged for SIAs whose sectors match Tessiant prospects and who had zero introductions on record.",
+          value: {
+            realisedRevenue: null,
+            pipelinePotential: null,
+            estimatedTimeSavedHours: 2,
+            directCostSavings: null,
+            qualitativeBenefit: "Warm introduction path opened without inventing lead outcomes",
+            currency: "GBP",
+            notes: "Measured from associate introduction fields and prospect-sector accounts — no revenue claimed",
+            sourceEntityIds: [],
+          },
+          createdAt: ago(30),
+          updatedAt: ago(30),
+        },
       ],
-      attributedSourceKeys: ["insight:ins_rel_acc_crest"],
+      attributedSourceKeys: ["insight:ins_rel_acc_crest", "insight:ins_sia_dormant"],
     },
   };
 }

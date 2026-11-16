@@ -14,6 +14,10 @@ export const PULSE_RULE_CONFIG = {
   stalledStageDays: 5,
   availabilityVerificationDays: 30,
   offeringMismatchMinOpenDemand: 1,
+  /** Sample profiles with no verifiedAt / unverified status before Network flags a bench hygiene signal. */
+  staleVerificationMinCount: 50,
+  /** Active associates with availability "unknown" before Network flags an availability hygiene signal. */
+  unknownAvailabilityMinCount: 10,
 } as const;
 
 function daysBetween(iso: string, now: number) {
@@ -489,6 +493,82 @@ export function generateTessiantInsights(state: CrmState, now = Date.now()): Tes
           dataAsOf: asOf,
           confidence: "verified",
           recommendedAction: { type: "request_introduction", label: "Ask the SIAs for one introduction each", suggestedOwnerId: "me" },
+          reviewStatus: "pending",
+        },
+        tessiant.pulse,
+      ),
+    );
+  }
+
+  // Rule: stale_verification — too many sample profiles lack a verification timestamp.
+  const unverifiedProfiles = tessiant.associates.filter((item) => !item.verifiedAt || item.status === "unverified");
+  if (unverifiedProfiles.length >= PULSE_RULE_CONFIG.staleVerificationMinCount) {
+    const named = unverifiedProfiles.filter((item) => !item.id.startsWith("as_demo_"));
+    const evidencePeople = (named.length ? named : unverifiedProfiles).slice(0, 4);
+    insights.push(
+      applyReview(
+        {
+          id: "ins_network_stale_verification",
+          tenantId: PULSE_TENANT_ID,
+          knowledgeBlockId: "network",
+          ruleId: "stale_verification",
+          title: `${unverifiedProfiles.length} sample profiles are unverified`,
+          summary: `${unverifiedProfiles.length} of ${tessiant.associates.length} seeded profiles have no verification timestamp (or are marked unverified). Capacity math should prefer verified + available associates — chase verification before treating the full sample as ready bench.`,
+          priority: "medium",
+          evidence: evidencePeople.map((item) => ({
+            entityType: "associate" as const,
+            entityId: item.id,
+            field: "verifiedAt",
+            observedValue: item.verifiedAt ?? "null",
+            href: `/staffing/associates/${item.id}`,
+          })),
+          generatedAt: asOf,
+          dataAsOf: asOf,
+          confidence: "verified",
+          recommendedAction: {
+            type: "verify_sample",
+            label: "Prioritise verification on shortlisted and scarce-skill profiles",
+            suggestedOwnerId: "me",
+          },
+          reviewStatus: "pending",
+        },
+        tessiant.pulse,
+      ),
+    );
+  }
+
+  // Rule: unknown_availability — active associates still marked availability unknown.
+  const unknownAvailability = tessiant.associates.filter(
+    (item) => item.status === "active" && item.availability === "unknown",
+  );
+  if (unknownAvailability.length >= PULSE_RULE_CONFIG.unknownAvailabilityMinCount) {
+    const named = unknownAvailability.filter((item) => !item.id.startsWith("as_demo_"));
+    const evidencePeople = (named.length ? named : unknownAvailability).slice(0, 4);
+    insights.push(
+      applyReview(
+        {
+          id: "ins_network_unknown_availability",
+          tenantId: PULSE_TENANT_ID,
+          knowledgeBlockId: "network",
+          ruleId: "unknown_availability",
+          title: `${unknownAvailability.length} active associates still show unknown availability`,
+          summary: `${unknownAvailability.length} active profiles in the Tessiant sample have availability = unknown. They cannot count toward verified available capacity until someone confirms a date.`,
+          priority: "medium",
+          evidence: evidencePeople.map((item) => ({
+            entityType: "associate" as const,
+            entityId: item.id,
+            field: "availability",
+            observedValue: item.availability,
+            href: `/staffing/associates/${item.id}`,
+          })),
+          generatedAt: asOf,
+          dataAsOf: asOf,
+          confidence: "verified",
+          recommendedAction: {
+            type: "confirm_availability",
+            label: "Run an availability confirm pass on unknown profiles",
+            suggestedOwnerId: "m_ali",
+          },
           reviewStatus: "pending",
         },
         tessiant.pulse,

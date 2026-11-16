@@ -89,6 +89,9 @@ export function rulePlainLanguage(ruleId: string): string {
     relationship_concentration: "Active accounts should have secondary relationship coverage.",
     possible_cross_sell: "Advisory interest without a confirmed placement is pipeline potential only.",
     sia_contribution: "SIA profiles should progress commercially when shortlisted.",
+    sia_dormant: "SIAs in prospect sectors with no introduction on record are a warm path that still needs an ask.",
+    stale_verification: "Unverified sample profiles should not be treated as ready capacity until verification is recorded.",
+    unknown_availability: "Active associates marked availability unknown cannot count toward verified available capacity.",
   };
   return map[ruleId] ?? "Deterministic Tessiant business rule based on current CRM records.";
 }
