@@ -136,7 +136,7 @@ export function LeadTimeline({
 export interface RecordMessage {
   id: string;
   channel: string;
-  subject?: string;
+  subject?: string | null;
   body: string;
   actor: string;
   at: string;
