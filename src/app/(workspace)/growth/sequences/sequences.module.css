@@ -1,0 +1,383 @@
+.studio {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+.library,
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.groupLabel {
+  margin: 12px 4px 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.seqCard {
+  display: grid;
+  grid-template-columns: 4px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.seqCard:hover {
+  background: var(--surface-muted);
+}
+
+.seqCard[aria-current="true"] {
+  border-color: var(--brand-ring);
+  background: var(--brand-soft);
+}
+
+.pip {
+  width: 4px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--brand);
+}
+
+.seqCard b,
+.seqCard small,
+.person b,
+.person small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seqCard b,
+.person b {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.seqCard small,
+.person small,
+.hint {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.stops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stops li {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.overlap {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  font-size: 13px;
+}
+
+.overlap b,
+.overlap small {
+  display: block;
+}
+
+.overlap small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.board {
+  min-width: 0;
+  padding: 16px 16px 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.board h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.builder {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.builder label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.builder input,
+.stepRow select {
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepRow {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.stepTemplate {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.stopGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stopGrid label,
+.builder .overlap {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.track {
+  display: flex;
+  flex-direction: column;
+  margin: 16px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 64px 18px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.when {
+  padding-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 14px;
+}
+
+.rail::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  bottom: -8px;
+  left: 50%;
+  width: 2px;
+  background: var(--line);
+  transform: translateX(-50%);
+}
+
+.step:last-child .rail::before {
+  display: none;
+}
+
+.dot {
+  position: relative;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--brand);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.stepCard {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-muted);
+}
+
+.stepCard b {
+  display: block;
+  font-size: 14px;
+}
+
+.stepCard p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.side h2 {
+  margin: 4px 4px 0;
+  font-size: 14px;
+}
+
+.enrol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+}
+
+.segment {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.people {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.personRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.personRow:hover {
+  background: var(--surface-muted);
+}
+
+.person {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.person:hover {
+  color: inherit;
+}
+
+.triggers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.trigger {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.trigger b {
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.trigger p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.triggerFoot {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+@media (max-width: 1180px) {
+  .studio,
+  .triggers {
+    grid-template-columns: 1fr;
+  }
+}

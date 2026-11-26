@@ -1,0 +1,204 @@
+.studio {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+.library,
+.templates {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.groupLabel {
+  margin: 4px 4px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.chatCard,
+.templateCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chatCard:hover,
+.templateCard:hover {
+  background: var(--surface-muted);
+}
+
+.chatCard[aria-pressed="true"],
+.templateCard[aria-pressed="true"] {
+  border-color: var(--brand-ring);
+  background: var(--brand-soft);
+}
+
+.chatCard b,
+.chatCard small,
+.templateCard b,
+.templateCard p {
+  display: block;
+  overflow: hidden;
+}
+
+.chatCard b,
+.templateCard b {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.chatCard small,
+.hint {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.chatCard small {
+  margin-top: 2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 540px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.chatHead {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.who {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.who b,
+.who small {
+  display: block;
+}
+
+.who small,
+.bubble small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--surface-muted) 70%, var(--surface));
+}
+
+.bubble {
+  max-width: min(78%, 460px);
+  padding: 10px 12px;
+  border-radius: 16px;
+}
+
+.bubble b,
+.bubble p {
+  margin: 0;
+}
+
+.bubble b {
+  font-size: 12px;
+}
+
+.bubble p {
+  margin-top: 3px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.bubbleIn {
+  align-self: flex-start;
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 6px;
+  background: var(--surface);
+}
+
+.bubbleOut {
+  align-self: flex-end;
+  border: 1px solid var(--brand-ring);
+  border-bottom-right-radius: 6px;
+  background: var(--brand-soft);
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface);
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+}
+
+.templateCard {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.templateCard p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.templateTop {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 1180px) {
+  .studio {
+    grid-template-columns: 1fr;
+  }
+}

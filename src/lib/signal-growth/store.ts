@@ -384,8 +384,23 @@ export const growth = {
   },
 
   scheduleCampaign(input: { name: string; templateId: string; segmentId: string; scheduledFor: string }) {
+    let id = "";
     commit((draft) => {
-      draft.campaigns.unshift({ id: uid("cp"), name: input.name, templateId: input.templateId, segmentId: input.segmentId, status: input.scheduledFor ? "scheduled" : "draft", scheduledFor: input.scheduledFor || undefined, timezoneNote: "Recipient local time" });
+      id = uid("cp");
+      draft.campaigns.unshift({ id, name: input.name, templateId: input.templateId, segmentId: input.segmentId, status: input.scheduledFor ? "scheduled" : "draft", scheduledFor: input.scheduledFor || undefined, timezoneNote: "Recipient local time" });
+    });
+    return id;
+  },
+
+  updateCampaign(id: string, input: { name: string; templateId: string; segmentId: string; scheduledFor: string }) {
+    commit((draft) => {
+      const campaign = draft.campaigns.find((item) => item.id === id);
+      if (!campaign || campaign.status === "sent") return;
+      campaign.name = input.name;
+      campaign.templateId = input.templateId;
+      campaign.segmentId = input.segmentId;
+      campaign.scheduledFor = input.scheduledFor || undefined;
+      campaign.status = input.scheduledFor ? "scheduled" : "draft";
     });
   },
 
@@ -398,15 +413,21 @@ export const growth = {
   },
 
   saveTemplate(input: { id?: string; name: string; subject: string; body: string; offerEnd: string }) {
+    let id = input.id ?? "";
     commit((draft) => {
       const fallbacks = { firstName: "there", company: "your team", site: "your site", aio: "your AIO score", seo: "your SEO score", topProblem: "the main issue we found", reportLink: "your private report link", offerEnd: input.offerEnd || "soon" };
       if (input.id) {
         const existing = draft.templates.find((item) => item.id === input.id);
-        if (existing) Object.assign(existing, { name: input.name, subject: input.subject, body: input.body, offerEnd: input.offerEnd, fallbacks });
+        if (existing) {
+          Object.assign(existing, { name: input.name, subject: input.subject, body: input.body, offerEnd: input.offerEnd, fallbacks });
+          id = existing.id;
+        }
         return;
       }
-      draft.templates.unshift({ id: uid("tm"), name: input.name, subject: input.subject, body: input.body, offerEnd: input.offerEnd, fallbacks });
+      id = uid("tm");
+      draft.templates.unshift({ id, name: input.name, subject: input.subject, body: input.body, offerEnd: input.offerEnd, fallbacks });
     });
+    return id;
   },
 
   enrol(sequenceId: string, leadIds: string[]) {
@@ -447,6 +468,28 @@ export const growth = {
       const sequence = draft.sequences.find((item) => item.id === sequenceId);
       if (sequence) sequence.allowOverlap = allow;
     });
+  },
+
+  createSequence(input: { name: string; steps: { templateId: string; waitDays: number }[]; stopOnReply: boolean; stopOnSignup: boolean; stopOnPaid: boolean; stopOnUnsubscribe: boolean; allowOverlap: boolean }) {
+    let id = "";
+    commit((draft) => {
+      const steps = input.steps
+        .filter((step) => draft.templates.some((item) => item.id === step.templateId))
+        .map((step) => ({ templateId: step.templateId, waitDays: Math.max(0, Math.round(step.waitDays) || 0) }));
+      if (!steps.length) return;
+      id = uid("sq");
+      draft.sequences.push({
+        id,
+        name: input.name.trim() || "Untitled sequence",
+        steps,
+        stopOnReply: input.stopOnReply,
+        stopOnSignup: input.stopOnSignup,
+        stopOnPaid: input.stopOnPaid,
+        stopOnUnsubscribe: input.stopOnUnsubscribe,
+        allowOverlap: input.allowOverlap,
+      });
+    });
+    return id;
   },
 
   reply(leadId: string, channel: Channel, text: string) {
