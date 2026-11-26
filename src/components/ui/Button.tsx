@@ -24,6 +24,7 @@ export default function Button({ children, variant = "primary", size = "medium",
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
+      data-variant={variant}
       className={[styles.button, styles[variant], styles[size], fullWidth ? styles.fullWidth : "", !children ? styles.iconOnly : "", className].filter(Boolean).join(" ")}
     >
       {loading ? <span className={styles.spinner} aria-hidden="true" /> : icon && <Icon name={icon} size={iconSize} />}

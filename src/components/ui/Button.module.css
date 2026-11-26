@@ -41,6 +41,16 @@
   background: var(--brand-strong);
 }
 
+a.primary,
+a.primary:hover {
+  color: #fff;
+}
+
+a.secondary,
+a.secondary:hover {
+  color: var(--ink-2);
+}
+
 .qiko {
   background: var(--qiko-accent);
   color: #fff;

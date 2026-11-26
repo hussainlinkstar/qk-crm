@@ -1,0 +1,305 @@
+.touchList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.touchRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  border-radius: var(--radius-md);
+  color: inherit;
+  text-decoration: none;
+}
+
+.touchRow + .touchRow {
+  box-shadow: inset 0 1px 0 var(--line-soft);
+}
+
+.touchRow:hover {
+  background: var(--surface-muted);
+}
+
+.touchRow b {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.touchCount {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.colHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pipelineBoard {
+  display: grid;
+  max-width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(8, minmax(240px, 260px));
+  align-items: start;
+  contain: paint;
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.pipelineBoard::-webkit-scrollbar,
+.wideBoard::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pipelineBoard::-webkit-scrollbar-button,
+.wideBoard::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.pipelineBoard::-webkit-scrollbar-track,
+.wideBoard::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pipelineBoard::-webkit-scrollbar-thumb,
+.wideBoard::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--line);
+  background-clip: padding-box;
+}
+
+.pipelineBoard::-webkit-scrollbar-thumb:hover,
+.wideBoard::-webkit-scrollbar-thumb:hover {
+  background: var(--line-strong);
+  background-clip: padding-box;
+}
+
+.wideBoard {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(200px, 1fr));
+  gap: 14px;
+  padding: 12px 18px 18px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.stageDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.dotNew { background: #0ea5e9; }
+.dotContacted { background: #6366f1; }
+.dotReplied { background: #8b5cf6; }
+.dotSigned { background: #0d9488; }
+.dotAudit { background: #0284c7; }
+.dotCheckout { background: #d97706; }
+.dotPaid { background: #10b981; }
+.dotLost { background: #94a3b8; }
+
+.report {
+  width: min(760px, calc(100% - 32px));
+  margin: 40px auto 64px;
+}
+
+.locked {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  color: transparent;
+  text-shadow: 0 0 8px var(--muted);
+  user-select: none;
+}
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.composerField {
+  flex: 1;
+  min-width: 0;
+}
+
+.narrow {
+  width: 240px;
+  max-width: 100%;
+}
+
+.taskList,
+.channelList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.taskRow,
+.channelRow {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.taskRow:first-child,
+.channelRow:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.taskRow {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.taskCheck {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: transparent;
+  cursor: pointer;
+}
+
+.taskCheck:hover {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.taskCheck[data-on="true"] {
+  border-color: var(--success);
+  background: var(--success);
+  color: #fff;
+}
+
+.taskCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.taskCopy b,
+.channelCopy b {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskCopy small,
+.channelCopy small {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.taskCopy small[data-overdue="true"] {
+  color: var(--danger);
+  font-weight: 650;
+}
+
+.channelRow {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  cursor: pointer;
+}
+
+.channelCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--line-strong);
+  cursor: pointer;
+  appearance: none;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #fff;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.switch:checked {
+  background: var(--danger);
+}
+
+.switch:checked::after {
+  transform: translateX(14px);
+}
+
+.switch:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.recordActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.recordActions :global(.select) {
+  width: 168px;
+}
+
+.inbox {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .inbox {
+    grid-template-columns: 1fr;
+  }
+
+  .wideBoard {
+    grid-template-columns: repeat(8, minmax(220px, 240px));
+  }
+}

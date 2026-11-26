@@ -77,6 +77,23 @@ const NAV: NavItem[] = [
       { href: "/staffing/offerings", label: "Offerings", match: (path) => path.startsWith("/staffing/offerings") },
     ],
   },
+  {
+    href: "/growth",
+    label: "Signal",
+    icon: "rocket",
+    match: (path) => path.startsWith("/growth"),
+    children: [
+      { href: "/growth", label: "Overview", match: (path) => path === "/growth" },
+      { href: "/growth/leads", label: "Leads", match: (path) => path.startsWith("/growth/leads") },
+      { href: "/growth/pipeline", label: "Pipeline", match: (path) => path.startsWith("/growth/pipeline") },
+      { href: "/growth/audits", label: "Audits", match: (path) => path.startsWith("/growth/audits") },
+      { href: "/growth/email", label: "Email", match: (path) => path.startsWith("/growth/email") },
+      { href: "/growth/sequences", label: "Sequences", match: (path) => path.startsWith("/growth/sequences") },
+      { href: "/growth/apollo", label: "Apollo", match: (path) => path.startsWith("/growth/apollo") },
+      { href: "/growth/whatsapp", label: "WhatsApp", match: (path) => path.startsWith("/growth/whatsapp") },
+      { href: "/growth/linkedin", label: "LinkedIn", match: (path) => path.startsWith("/growth/linkedin") },
+    ],
+  },
 ];
 
 function pageTitle(pathname: string): string {
@@ -99,6 +116,15 @@ function pageTitle(pathname: string): string {
   if (pathname.startsWith("/sales/contacts")) return "Contacts";
   if (pathname.startsWith("/sales/leads")) return "Leads";
   if (pathname.startsWith("/sales/actions")) return "Activities";
+  if (pathname.startsWith("/growth/linkedin")) return "LinkedIn";
+  if (pathname.startsWith("/growth/whatsapp")) return "WhatsApp";
+  if (pathname.startsWith("/growth/apollo")) return "Apollo";
+  if (pathname.startsWith("/growth/sequences")) return "Sequences";
+  if (pathname.startsWith("/growth/email")) return "Email";
+  if (pathname.startsWith("/growth/audits")) return "Prospect audits";
+  if (pathname.startsWith("/growth/pipeline")) return "Signal pipeline";
+  if (pathname.startsWith("/growth/leads")) return "Signal leads";
+  if (pathname.startsWith("/growth")) return "Signal growth";
   if (pathname.startsWith("/sales")) return "Sales";
   if (pathname.startsWith("/settings")) return "Settings";
   return "Tessiant";

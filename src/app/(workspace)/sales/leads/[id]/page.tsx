@@ -11,7 +11,6 @@ import { LEAD_STATUSES, type ActivityKind, type ConversationChannel, type CrmSta
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import { ConfirmDialog } from "@/components/ui/Overlay";
-import { KIND_ICON } from "@/components/ui/kind-icons";
 import { EmptyState, LeadStatusChip, SkeletonRows, useNow, useWorkspaceData } from "@/components/ui/bits";
 import SuggestionCard from "@/components/tasks/SuggestionCard";
 import TaskCard from "@/components/tasks/TaskCard";
@@ -19,6 +18,8 @@ import LogInteractionModal from "@/components/leads/LogInteractionModal";
 import ComposeMessageModal from "@/components/leads/ComposeMessageModal";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import RelationshipIntelligence from "@/components/sales/RelationshipIntelligence";
+import LeadProfileFrame from "@/components/leads/LeadProfileFrame";
+import { EngagementCard, FilterBar, LeadTimeline, MessageThread, OriginCard, PanelCard, RecordStack } from "@/components/leads/LeadRecordSections";
 import { salesRelationshipIntel } from "@/lib/sales-relationship";
 import styles from "./profile.module.css";
 
@@ -154,207 +155,203 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
   };
 
   return (
-    <div className="page">
-      <Link href="/sales/leads" className="breadcrumb">
-        <Icon name="arrowLeft" size={14} /> Leads
-      </Link>
-
-      <section className={`card ${styles.header}`}>
-        <div className={styles.identity}>
-          <span className="avatar avatar-lg">{initials(lead.name)}</span>
-          <div className={styles.identityText}>
-            <div className={styles.nameRow}>
-              <h1>{lead.name}</h1>
-              <LeadStatusChip status={lead.status} />
-              {suggestions.length > 0 && (
-                <span className="chip chip-ai">
-                  <Icon name="sparkles" size={11} /> {plural(suggestions.length, "suggestion")}
-                </span>
-              )}
-            </div>
-            <p className={styles.role}>
-              {lead.role ? `${lead.role} · ` : ""}
-              {lead.company ?? "No company on record"}
-            </p>
-            <p className={styles.contact}>
-              <a href={`mailto:${lead.email}`} onClick={(event) => { event.preventDefault(); setCompose("email"); }}>
-                <Icon name="mail" size={13} /> {lead.email}
-              </a>
-              {lead.phone && (
-                <a href={`tel:${lead.phone.replace(/\s/g, "")}`}>
-                  <Icon name="phone" size={13} /> {lead.phone}
-                </a>
-              )}
-              <span>
-                <Icon name="globe" size={13} /> {lead.source}
+    <>
+      <LeadProfileFrame
+        back={{ href: "/sales/leads", label: "Leads" }}
+        name={lead.name}
+        chips={
+          <>
+            <LeadStatusChip status={lead.status} />
+            {suggestions.length > 0 && (
+              <span className="chip chip-ai">
+                <Icon name="sparkles" size={11} /> {plural(suggestions.length, "suggestion")}
               </span>
-            </p>
-          </div>
-        </div>
-        <div className={styles.controls}>
-          <label className={styles.control}>
-            <span>Status</span>
-            <Select
-              className="select"
-              value={lead.status}
-              disabled={lead.status === "Converted"}
-              onChange={(event) => {
-                const next = event.target.value as LeadStatus;
-                if (next === "Converted" && !lead.convertedOpportunityId) {
-                  if (lead.status === "Qualified") convert();
-                  else toast("Mark the lead qualified before converting", "info");
-                  return;
-                }
-                setPending({ field: "status", value: next });
-              }}
-            >
-              {LEAD_STATUSES.map((status) => (
-                <option key={status} disabled={status === "Converted" && lead.status !== "Qualified" && lead.status !== "Converted"}>
-                  {status}
-                </option>
-              ))}
-            </Select>
-          </label>
-          <label className={styles.control}>
-            <span>Owner</span>
-            <Select className="select" value={lead.ownerId ?? ""} disabled={lead.status === "Converted"} onChange={(event) => setPending({ field: "owner", value: event.target.value })}>
-              <option value="">Unassigned</option>
-              {state.members.map((member) => <option key={member.id} value={member.id}>{member.id === "me" ? `${member.name} (you)` : member.name}</option>)}
-            </Select>
-          </label>
-        </div>
-        <div className={styles.actions}>
-          <Button icon="plus" onClick={newTask}>Create task</Button>
-          <Button variant="secondary" icon="phone" onClick={() => setLogOpen(true)}>Log interaction</Button>
-          <Button variant="secondary" icon="mail" onClick={() => setCompose("email")}>Email</Button>
-          <Button variant="secondary" icon="whatsapp" onClick={() => setCompose("whatsapp")}>WhatsApp</Button>
-          {lead.status !== "Converted" && (state.tessiant?.accounts.length ?? 0) > 0 && (
-            <Button
-              variant="secondary"
-              onClick={convert}
-            >
-              Convert to opportunity
-            </Button>
-          )}
-          {lead.convertedOpportunityId && (
-            <Link href="/sales/pipeline">
-              <Button variant="ghost">Open opportunities</Button>
-            </Link>
-          )}
-          <Button variant="soft" icon="sparkles" onClick={() => askQiko(`Show me everything we know about ${lead.name}`, lead.id)}>Ask Qiko about {lead.name.split(" ")[0]}</Button>
-        </div>
-      </section>
-
-      <div className={styles.layout}>
-        <div className={styles.main}>
-          <nav className={styles.tabs} aria-label="Lead sections">
-            {tabs.map((item) => (
-              <button type="button" key={item.key} aria-pressed={tab === item.key} onClick={() => setTab(item.key)}>
-                {item.label}
-                {item.count !== undefined && <span>{item.count}</span>}
-              </button>
-            ))}
-          </nav>
+            )}
+          </>
+        }
+        role={<>{lead.role ? `${lead.role} · ` : ""}{lead.company ?? "No company on record"}</>}
+        contact={
+          <>
+            <a href={`mailto:${lead.email}`} onClick={(event) => { event.preventDefault(); setCompose("email"); }}>
+              <Icon name="mail" size={13} /> {lead.email}
+            </a>
+            {lead.phone && (
+              <a href={`tel:${lead.phone.replace(/\s/g, "")}`}>
+                <Icon name="phone" size={13} /> {lead.phone}
+              </a>
+            )}
+            <span>
+              <Icon name="globe" size={13} /> {lead.source}
+            </span>
+          </>
+        }
+        controls={
+          <>
+            <label className={styles.control}>
+              <span>Status</span>
+              <Select
+                className="select"
+                value={lead.status}
+                disabled={lead.status === "Converted"}
+                onChange={(event) => {
+                  const next = event.target.value as LeadStatus;
+                  if (next === "Converted" && !lead.convertedOpportunityId) {
+                    if (lead.status === "Qualified") convert();
+                    else toast("Mark the lead qualified before converting", "info");
+                    return;
+                  }
+                  setPending({ field: "status", value: next });
+                }}
+              >
+                {LEAD_STATUSES.map((status) => (
+                  <option key={status} disabled={status === "Converted" && lead.status !== "Qualified" && lead.status !== "Converted"}>
+                    {status}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <label className={styles.control}>
+              <span>Owner</span>
+              <Select className="select" value={lead.ownerId ?? ""} disabled={lead.status === "Converted"} onChange={(event) => setPending({ field: "owner", value: event.target.value })}>
+                <option value="">Unassigned</option>
+                {state.members.map((member) => <option key={member.id} value={member.id}>{member.id === "me" ? `${member.name} (you)` : member.name}</option>)}
+              </Select>
+            </label>
+          </>
+        }
+        actions={
+          <>
+            <Button icon="plus" onClick={newTask}>Create task</Button>
+            <Button variant="secondary" icon="phone" onClick={() => setLogOpen(true)}>Log interaction</Button>
+            <Button variant="secondary" icon="mail" onClick={() => setCompose("email")}>Email</Button>
+            <Button variant="secondary" icon="whatsapp" onClick={() => setCompose("whatsapp")}>WhatsApp</Button>
+            {lead.status !== "Converted" && (state.tessiant?.accounts.length ?? 0) > 0 && (
+              <Button variant="secondary" onClick={convert}>Convert to opportunity</Button>
+            )}
+            {lead.convertedOpportunityId && (
+              <Link href="/sales/pipeline">
+                <Button variant="ghost">Open opportunities</Button>
+              </Link>
+            )}
+            <Button variant="soft" icon="sparkles" onClick={() => askQiko(`Show me everything we know about ${lead.name}`, lead.id)}>Ask Qiko about {lead.name.split(" ")[0]}</Button>
+          </>
+        }
+        tabs={tabs}
+        tab={tab}
+        onTab={(key) => setTab(key as Tab)}
+        side={
+          <>
+            <section className="card">
+              <div className="card-head">
+                <div>
+                  <h2>Details</h2>
+                </div>
+                {!editing && <Button size="small" variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Button>}
+              </div>
+              <div className="card-body">
+                {editing ? (
+                  <form className="form-grid" onSubmit={saveDetails}>
+                    <label className="field"><span>Email</span><input className="input" type="email" value={details.email} onChange={(event) => setDetails({ ...details, email: event.target.value })} /></label>
+                    <label className="field"><span>Phone</span><input className="input" value={details.phone} onChange={(event) => setDetails({ ...details, phone: event.target.value })} /></label>
+                    <label className="field"><span>Company</span><input className="input" value={details.company} onChange={(event) => setDetails({ ...details, company: event.target.value })} /></label>
+                    <label className="field"><span>Job title</span><input className="input" value={details.role} onChange={(event) => setDetails({ ...details, role: event.target.value })} /></label>
+                    <label className="field"><span>Next action override</span><input className="input" value={details.nextAction} onChange={(event) => setDetails({ ...details, nextAction: event.target.value })} placeholder="Leave empty to use tasks & suggestions" /></label>
+                    <div className={styles.formActions}>
+                      <Button variant="secondary" size="small" onClick={() => { setEditing(false); setDetails({ email: lead.email, phone: lead.phone ?? "", company: lead.company ?? "", role: lead.role ?? "", nextAction: lead.nextAction ?? "" }); }}>Cancel</Button>
+                      <Button type="submit" size="small" icon="check">Save</Button>
+                    </div>
+                  </form>
+                ) : (
+                  <dl className={styles.details}>
+                    <div><dt>Email</dt><dd>{lead.email}</dd></div>
+                    <div><dt>Phone</dt><dd>{lead.phone ?? "—"}</dd></div>
+                    <div><dt>Company</dt><dd>{lead.company ?? "—"}</dd></div>
+                    <div><dt>Job title</dt><dd>{lead.role ?? "—"}</dd></div>
+                    <div><dt>Owner</dt><dd>{owner?.name ?? "Unassigned"}</dd></div>
+                    <div><dt>Next action</dt><dd>{lead.nextActionLabel}</dd></div>
+                  </dl>
+                )}
+              </div>
+            </section>
+            <OriginCard
+              source={lead.source}
+              firstSeen={formatDate(lead.createdAt, true)}
+              systems={sources.join(", ") || "—"}
+              summary={<>{plural(events.length, "activity", "activities")} from {plural(sources.length, "system")} merged into one record by email ({lead.email}).</>}
+            />
+          </>
+        }
+      >
 
           {tab === "overview" && (
-            <div className={styles.stack}>
+            <RecordStack>
               <section className="card">
                 <div className="card-body">
                   <RelationshipIntelligence intel={relationship} variant="page" />
                 </div>
               </section>
-              <section className="card">
-                <div className="card-head">
-                  <div>
-                    <h2>How {lead.name.split(" ")[0]} is engaging</h2>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <dl className={styles.stats}>
-                    <div><dt>Activity · 30 days</dt><dd>{recent30.length}</dd></div>
-                    <div><dt>Free scans</dt><dd>{scans.length}</dd></div>
-                    <div><dt>Reports opened</dt><dd>{reports.length}</dd></div>
-                    <div><dt>Logins</dt><dd>{logins.length}</dd></div>
-                    <div><dt>Last activity</dt><dd>{lead.lastActivity ? timeAgo(lead.lastActivity.occurredAt, now || undefined) : "—"}</dd></div>
-                    <div><dt>Open tasks</dt><dd>{openTasks.length}</dd></div>
-                  </dl>
-                </div>
-              </section>
-
-              <section className="card">
-                <div className="card-head">
-                  <div>
-                    <h2>Email and WhatsApp</h2>
-                  </div>
+              <EngagementCard
+                name={lead.name.split(" ")[0]}
+                stats={[
+                  { label: "Activity · 30 days", value: recent30.length },
+                  { label: "Free scans", value: scans.length },
+                  { label: "Reports opened", value: reports.length },
+                  { label: "Logins", value: logins.length },
+                  { label: "Last activity", value: lead.lastActivity ? timeAgo(lead.lastActivity.occurredAt, now || undefined) : "—" },
+                  { label: "Open tasks", value: openTasks.length },
+                ]}
+              />
+              <PanelCard
+                title="Email and WhatsApp"
+                extra={
                   <div className={styles.convoActions}>
                     <Button size="small" variant="secondary" icon="mail" onClick={() => setCompose("email")}>Email</Button>
                     <Button size="small" variant="secondary" icon="whatsapp" onClick={() => setCompose("whatsapp")}>WhatsApp</Button>
                   </div>
-                </div>
-                <div className="card-body">
-                  {messages.length === 0 ? (
-                    <EmptyState icon="message" title="No messages yet">Send an email or WhatsApp and the thread stays on this lead.</EmptyState>
-                  ) : (
-                    <>
-                      <MessageThread messages={messages.slice(-4)} now={now} />
-                      {messages.length > 4 && (
-                        <button type="button" className={`link-button ${styles.threadMore}`} onClick={() => setTab("conversations")}>
-                          All {messages.length} messages <Icon name="arrowRight" size={13} />
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              </section>
-
-              <section className="card">
-                <div className="card-head">
-                  <div>
-                    <h2>{suggestions.length ? "Qiko recommends" : openTasks.length ? "Planned follow-ups" : "Next step"}</h2>
-                  </div>
-                  <Button size="small" variant="secondary" icon="plus" onClick={newTask}>Task</Button>
-                </div>
-                <div className={`card-body ${styles.stack}`}>
-                  {suggestions.map((suggestion) => <SuggestionCard key={suggestion.id} suggestion={suggestion} lead={lead} showLead={false} defaultOpen />)}
-                  {openTasks.map((task) => <TaskCard key={task.id} task={task} owner={task.ownerId ? memberById.get(task.ownerId) : null} showLead={false} />)}
-                  {!suggestions.length && !openTasks.length && <EmptyState icon="checkCircle" title={lead.nextActionLabel} actions={<Button size="small" icon="plus" onClick={newTask}>Plan a follow-up</Button>}>No open tasks or suggestions for this lead.</EmptyState>}
-                </div>
-              </section>
-
-              <section className="card">
-                <div className="card-head">
-                  <div>
-                    <h2>Recent activity</h2>
-                  </div>
+                }
+              >
+                {messages.length === 0 ? (
+                  <EmptyState icon="message" title="No messages yet">Send an email or WhatsApp and the thread stays on this lead.</EmptyState>
+                ) : (
+                  <>
+                    <MessageThread messages={messages.slice(-4)} now={now} />
+                    {messages.length > 4 && (
+                      <button type="button" className={`link-button ${styles.threadMore}`} onClick={() => setTab("conversations")}>
+                        All {messages.length} messages <Icon name="arrowRight" size={13} />
+                      </button>
+                    )}
+                  </>
+                )}
+              </PanelCard>
+              <PanelCard
+                title={suggestions.length ? "Qiko recommends" : openTasks.length ? "Planned follow-ups" : "Next step"}
+                extra={<Button size="small" variant="secondary" icon="plus" onClick={newTask}>Task</Button>}
+                stack
+              >
+                {suggestions.map((suggestion) => <SuggestionCard key={suggestion.id} suggestion={suggestion} lead={lead} showLead={false} defaultOpen />)}
+                {openTasks.map((task) => <TaskCard key={task.id} task={task} owner={task.ownerId ? memberById.get(task.ownerId) : null} showLead={false} />)}
+                {!suggestions.length && !openTasks.length && <EmptyState icon="checkCircle" title={lead.nextActionLabel} actions={<Button size="small" icon="plus" onClick={newTask}>Plan a follow-up</Button>}>No open tasks or suggestions for this lead.</EmptyState>}
+              </PanelCard>
+              <PanelCard
+                title="Recent activity"
+                extra={
                   <button type="button" className="link-button" onClick={() => setTab("activity")}>
                     Full history <Icon name="arrowRight" size={13} />
                   </button>
-                </div>
-                <div className="card-body">
-                  <Timeline groups={grouped.slice(0, 2)} now={now} />
-                </div>
-              </section>
-            </div>
+                }
+              >
+                <LeadTimeline groups={grouped.slice(0, 2)} now={now} />
+              </PanelCard>
+            </RecordStack>
           )}
 
           {tab === "activity" && (
-            <section className="card">
-              <div className="card-head">
-                <div>
-                  <h2>{plural(timeline.length, "event")}</h2>
-                </div>
-                <div className="segmented" role="group" aria-label="Filter activity">
-                  {ACTIVITY_GROUPS.map((group) => (
-                    <button type="button" key={group.key} aria-pressed={activityFilter === group.key} onClick={() => setActivityFilter(group.key)}>
-                      {group.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="card-body">
-                {timeline.length ? <Timeline groups={grouped} now={now} /> : <EmptyState title="No events of this type" />}
-              </div>
-            </section>
+            <PanelCard
+              title={plural(timeline.length, "event")}
+              extra={<FilterBar label="Filter activity" value={activityFilter} options={ACTIVITY_GROUPS.map((group) => ({ key: group.key, label: group.label }))} onChange={setActivityFilter} />}
+            >
+              {timeline.length ? <LeadTimeline groups={grouped} now={now} /> : <EmptyState title="No events of this type" />}
+            </PanelCard>
           )}
 
           {tab === "conversations" && (
@@ -369,14 +366,16 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
                 </div>
               </div>
               <div className="card-body">
-                <div className="segmented" role="group" aria-label="Filter conversation">
-                  {(["all", "email", "whatsapp"] as const).map((value) => (
-                    <button type="button" key={value} aria-pressed={convoFilter === value} onClick={() => setConvoFilter(value)}>
-                      {value === "all" ? "All" : value === "email" ? "Email" : "WhatsApp"}
-                      <span className="count">{value === "all" ? messages.length : messages.filter((message) => message.channel === value).length}</span>
-                    </button>
-                  ))}
-                </div>
+                <FilterBar
+                  label="Filter conversation"
+                  value={convoFilter}
+                  onChange={(key) => setConvoFilter(key as ConversationChannel | "all")}
+                  options={[
+                    { key: "all", label: "All", count: messages.length },
+                    { key: "email", label: "Email", count: messages.filter((message) => message.channel === "email").length },
+                    { key: "whatsapp", label: "WhatsApp", count: messages.filter((message) => message.channel === "whatsapp").length },
+                  ]}
+                />
                 {visibleMessages.length === 0 ? (
                   <EmptyState icon={convoFilter === "whatsapp" ? "whatsapp" : "mail"} title={convoFilter === "all" ? "No messages yet" : `No ${convoFilter === "email" ? "email" : "WhatsApp"} messages`}>
                     New messages are saved here and opened in your email or WhatsApp app.
@@ -415,7 +414,7 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
               {reports.length > 0 && (
                 <section className="card">
                   <div className="card-head"><div><h2>Associated reports</h2></div></div>
-                  <div className="card-body"><Timeline groups={[{ day: "reports", items: reports }]} now={now} hideDay /></div>
+                  <div className="card-body"><LeadTimeline groups={[{ day: "reports", items: reports }]} now={now} hideDay /></div>
                 </section>
               )}
             </div>
@@ -465,61 +464,6 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
               </div>
             </section>
           )}
-        </div>
-
-        <aside className={styles.side}>
-          <section className="card">
-            <div className="card-head">
-              <div>
-                <h2>Details</h2>
-              </div>
-              {!editing && <Button size="small" variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Button>}
-            </div>
-            <div className="card-body">
-              {editing ? (
-                <form className="form-grid" onSubmit={saveDetails}>
-                  <label className="field"><span>Email</span><input className="input" type="email" value={details.email} onChange={(event) => setDetails({ ...details, email: event.target.value })} /></label>
-                  <label className="field"><span>Phone</span><input className="input" value={details.phone} onChange={(event) => setDetails({ ...details, phone: event.target.value })} /></label>
-                  <label className="field"><span>Company</span><input className="input" value={details.company} onChange={(event) => setDetails({ ...details, company: event.target.value })} /></label>
-                  <label className="field"><span>Job title</span><input className="input" value={details.role} onChange={(event) => setDetails({ ...details, role: event.target.value })} /></label>
-                  <label className="field"><span>Next action override</span><input className="input" value={details.nextAction} onChange={(event) => setDetails({ ...details, nextAction: event.target.value })} placeholder="Leave empty to use tasks & suggestions" /></label>
-                  <div className={styles.formActions}>
-                    <Button variant="secondary" size="small" onClick={() => { setEditing(false); setDetails({ email: lead.email, phone: lead.phone ?? "", company: lead.company ?? "", role: lead.role ?? "", nextAction: lead.nextAction ?? "" }); }}>Cancel</Button>
-                    <Button type="submit" size="small" icon="check">Save</Button>
-                  </div>
-                </form>
-              ) : (
-                <dl className={styles.details}>
-                  <div><dt>Email</dt><dd>{lead.email}</dd></div>
-                  <div><dt>Phone</dt><dd>{lead.phone ?? "—"}</dd></div>
-                  <div><dt>Company</dt><dd>{lead.company ?? "—"}</dd></div>
-                  <div><dt>Job title</dt><dd>{lead.role ?? "—"}</dd></div>
-                  <div><dt>Owner</dt><dd>{owner?.name ?? "Unassigned"}</dd></div>
-                  <div><dt>Next action</dt><dd>{lead.nextActionLabel}</dd></div>
-                </dl>
-              )}
-            </div>
-          </section>
-
-          <section className="card">
-            <div className="card-head">
-              <div>
-                <h2>Where this lead came from</h2>
-              </div>
-            </div>
-            <div className="card-body">
-              <dl className={styles.details}>
-                <div><dt>Original source</dt><dd>{lead.source}</dd></div>
-                <div><dt>First seen</dt><dd>{formatDate(lead.createdAt, true)}</dd></div>
-                <div><dt>Systems with activity</dt><dd>{sources.join(", ") || "—"}</dd></div>
-              </dl>
-              <p className={styles.dedupe}>
-                <Icon name="checkCircle" size={13} /> {plural(events.length, "activity", "activities")} from {plural(sources.length, "system")} merged into one record by email ({lead.email}).
-              </p>
-            </div>
-          </section>
-        </aside>
-      </div>
 
       {logOpen && <LogInteractionModal leadId={lead.id} leadName={lead.name} onClose={() => setLogOpen(false)} />}
       {compose && (
@@ -566,53 +510,7 @@ function Profile({ lead, state }: { lead: LeadView; state: CrmState }) {
           }}
         />
       )}
-    </div>
-  );
-}
-
-function MessageThread({ messages, now }: { messages: CrmState["messages"]; now: number }) {
-  return (
-    <div className={styles.thread}>
-      {messages.map((message) => (
-        <article key={message.id} className={`${styles.bubble} ${message.direction === "out" ? styles.bubbleOut : styles.bubbleIn}`}>
-          <b>{message.channel === "email" ? message.subject || "Email" : "WhatsApp"}</b>
-          <p>{message.body}</p>
-          <small>
-            {message.actor} · {message.channel === "email" ? "Email" : "WhatsApp"} · <span title={formatDateTime(message.at)}>{timeAgo(message.at, now || undefined)}</span>
-          </small>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function Timeline({ groups, now, hideDay = false }: { groups: { day: string; items: LeadView["lastActivity"][] }[]; now: number; hideDay?: boolean }) {
-  return (
-    <div className={styles.timeline}>
-      {groups.map((group) => (
-        <div key={group.day}>
-          {!hideDay && <p className={styles.day}>{formatDate(group.day, true)}</p>}
-          <ol>
-            {group.items.map((event) =>
-              event ? (
-                <li key={event.id}>
-                  <span className={`${styles.timelineIcon} ${styles[`kind_${event.kind}`] ?? ""}`}>
-                    <Icon name={KIND_ICON[event.kind]} size={13} />
-                  </span>
-                  <div>
-                    <b>{event.title}</b>
-                    {event.detail && <p>{event.detail}</p>}
-                    <small>
-                      {event.source}
-                      {event.actor ? ` · ${event.actor}` : ""} · <span title={formatDateTime(event.occurredAt)}>{timeAgo(event.occurredAt, now || undefined)}</span>
-                    </small>
-                  </div>
-                </li>
-              ) : null,
-            )}
-          </ol>
-        </div>
-      ))}
-    </div>
+      </LeadProfileFrame>
+    </>
   );
 }
