@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
-import { Drawer } from "@/components/ui/Overlay";
+import { ConfirmDialog, Drawer } from "@/components/ui/Overlay";
 import Icon from "@/components/ui/Icon";
 import Select from "@/components/ui/Select";
 import { SkeletonRows } from "@/components/ui/bits";
@@ -11,7 +11,7 @@ import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { avatarStyle, formatDateTime, initials, plural } from "@/lib/format";
 import { campaignStats, fullName, renderTemplate, segmentLeads } from "@/lib/signal-growth/engine";
 import { growth, useGrowth } from "@/lib/signal-growth/store";
-import type { Campaign, EmailTemplate } from "@/lib/signal-growth/types";
+import type { Campaign, EmailTemplate, TemplateCategory } from "@/lib/signal-growth/types";
 import styles from "./email.module.css";
 
 const MERGE = [
@@ -42,20 +42,22 @@ function readableSubject(value: string) {
   return value.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => key.replace(/([A-Z])/g, " $1").trim().toLowerCase());
 }
 
-const TEMPLATE_KINDS = ["Sequence", "Campaign", "Trigger", "Letter"] as const;
-type TemplateKind = (typeof TEMPLATE_KINDS)[number];
+const TEMPLATE_KINDS: TemplateCategory[] = ["Sequence", "Campaign", "Trigger", "Letter"];
+type TemplateKind = TemplateCategory;
 
 function slugOf(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "template";
 }
 
-function templateUse(state: NonNullable<ReturnType<typeof useGrowth>>, id: string) {
-  const sequenceUses = state.sequences.reduce((sum, sequence) => sum + sequence.steps.filter((step) => step.templateId === id).length, 0);
-  const campaignUses = state.campaigns.filter((item) => item.templateId === id).length;
-  const triggerUses = state.triggers.filter((item) => item.templateId === id).length;
+function templateUse(state: NonNullable<ReturnType<typeof useGrowth>>, item: EmailTemplate) {
+  const sequenceUses = state.sequences.reduce((sum, sequence) => sum + sequence.steps.filter((step) => step.templateId === item.id).length, 0);
+  const campaignUses = state.campaigns.filter((row) => row.templateId === item.id).length;
+  const triggerUses = state.triggers.filter((row) => row.templateId === item.id).length;
   const uses = sequenceUses + campaignUses + triggerUses;
-  const kind: TemplateKind = sequenceUses ? "Sequence" : campaignUses ? "Campaign" : triggerUses ? "Trigger" : "Letter";
-  return { uses, kind, status: uses ? "Active" : "Draft" };
+  const derived: TemplateKind = sequenceUses ? "Sequence" : campaignUses ? "Campaign" : triggerUses ? "Trigger" : "Letter";
+  const kind = item.category ?? derived;
+  const status = item.paused ? "Paused" : uses ? "Active" : "Draft";
+  return { uses, kind, status };
 }
 
 function fileSize(bytes: number) {
@@ -134,6 +136,8 @@ export default function EmailPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<"edit" | "preview">("edit");
   const [bodyFormat, setBodyFormat] = useState<"text" | "html">("text");
+  const [category, setCategory] = useState<TemplateCategory>("Letter");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   bodyValue.current = body;
   useLayoutEffect(() => {
     if (bodyFormat !== "text" || !textRef.current) return;
@@ -194,6 +198,7 @@ export default function EmailPage() {
     setSubject(item.subject);
     setBody(item.body);
     setOfferEnd(item.offerEnd);
+    setCategory(templateUse(state, item).kind);
     setCampaignName(item.name);
     setWhen("");
     setAttachments([]);
@@ -215,6 +220,7 @@ export default function EmailPage() {
       setSubject(source.subject);
       setBody(source.body);
       setOfferEnd(source.offerEnd);
+      setCategory(templateUse(state, source).kind);
     }
     openEditor(source?.body ?? "");
   };
@@ -284,6 +290,7 @@ export default function EmailPage() {
       subject,
       body,
       offerEnd,
+      category,
     });
     setTemplateId(id);
     return id;
@@ -352,6 +359,7 @@ export default function EmailPage() {
     setSubject("");
     setBody("");
     setOfferEnd("Friday");
+    setCategory("Letter");
     setCampaignName("Untitled");
     setWhen("");
     setAttachments([]);
@@ -359,7 +367,8 @@ export default function EmailPage() {
     openEditor("");
   };
 
-  const catalog = state.templates.map((item) => ({ item, ...templateUse(state, item.id) }));
+  const catalog = state.templates.map((item) => ({ item, ...templateUse(state, item) }));
+  const deleteTarget = catalog.find((row) => row.item.id === deleteId)?.item ?? null;
   const activeCount = catalog.filter((row) => row.status === "Active").length;
   const emailsSent = state.leads.reduce((sum, lead) => sum + lead.timeline.filter((event) => event.channel === "email" && event.kind === "sent").length, 0);
   const kindTabs = ["All" as const, ...TEMPLATE_KINDS.filter((kind) => catalog.some((row) => row.kind === kind))];
@@ -447,12 +456,14 @@ export default function EmailPage() {
                     </td>
                     <td><span className={kindChip[row.kind]}>{row.kind}</span></td>
                     <td className={styles.subjectCell} title={row.item.subject}>{row.item.subject}</td>
-                    <td><span className={row.status === "Active" ? "chip chip-won" : "chip"}>{row.status}</span></td>
+                    <td><span className={row.status === "Paused" ? "chip chip-pending" : row.status === "Active" ? "chip chip-won" : "chip"}>{row.status}</span></td>
                     <td className="tabular">{row.uses}</td>
                     <td>
                       <div className={styles.rowActions}>
                         <button type="button" className={styles.iconBtn} aria-label={`Preview ${row.item.name}`} aria-pressed={previewId === row.item.id} onClick={() => { setLogsOpen(false); setPreviewId((current) => current === row.item.id ? null : row.item.id); }}><Icon name="eye" size={16} /></button>
                         <button type="button" className={styles.iconBtn} aria-label={`Edit ${row.item.name}`} onClick={() => loadTemplate(row.item)}><Icon name="edit" size={16} /></button>
+                        <button type="button" className={styles.iconBtn} aria-label={row.item.paused ? `Resume ${row.item.name}` : `Pause ${row.item.name}`} onClick={() => { growth.setTemplatePaused(row.item.id, !row.item.paused); toast(row.item.paused ? `${row.item.name} resumed.` : `${row.item.name} paused.`); }}><Icon name={row.item.paused ? "play" : "pause"} size={16} /></button>
+                        <button type="button" className={styles.iconBtn} aria-label={`Delete ${row.item.name}`} onClick={() => setDeleteId(row.item.id)}><Icon name="trash" size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -574,10 +585,18 @@ export default function EmailPage() {
               <div className={styles.editorPane}>
               {editorMode === "edit" ? (
                 <div className={styles.editorFields}>
-                  <label>
-                    Name
-                    <input className="input" value={name} onChange={(event) => setName(event.target.value)} aria-label="Template name" />
-                  </label>
+                  <div className={styles.nameRow}>
+                    <label>
+                      Name
+                      <input className="input" value={name} onChange={(event) => setName(event.target.value)} aria-label="Template name" />
+                    </label>
+                    <label>
+                      Category
+                      <Select className={styles.categoryPick} value={category} aria-label="Category" onChange={(event) => setCategory(event.target.value as TemplateCategory)}>
+                        {TEMPLATE_KINDS.map((kind) => <option key={kind} value={kind}>{kind}</option>)}
+                      </Select>
+                    </label>
+                  </div>
                   <label>
                     Subject
                     <input className="input" value={subject} onChange={(event) => setSubject(event.target.value)} aria-label="Subject" placeholder="The line they see first" />
@@ -690,6 +709,23 @@ export default function EmailPage() {
               )}
               </div>
             </Drawer>
+          ) : null}
+
+          {deleteTarget ? (
+            <ConfirmDialog
+              title={`Delete ${deleteTarget.name}?`}
+              description="This email leaves the library. A sequence that uses it skips that step."
+              confirmLabel="Delete"
+              tone="danger"
+              onCancel={() => setDeleteId(null)}
+              onConfirm={() => {
+                growth.deleteTemplate(deleteTarget.id);
+                if (previewId === deleteTarget.id) setPreviewId(null);
+                if (templateId === deleteTarget.id) setEditorOpen(false);
+                toast(`${deleteTarget.name} deleted.`);
+                setDeleteId(null);
+              }}
+            />
           ) : null}
       </div>
     );

@@ -222,7 +222,8 @@ export function runDue(state: GrowthState, now: number, origin: string): boolean
   for (const campaign of state.campaigns) {
     if (campaign.status !== "scheduled" || !campaign.scheduledFor) continue;
     if (new Date(campaign.scheduledFor).getTime() > now) continue;
-    sendCampaign(state, campaign, origin, at);
+    const result = sendCampaign(state, campaign, origin, at);
+    if (result.held) continue;
     changed = true;
   }
   refreshEnrollmentStops(state, at);
@@ -240,6 +241,7 @@ export function runDue(state: GrowthState, now: number, origin: string): boolean
       changed = true;
       continue;
     }
+    if (template.paused) continue;
     const result = sendEmail(state, lead, template, { sequenceId: sequence.id, at, origin });
     if (result === "capped") break;
     changed = true;
@@ -263,7 +265,7 @@ export function runDue(state: GrowthState, now: number, origin: string): boolean
       if (trigger.fired.includes(key)) continue;
       if (!triggerReady(lead, trigger.event, trigger.waitHours, now)) continue;
       const template = state.templates.find((item) => item.id === trigger.templateId);
-      if (!template) continue;
+      if (!template || template.paused) continue;
       if (trigger.channel === "whatsapp") {
         if (!lead.whatsappOptIn || !canContact(lead, "whatsapp")) {
           trigger.fired.push(key);
@@ -302,8 +304,9 @@ function triggerReady(lead: Lead, event: GrowthState["triggers"][number]["event"
   return lead.stage === "Checkout started" && now - new Date(started.at).getTime() >= wait;
 }
 
-export function sendCampaign(state: GrowthState, campaign: Campaign, origin: string, at: string): { sent: number; blocked: number; capped: boolean } {
+export function sendCampaign(state: GrowthState, campaign: Campaign, origin: string, at: string): { sent: number; blocked: number; capped: boolean; held: boolean } {
   const template = state.templates.find((item) => item.id === campaign.templateId);
+  if (!template || template.paused) return { sent: 0, blocked: 0, capped: false, held: true };
   const leads = segmentLeads(state, campaign.segmentId, new Date(at).getTime());
   let sent = 0;
   let blocked = 0;
@@ -321,7 +324,7 @@ export function sendCampaign(state: GrowthState, campaign: Campaign, origin: str
   }
   campaign.status = "sent";
   campaign.scheduledFor = undefined;
-  return { sent, blocked, capped };
+  return { sent, blocked, capped, held: false };
 }
 
 export function reached(lead: Lead, stage: Stage): boolean {

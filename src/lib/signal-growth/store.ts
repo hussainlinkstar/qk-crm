@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { todayKey, uid } from "@/lib/format";
 import { activeSequenceId, applySignalEvent, findDuplicate, queueAudits, refreshEnrollmentStops, renderTemplate, runDue, sendCampaign, setStage } from "./engine";
 import { createSeed } from "./seed";
-import type { Channel, GrowthState, Lead, LeadQuery, SignalEvent, Stage } from "./types";
+import type { Channel, EmailTemplate, GrowthState, Lead, LeadQuery, SignalEvent, Stage } from "./types";
 
 const KEY = "qiko.signal.growth.v2";
 let state: GrowthState | null = null;
@@ -378,7 +378,11 @@ export const growth = {
       const campaign = draft.campaigns.find((item) => item.id === campaignId);
       if (!campaign) return;
       const result = sendCampaign(draft, campaign, origin, new Date().toISOString());
-      message = result.capped ? `Sent ${result.sent}, then the daily send limit stopped the rest. ${result.blocked} were do-not-contact.` : `Sent ${result.sent}. ${result.blocked} do-not-contact leads were left out.`;
+      message = result.held
+        ? "This template is paused, so nothing was sent."
+        : result.capped
+          ? `Sent ${result.sent}, then the daily send limit stopped the rest. ${result.blocked} were do-not-contact.`
+          : `Sent ${result.sent}. ${result.blocked} do-not-contact leads were left out.`;
     });
     return message;
   },
@@ -412,22 +416,50 @@ export const growth = {
     return `Test to you: ${rendered.subject}`;
   },
 
-  saveTemplate(input: { id?: string; name: string; subject: string; body: string; offerEnd: string }) {
+  saveTemplate(input: { id?: string; name: string; subject: string; body: string; offerEnd: string; category?: EmailTemplate["category"] }) {
     let id = input.id ?? "";
     commit((draft) => {
       const fallbacks = { firstName: "there", company: "your team", site: "your site", aio: "your AIO score", seo: "your SEO score", topProblem: "the main issue we found", reportLink: "your private report link", offerEnd: input.offerEnd || "soon" };
       if (input.id) {
         const existing = draft.templates.find((item) => item.id === input.id);
         if (existing) {
-          Object.assign(existing, { name: input.name, subject: input.subject, body: input.body, offerEnd: input.offerEnd, fallbacks });
+          Object.assign(existing, { name: input.name, subject: input.subject, body: input.body, offerEnd: input.offerEnd, fallbacks, category: input.category });
           id = existing.id;
         }
         return;
       }
       id = uid("tm");
-      draft.templates.unshift({ id, name: input.name, subject: input.subject, body: input.body, offerEnd: input.offerEnd, fallbacks });
+      draft.templates.unshift({ id, name: input.name, subject: input.subject, body: input.body, offerEnd: input.offerEnd, fallbacks, category: input.category });
     });
     return id;
+  },
+
+  setTemplatePaused(id: string, paused: boolean) {
+    commit((draft) => {
+      const template = draft.templates.find((item) => item.id === id);
+      if (template) template.paused = paused;
+    });
+  },
+
+  deleteTemplate(id: string) {
+    commit((draft) => {
+      draft.templates = draft.templates.filter((item) => item.id !== id);
+      for (const sequence of draft.sequences) {
+        for (const enrollment of draft.enrollments) {
+          if (enrollment.sequenceId !== sequence.id || enrollment.status !== "active") continue;
+          const removedBefore = sequence.steps.slice(0, enrollment.stepIndex).filter((step) => step.templateId === id).length;
+          enrollment.stepIndex = Math.max(0, enrollment.stepIndex - removedBefore);
+        }
+        sequence.steps = sequence.steps.filter((step) => step.templateId !== id);
+        for (const enrollment of draft.enrollments) {
+          if (enrollment.sequenceId !== sequence.id || enrollment.status !== "active") continue;
+          if (enrollment.stepIndex >= sequence.steps.length) {
+            enrollment.status = "stopped";
+            enrollment.stopReason = "completed";
+          }
+        }
+      }
+    });
   },
 
   enrol(sequenceId: string, leadIds: string[]) {

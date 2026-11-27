@@ -38,6 +38,8 @@ const PATHS = {
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   send: <><path d="m22 2-7 20-4-9-9-4z" /><path d="M22 2 11 13" /></>,
   trash: <><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>,
+  pause: <><circle cx="12" cy="12" r="10" /><path d="M10 15V9M14 15V9" /></>,
+  play: <><circle cx="12" cy="12" r="10" /><path d="m10 8 6 4-6 4V8z" /></>,
   edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" /></>,
   userPlus: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6M22 11h-6" /></>,
   zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />,

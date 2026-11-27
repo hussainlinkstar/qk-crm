@@ -123,6 +123,8 @@ export interface LeadQuery {
   preset?: "" | "no-audit-7d" | "checkout-abandoned";
 }
 
+export type TemplateCategory = "Sequence" | "Campaign" | "Trigger" | "Letter";
+
 export interface EmailTemplate {
   id: string;
   name: string;
@@ -130,6 +132,8 @@ export interface EmailTemplate {
   body: string;
   fallbacks: Record<string, string>;
   offerEnd: string;
+  category?: TemplateCategory;
+  paused?: boolean;
 }
 
 export interface Campaign {
