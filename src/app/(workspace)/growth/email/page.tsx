@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
+import { Drawer } from "@/components/ui/Overlay";
 import Icon from "@/components/ui/Icon";
 import Select from "@/components/ui/Select";
 import { SkeletonRows } from "@/components/ui/bits";
+import { OutcomeGrid, PageHero } from "@/components/ui/workspace";
 import { useWorkspace } from "@/components/shell/WorkspaceContext";
 import { avatarStyle, formatDateTime, initials, plural } from "@/lib/format";
 import { campaignStats, fullName, renderTemplate, segmentLeads } from "@/lib/signal-growth/engine";
@@ -40,6 +42,22 @@ function readableSubject(value: string) {
   return value.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => key.replace(/([A-Z])/g, " $1").trim().toLowerCase());
 }
 
+const TEMPLATE_KINDS = ["Sequence", "Campaign", "Trigger", "Letter"] as const;
+type TemplateKind = (typeof TEMPLATE_KINDS)[number];
+
+function slugOf(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "template";
+}
+
+function templateUse(state: NonNullable<ReturnType<typeof useGrowth>>, id: string) {
+  const sequenceUses = state.sequences.reduce((sum, sequence) => sum + sequence.steps.filter((step) => step.templateId === id).length, 0);
+  const campaignUses = state.campaigns.filter((item) => item.templateId === id).length;
+  const triggerUses = state.triggers.filter((item) => item.templateId === id).length;
+  const uses = sequenceUses + campaignUses + triggerUses;
+  const kind: TemplateKind = sequenceUses ? "Sequence" : campaignUses ? "Campaign" : triggerUses ? "Trigger" : "Letter";
+  return { uses, kind, status: uses ? "Active" : "Draft" };
+}
+
 function fileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -72,10 +90,26 @@ function renderBody(text: string) {
   return blocks.join("") || "<p>The message will show here.</p>";
 }
 
+function letterMarkup(text: string) {
+  if (!/<\/?[a-z][\s\S]*>/i.test(text)) return renderBody(text);
+  return text
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, "")
+    .replace(/\son\w+\s*=\s*(['"]).*?\1/gi, "")
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, "")
+    .replace(/javascript:/gi, "");
+}
+
+function textHtml(value: string) {
+  return value.trim() ? letterMarkup(value) : "";
+}
+
 export default function EmailPage() {
   const state = useGrowth();
   const { toast, session } = useWorkspace();
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const bodyValue = useRef("");
   const fileRef = useRef<HTMLInputElement>(null);
   const [hydrated, setHydrated] = useState(false);
   const [templateId, setTemplateId] = useState("tm_audit");
@@ -92,6 +126,19 @@ export default function EmailPage() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [panel, setPanel] = useState<Panel>("");
   const [linkUrl, setLinkUrl] = useState("https://");
+  const [browsing, setBrowsing] = useState(true);
+  const [kindFilter, setKindFilter] = useState<"All" | TemplateKind>("All");
+  const [templateQuery, setTemplateQuery] = useState("");
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<"edit" | "preview">("edit");
+  const [bodyFormat, setBodyFormat] = useState<"text" | "html">("text");
+  bodyValue.current = body;
+  useLayoutEffect(() => {
+    if (bodyFormat !== "text" || !textRef.current) return;
+    textRef.current.innerHTML = textHtml(bodyValue.current);
+  }, [bodyFormat, editorOpen]);
 
   if (state && !hydrated) {
     const template = state.templates.find((item) => item.id === "tm_audit") ?? state.templates[0];
@@ -132,6 +179,14 @@ export default function EmailPage() {
     : null;
   const sentCampaign = campaign?.status === "sent";
 
+  const openEditor = (source: string) => {
+    setPreviewId(null);
+    setLogsOpen(false);
+    setEditorMode("edit");
+    setBodyFormat(/<\/?[a-z]/i.test(source) ? "html" : "text");
+    setEditorOpen(true);
+  };
+
   const loadTemplate = (item: EmailTemplate) => {
     setTemplateId(item.id);
     setCampaignId(null);
@@ -143,6 +198,7 @@ export default function EmailPage() {
     setWhen("");
     setAttachments([]);
     setPanel("");
+    openEditor(item.body);
   };
 
   const loadCampaign = (item: Campaign) => {
@@ -153,15 +209,27 @@ export default function EmailPage() {
     setWhen(toLocalInput(item.scheduledFor));
     setAttachments([]);
     setPanel("");
-    if (!source) return;
-    setTemplateId(source.id);
-    setName(source.name);
-    setSubject(source.subject);
-    setBody(source.body);
-    setOfferEnd(source.offerEnd);
+    if (source) {
+      setTemplateId(source.id);
+      setName(source.name);
+      setSubject(source.subject);
+      setBody(source.body);
+      setOfferEnd(source.offerEnd);
+    }
+    openEditor(source?.body ?? "");
+  };
+
+  const syncText = () => {
+    if (textRef.current) setBody(textRef.current.innerHTML);
   };
 
   const insert = (snippet: string) => {
+    if (bodyFormat === "text" && textRef.current) {
+      textRef.current.focus();
+      document.execCommand("insertText", false, snippet);
+      syncText();
+      return;
+    }
     const field = bodyRef.current;
     const start = field?.selectionStart ?? body.length;
     const end = field?.selectionEnd ?? body.length;
@@ -174,6 +242,14 @@ export default function EmailPage() {
   };
 
   const wrap = (before: string, after: string) => {
+    if (bodyFormat === "text" && textRef.current) {
+      textRef.current.focus();
+      const command = before === "**" ? "bold" : before === "*" ? "italic" : "";
+      if (command) document.execCommand(command);
+      else document.execCommand("insertText", false, `${before}text${after}`);
+      syncText();
+      return;
+    }
     const field = bodyRef.current;
     const start = field?.selectionStart ?? body.length;
     const end = field?.selectionEnd ?? body.length;
@@ -186,6 +262,12 @@ export default function EmailPage() {
   };
 
   const bullet = () => {
+    if (bodyFormat === "text" && textRef.current) {
+      textRef.current.focus();
+      document.execCommand("insertUnorderedList");
+      syncText();
+      return;
+    }
     const field = bodyRef.current;
     const start = field?.selectionStart ?? body.length;
     const end = field?.selectionEnd ?? body.length;
@@ -227,22 +309,6 @@ export default function EmailPage() {
     toast(schedule ? "Scheduled. It sends within 5 minutes of that time." : "Draft saved.");
   };
 
-  const sendNow = () => {
-    if (!subject.trim() || !body.trim()) {
-      toast("Add a subject and a message first.");
-      return;
-    }
-    const id = persistTemplate();
-    let target = campaign && campaign.status !== "sent" ? campaign.id : "";
-    const payload = { name: campaignName.trim() || name.trim() || "Untitled", templateId: id, segmentId, scheduledFor: "" };
-    if (target) growth.updateCampaign(target, payload);
-    else {
-      target = growth.scheduleCampaign(payload);
-      setCampaignId(target);
-    }
-    toast(growth.sendCampaign(target, origin));
-  };
-
   const addFiles = (list: FileList | null) => {
     if (!list?.length) return;
     const next: Attachment[] = [];
@@ -265,8 +331,6 @@ export default function EmailPage() {
   const plain = body.replace(/\{\{[^}]+\}\}/g, " ").replace(/[*_\[\]()]/g, " ").trim();
   const words = plain ? plain.split(/\s+/).length : 0;
   const seconds = words ? Math.max(5, Math.round((words / 180) * 60)) : 0;
-  const cap = Math.max(state.caps.emailLimit, 1);
-  const used = Math.min(100, Math.round((state.caps.emailsSent / cap) * 100));
   const segment = state.segments.find((item) => item.id === segmentId);
   const reachable = audience.length - blocked;
   const stats = campaign ? campaignStats(state, campaign.id) : null;
@@ -292,195 +356,341 @@ export default function EmailPage() {
     setWhen("");
     setAttachments([]);
     setPanel("");
+    openEditor("");
+  };
+
+  const catalog = state.templates.map((item) => ({ item, ...templateUse(state, item.id) }));
+  const activeCount = catalog.filter((row) => row.status === "Active").length;
+  const emailsSent = state.leads.reduce((sum, lead) => sum + lead.timeline.filter((event) => event.channel === "email" && event.kind === "sent").length, 0);
+  const kindTabs = ["All" as const, ...TEMPLATE_KINDS.filter((kind) => catalog.some((row) => row.kind === kind))];
+  const query = templateQuery.trim().toLowerCase();
+  const visible = (kindFilter === "All" ? catalog : catalog.filter((row) => row.kind === kindFilter)).filter((row) => {
+    if (!query) return true;
+    return `${row.item.name} ${slugOf(row.item.name)} ${row.item.subject} ${row.kind}`.toLowerCase().includes(query);
+  });
+  const previewTemplate = state.templates.find((item) => item.id === previewId) ?? null;
+  const previewRow = catalog.find((row) => row.item.id === previewId) ?? null;
+  const previewLetter = previewTemplate && sample ? renderTemplate(previewTemplate, sample, origin) : null;
+
+  const kindChip: Record<TemplateKind, string> = {
+    Sequence: "chip chip-contacted",
+    Campaign: "chip chip-new",
+    Trigger: "chip chip-pending",
+    Letter: "chip chip-ai",
   };
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <div>
-          <p className="kicker">Signal</p>
-          <h1>Email studio</h1>
-          <p className="subtitle">Write the letter, watch it land in their inbox, then save, schedule, or send. A send uses the subject and body and stops at today’s limit.</p>
-        </div>
-        <div className={styles.capacity}>
-          <div>
-            <b className="tabular">{state.caps.emailsSent} of {state.caps.emailLimit}</b>
-            <small>sent today</small>
-            <div className={styles.meter} data-hot={used >= 80 ? "true" : undefined}><span style={{ width: `${used}%` }} /></div>
-          </div>
-          <input className={`input ${styles.capField}`} type="number" min={0} value={limit ?? state.caps.emailLimit} onChange={(event) => setLimit(Number(event.target.value))} aria-label="Daily send limit" />
-          <Button size="small" variant="secondary" onClick={() => { growth.setEmailLimit(limit ?? state.caps.emailLimit); toast("Send limit saved"); }}>Save</Button>
-        </div>
-      </header>
+      <div className="page">
+        <PageHero
+          kicker="Signal"
+          title="Email templates"
+          lede="Letters you can send, schedule, or place in a sequence."
+          action={
+            <>
+              <Button variant="secondary" aria-expanded={logsOpen} onClick={() => { setPreviewId(null); setLogsOpen(true); }}>View logs</Button>
+              <Button icon="plus" onClick={startBlank}>New template</Button>
+            </>
+          }
+        />
 
-      <div className={styles.studio}>
-        <aside className={styles.library} aria-label="Templates and drafts">
-          <Button icon="plus" variant="secondary" fullWidth onClick={startBlank}>New letter</Button>
-          <p className={styles.groupLabel}>Templates</p>
-          {state.templates.map((item) => (
-            <button type="button" key={item.id} className={styles.mailCard} aria-current={!campaignId && templateId === item.id ? "true" : undefined} onClick={() => loadTemplate(item)}>
-              <i className={styles.pip} data-tone="template" />
-              <span>
-                <b>{item.name}</b>
-                <small>{readableSubject(item.subject)}</small>
-              </span>
-            </button>
-          ))}
-          {groups.map((group) => group.items.length ? (
-            <div key={group.label}>
-              <p className={styles.groupLabel}>{group.label}</p>
-              {group.items.map((item) => (
-                <button type="button" key={item.id} className={styles.mailCard} aria-current={campaignId === item.id ? "true" : undefined} onClick={() => loadCampaign(item)}>
-                  <i className={styles.pip} data-tone={group.tone} />
-                  <span>
-                    <b>{item.name}</b>
-                    <small>{item.scheduledFor ? formatDateTime(item.scheduledFor) : item.status}</small>
-                  </span>
-                </button>
-              ))}
+        <OutcomeGrid
+          label="Template totals"
+          tiles={[
+            { key: "total", label: "Total templates", numeric: catalog.length, sub: "Letters ready to send", icon: "mail", iconTone: "qiko", tone: "qiko" },
+            { key: "active", label: "Active", numeric: activeCount, sub: "Used in a flow or a send", icon: "check", iconTone: "qiko", tone: "qiko" },
+            { key: "sent", label: "Emails sent", numeric: emailsSent, sub: "Across every lead", icon: "send", iconTone: "qiko", tone: "qiko" },
+            { key: "today", label: "Sent today", numeric: state.caps.emailsSent, sub: `of ${state.caps.emailLimit}`, icon: "calendar", iconTone: "qiko", tone: "qiko" },
+          ]}
+        />
+
+        <section className="card">
+          <div className={styles.toolbar}>
+            <div className="segmented" role="group" aria-label="Template kinds">
+              {kindTabs.map((kind) => {
+                const count = kind === "All" ? catalog.length : catalog.filter((row) => row.kind === kind).length;
+                return (
+                  <button type="button" key={kind} aria-pressed={kindFilter === kind} onClick={() => setKindFilter(kind)}>
+                    {kind} <span className="count">{count}</span>
+                  </button>
+                );
+              })}
             </div>
-          ) : null)}
-        </aside>
-
-        <section className={styles.letter} aria-label="Email composer">
-          <div className={styles.letterHead}>
-            <div className={styles.people}>
-              <span className={styles.who}>
-                <span className="avatar" style={avatarStyle(session.name)}>{initials(session.name)}</span>
-                <span>
-                  <b>{session.name}</b>
-                  <small>{session.email}</small>
-                </span>
-              </span>
-              <span className={styles.toWord}>to</span>
-              <span className={styles.audience}>
-                <Select className={styles.segmentPick} value={segmentId} aria-label="Segment" onChange={(event) => setSegmentId(event.target.value)}>
-                  {state.segments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                </Select>
-                <small>{plural(reachable, "person", "people")} receive it · {blocked} skipped</small>
-              </span>
-            </div>
-            <input className={styles.draftName} value={campaignName} onChange={(event) => setCampaignName(event.target.value)} aria-label="Draft name" placeholder="Draft name" />
-          </div>
-
-          <input className={styles.subject} value={subject} onChange={(event) => setSubject(event.target.value)} aria-label="Subject" placeholder="The line they see first" />
-
-          <div className={styles.dock} role="toolbar" aria-label="Formatting">
-            <button type="button" className={styles.tool} aria-label="Bold" onClick={() => wrap("**", "**")}><span className={styles.toolMark}>B</span></button>
-            <button type="button" className={styles.tool} aria-label="Italic" onClick={() => wrap("*", "*")}><span className={styles.toolMark}><em>I</em></span></button>
-            <button type="button" className={styles.tool} aria-label="Bulleted list" onClick={bullet}><Icon name="list" size={15} /></button>
-            <button type="button" className={styles.tool} aria-label="Insert link" aria-expanded={panel === "link"} onClick={() => setPanel(panel === "link" ? "" : "link")}><Icon name="link" size={15} /></button>
-            <span className={styles.dockSplit} />
-            <button type="button" className={styles.tool} aria-label="Insert emoji" aria-expanded={panel === "emoji"} onClick={() => setPanel(panel === "emoji" ? "" : "emoji")}>Emoji</button>
-            <span className={styles.spacer} />
-            <button type="button" className={styles.tool} aria-label="Attach files" onClick={() => fileRef.current?.click()}><Icon name="file" size={15} /> Attach</button>
-            <input ref={fileRef} type="file" multiple hidden onChange={(event) => addFiles(event.target.files)} />
-            {panel === "emoji" ? (
-              <div className={styles.popover} role="dialog" aria-label="Emoji">
-                <p>Drop one in</p>
-                <div className={styles.emojiGrid}>
-                  {EMOJIS.map((emoji) => (
-                    <button type="button" key={emoji} onClick={() => { insert(emoji); setPanel(""); }}>{emoji}</button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            {panel === "link" ? (
-              <form className={`${styles.popover} ${styles.linkForm}`} onSubmit={(event) => { event.preventDefault(); wrap("[", `](${linkUrl.trim() || "https://"})`); setPanel(""); }}>
-                <input className="input" value={linkUrl} onChange={(event) => setLinkUrl(event.target.value)} aria-label="Link address" placeholder="https://" />
-                <Button type="submit" size="small" variant="secondary">Insert</Button>
-              </form>
-            ) : null}
-          </div>
-
-          <div className={styles.mergeRow}>
-            {MERGE.map(([key, label]) => (
-              <button type="button" key={key} className={styles.token} onClick={() => insert(`{{${key}}}`)}>{label}</button>
-            ))}
-          </div>
-
-          <textarea ref={bodyRef} className={styles.body} value={body} onChange={(event) => setBody(event.target.value)} aria-label="Message" placeholder="Start with their name. One reason to open the report." />
-
-          {attachments.length ? (
-            <div className={styles.files}>
-              {attachments.map((file) => (
-                <span key={file.id} className={styles.fileCard}>
-                  <span className={styles.fileMark}><Icon name="file" size={16} /></span>
-                  <span>
-                    <b>{file.name}</b>
-                    <small className={styles.hint}>{fileSize(file.size)}</small>
-                  </span>
-                  <button type="button" aria-label={`Remove ${file.name}`} onClick={() => setAttachments((current) => current.filter((item) => item.id !== file.id))}><Icon name="x" size={14} /></button>
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          <div className={styles.letterMeta}>
-            <span className={styles.readTime}>{words ? `${plural(words, "word")} · ${seconds} sec to read` : "Empty letter"}</span>
-            <label>
-              Offer ends
-              <input value={offerEnd} onChange={(event) => setOfferEnd(event.target.value)} aria-label="Offer end" />
-            </label>
-            <label>
-              Send at
-              <input type="datetime-local" value={when} onChange={(event) => setWhen(event.target.value)} aria-label="Send at" />
+            <label className={`search-field ${styles.search}`}>
+              <Icon name="search" size={15} />
+              <input value={templateQuery} onChange={(event) => setTemplateQuery(event.target.value)} placeholder="Search name or subject" aria-label="Search templates" />
             </label>
           </div>
-          <p className={styles.note}>
-            A chip drops in that lead’s own value, or a fallback when the value is empty. Saving updates every place this template is used.
-            {attachments.length ? " Files stay on this letter for the session. A send uses the subject and body." : ""}
-          </p>
-          <div className={styles.actions}>
-            <Button variant="ghost" onClick={() => { const id = persistTemplate(); toast(growth.sendTest(id, origin)); }}>Send test</Button>
-            <span className={styles.spacer} />
-            <Button variant="secondary" onClick={() => saveDraft(false)}>Save draft</Button>
-            <Button variant="secondary" icon="calendar" disabled={!when || sentCampaign} onClick={() => saveDraft(true)}>Schedule</Button>
-            <Button icon="send" disabled={sentCampaign} onClick={sendNow}>{sentCampaign ? "Sent" : "Send now"}</Button>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Template</th>
+                  <th>Category</th>
+                  <th>Subject</th>
+                  <th>Status</th>
+                  <th>Uses</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className={styles.emptyCell}>{query ? `No templates match “${templateQuery.trim()}”.` : "No templates in this category."}</td>
+                  </tr>
+                ) : visible.map((row) => (
+                  <tr key={row.item.id}>
+                    <td>
+                      <button type="button" className={styles.templateName} onClick={() => loadTemplate(row.item)}>
+                        <b>{row.item.name}</b>
+                        <small>{slugOf(row.item.name)}</small>
+                      </button>
+                    </td>
+                    <td><span className={kindChip[row.kind]}>{row.kind}</span></td>
+                    <td className={styles.subjectCell} title={row.item.subject}>{row.item.subject}</td>
+                    <td><span className={row.status === "Active" ? "chip chip-won" : "chip"}>{row.status}</span></td>
+                    <td className="tabular">{row.uses}</td>
+                    <td>
+                      <div className={styles.rowActions}>
+                        <button type="button" className={styles.iconBtn} aria-label={`Preview ${row.item.name}`} aria-pressed={previewId === row.item.id} onClick={() => { setLogsOpen(false); setPreviewId((current) => current === row.item.id ? null : row.item.id); }}><Icon name="eye" size={16} /></button>
+                        <button type="button" className={styles.iconBtn} aria-label={`Edit ${row.item.name}`} onClick={() => loadTemplate(row.item)}><Icon name="edit" size={16} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 
-        <aside className={styles.inbox} aria-label="Inbox preview">
-          <div className={styles.inboxBar}>
-            <div>
-              <p>Their inbox</p>
-              <b>{sample ? fullName(sample) : "No lead"}</b>
-            </div>
-            <Select className={styles.previewPick} value={sample?.id ?? ""} aria-label="Preview as" onChange={(event) => setSampleId(event.target.value)}>
-              {state.leads.map((lead) => <option key={lead.id} value={lead.id}>{fullName(lead)}</option>)}
-            </Select>
-          </div>
-          <article className={styles.message}>
-            <div className={styles.fromLine}>
-              <span className="avatar" style={avatarStyle(session.name)}>{initials(session.name)}</span>
-              <span>
-                <b>{session.name}</b>
-                <small>to {sample?.email} · {segment?.name}</small>
-              </span>
-            </div>
-            <h3>{preview?.subject || "No subject yet"}</h3>
-            <div className={styles.paperBody} dangerouslySetInnerHTML={{ __html: renderBody(preview?.body || "") }} />
-            {attachments.length ? (
-              <div className={styles.files}>
-                {attachments.map((file) => (
-                  <span key={file.id} className={styles.fileCard}>
-                    <span className={styles.fileMark}><Icon name="file" size={16} /></span>
-                    <b>{file.name}</b>
+          {previewTemplate && previewLetter ? (
+            <Drawer
+              kicker="Email"
+              width={480}
+              title={
+                <span className={styles.panelTitle}>
+                  <span>
+                    {previewTemplate.name}
+                    <small>{previewRow ? `${previewRow.kind} · ${previewRow.status}` : "Template"}</small>
                   </span>
-                ))}
-              </div>
-            ) : null}
-            {statTiles.length ? null : <p className={styles.note}>Open a sent letter to see delivery, opens, and replies.</p>}
-          </article>
-          {statTiles.length ? (
-            <div className={styles.stats}>
-              {statTiles.map(([label, value]) => (
-                <div key={label}><b className="tabular">{value}</b><span>{label}</span></div>
-              ))}
-            </div>
+                </span>
+              }
+              onClose={() => setPreviewId(null)}
+              footer={
+                <button type="button" className={styles.editTemplate} onClick={() => { setPreviewId(null); loadTemplate(previewTemplate); }}>
+                  Edit template <Icon name="arrowRight" size={14} />
+                </button>
+              }
+            >
+              <aside className={`${styles.inbox} ${styles.drawerInbox}`} aria-label="Inbox preview">
+                <div className={styles.inboxBar}>
+                  <div>
+                    <p>Their inbox</p>
+                    <b>{sample ? fullName(sample) : "No lead"}</b>
+                  </div>
+                  <Select className={styles.previewPick} value={sample?.id ?? ""} aria-label="Preview as" onChange={(event) => setSampleId(event.target.value)}>
+                    {state.leads.map((lead) => <option key={lead.id} value={lead.id}>{fullName(lead)}</option>)}
+                  </Select>
+                </div>
+                <article className={styles.message}>
+                  <div className={styles.fromLine}>
+                    <span className="avatar" style={avatarStyle(session.name)}>{initials(session.name)}</span>
+                    <span>
+                      <b>{session.name}</b>
+                      <small>to {sample?.email || "a lead"}</small>
+                    </span>
+                  </div>
+                  <h3>{previewLetter.subject || "No subject yet"}</h3>
+                  <div className={styles.paperBody} dangerouslySetInnerHTML={{ __html: letterMarkup(previewLetter.body) }} />
+                </article>
+              </aside>
+            </Drawer>
           ) : null}
-        </aside>
+
+          {logsOpen ? (
+            <Drawer title="Send log" kicker="Signal" width={420} onClose={() => setLogsOpen(false)}>
+              <p className={styles.logIntro}>Drafts, scheduled letters, and letters already sent.</p>
+              <div className={styles.limitRow}>
+                <span>{state.caps.emailsSent} of {state.caps.emailLimit} today</span>
+                <input className={`input ${styles.capField}`} type="number" min={0} value={limit ?? state.caps.emailLimit} onChange={(event) => setLimit(Number(event.target.value))} aria-label="Daily send limit" />
+                <Button size="small" variant="secondary" onClick={() => { growth.setEmailLimit(limit ?? state.caps.emailLimit); toast("Send limit saved"); }}>Save</Button>
+              </div>
+              {state.campaigns.length === 0 ? (
+                <p className={styles.emptyCell}>No sends yet.</p>
+              ) : (
+                <ul className={styles.logList}>
+                  {state.campaigns.map((item) => {
+                    const source = state.templates.find((row) => row.id === item.templateId);
+                    return (
+                      <li key={item.id}>
+                        <button type="button" onClick={() => { setLogsOpen(false); loadCampaign(item); }}>
+                          <b>{item.name}</b>
+                          <small>{source?.name ?? "Template"}{item.scheduledFor ? ` · ${formatDateTime(item.scheduledFor)}` : ""}</small>
+                        </button>
+                        <span className={item.status === "sent" ? "chip chip-won" : "chip"}>{item.status}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Drawer>
+          ) : null}
+
+          {editorOpen ? (
+            <Drawer
+              width={760}
+              title={name.trim() || "New template"}
+              onClose={() => setEditorOpen(false)}
+              header={
+                <>
+                  <p className={styles.editorTitle}>{name.trim() || "New template"}</p>
+                  <div className={styles.letterHead}>
+                    <div className={styles.people}>
+                      <span className={styles.who}>
+                        <span className="avatar" style={avatarStyle(session.name)}>{initials(session.name)}</span>
+                        <span>
+                          <b>{session.name}</b>
+                          <small>{session.email}</small>
+                        </span>
+                      </span>
+                      <span className={styles.toWord}>to</span>
+                      <span className={styles.audience}>
+                        <Select className={styles.segmentPick} value={segmentId} aria-label="Segment" onChange={(event) => setSegmentId(event.target.value)}>
+                          {state.segments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                        </Select>
+                        <small>{plural(reachable, "person", "people")} receive it · {blocked} skipped</small>
+                      </span>
+                    </div>
+                  </div>
+                </>
+              }
+              footer={
+                <>
+                  <Button variant="secondary" onClick={() => saveDraft(false)}>Save draft</Button>
+                  <Button variant="secondary" icon="calendar" disabled={!when || sentCampaign} onClick={() => saveDraft(true)}>Schedule</Button>
+                  <Button onClick={() => { persistTemplate(); toast("Template saved."); }}>Save</Button>
+                </>
+              }
+            >
+              <div className={styles.editorPane}>
+              {editorMode === "edit" ? (
+                <div className={styles.editorFields}>
+                  <label>
+                    Name
+                    <input className="input" value={name} onChange={(event) => setName(event.target.value)} aria-label="Template name" />
+                  </label>
+                  <label>
+                    Subject
+                    <input className="input" value={subject} onChange={(event) => setSubject(event.target.value)} aria-label="Subject" placeholder="The line they see first" />
+                  </label>
+                  <div className={styles.toolRow}>
+                  <div className={styles.dock} role="toolbar" aria-label="Formatting">
+                    <button type="button" className={styles.tool} aria-label="Bold" onClick={() => wrap("**", "**")}><span className={styles.toolMark}>B</span></button>
+                    <button type="button" className={styles.tool} aria-label="Italic" onClick={() => wrap("*", "*")}><span className={styles.toolMark}><em>I</em></span></button>
+                    <button type="button" className={styles.tool} aria-label="Bulleted list" onClick={bullet}><Icon name="list" size={15} /></button>
+                    <button type="button" className={styles.tool} aria-label="Insert link" aria-expanded={panel === "link"} onClick={() => setPanel(panel === "link" ? "" : "link")}><Icon name="link" size={15} /></button>
+                    <span className={styles.dockSplit} />
+                    <button type="button" className={styles.tool} aria-label="Insert emoji" aria-expanded={panel === "emoji"} onClick={() => setPanel(panel === "emoji" ? "" : "emoji")}>Emoji</button>
+                    {panel === "emoji" ? (
+                      <div className={styles.popover} role="dialog" aria-label="Emoji">
+                        <p>Drop one in</p>
+                        <div className={styles.emojiGrid}>
+                          {EMOJIS.map((emoji) => (
+                            <button type="button" key={emoji} onClick={() => { insert(emoji); setPanel(""); }}>{emoji}</button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {panel === "link" ? (
+                      <form className={`${styles.popover} ${styles.linkForm}`} onSubmit={(event) => { event.preventDefault(); wrap("[", `](${linkUrl.trim() || "https://"})`); setPanel(""); }}>
+                        <input className="input" value={linkUrl} onChange={(event) => setLinkUrl(event.target.value)} aria-label="Link address" placeholder="https://" />
+                        <Button type="submit" size="small" variant="secondary">Insert</Button>
+                      </form>
+                    ) : null}
+                  </div>
+                  <span className={styles.spacer} />
+                  <div className={`segmented ${styles.formatSwitch}`} role="group" aria-label="Email format">
+                    <button type="button" aria-pressed={bodyFormat === "text"} onClick={() => setBodyFormat("text")}>Text</button>
+                    <button type="button" aria-pressed={bodyFormat === "html"} onClick={() => setBodyFormat("html")}>HTML</button>
+                  </div>
+                  <div className={`segmented ${styles.modeSwitch}`} role="group" aria-label="Editor mode">
+                    <button type="button" aria-pressed={editorMode === "edit"} onClick={() => setEditorMode("edit")}>Edit</button>
+                    <button type="button" aria-pressed={editorMode === "preview"} onClick={() => setEditorMode("preview")}>Preview</button>
+                  </div>
+                  <button type="button" className={styles.attach} aria-label="Attach files" onClick={() => fileRef.current?.click()}><Icon name="file" size={15} /> Attach</button>
+                  <input ref={fileRef} type="file" multiple hidden onChange={(event) => addFiles(event.target.files)} />
+                  </div>
+                  <div className={styles.mergeRow}>
+                    {MERGE.map(([key, label]) => (
+                      <button type="button" key={key} className={styles.token} onClick={() => insert(`{{${key}}}`)}>{label}</button>
+                    ))}
+                  </div>
+                  {bodyFormat === "html" ? (
+                    <textarea ref={bodyRef} className={`${styles.htmlField} ${styles.htmlFieldCode}`} value={body} onChange={(event) => setBody(event.target.value)} aria-label="Email" placeholder="Paste or write HTML." />
+                  ) : (
+                    <div ref={textRef} className={styles.htmlField} contentEditable role="textbox" aria-multiline="true" aria-label="Email" data-placeholder="Write the email." onInput={syncText} />
+                  )}
+                  {attachments.length ? (
+                    <div className={styles.files}>
+                      {attachments.map((file) => (
+                        <span key={file.id} className={styles.fileCard}>
+                          <span className={styles.fileMark}><Icon name="file" size={16} /></span>
+                          <span>
+                            <b>{file.name}</b>
+                            <small className={styles.hint}>{fileSize(file.size)}</small>
+                          </span>
+                          <button type="button" aria-label={`Remove ${file.name}`} onClick={() => setAttachments((current) => current.filter((item) => item.id !== file.id))}><Icon name="x" size={14} /></button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className={styles.letterMeta}>
+                    <span className={styles.readTime}>{words ? `${plural(words, "word")} · ${seconds} sec to read` : "Empty email"}</span>
+                    <label>
+                      Offer ends
+                      <input className="input" value={offerEnd} onChange={(event) => setOfferEnd(event.target.value)} aria-label="Offer end" />
+                    </label>
+                    <label>
+                      Send at
+                      <input className="input" type="datetime-local" value={when} onChange={(event) => setWhen(event.target.value)} aria-label="Send at" />
+                    </label>
+                  </div>
+                  <p className={styles.logIntro}>{bodyFormat === "html" ? "HTML is shown as the lead would read it in Preview." : "Text keeps bold, lists, and links. Switch to HTML to paste a designed email."} Tokens such as {"{{firstName}}"} fill in for the lead.</p>
+                </div>
+              ) : (
+                <>
+                <div className={styles.previewTools}>
+                  <div className={`segmented ${styles.modeSwitch}`} role="group" aria-label="Editor mode">
+                    <button type="button" aria-pressed={editorMode === "edit"} onClick={() => setEditorMode("edit")}>Edit</button>
+                    <button type="button" aria-pressed={editorMode === "preview"} onClick={() => setEditorMode("preview")}>Preview</button>
+                  </div>
+                </div>
+                <aside className={`${styles.inbox} ${styles.drawerInbox} ${styles.editorPreview}`} aria-label="Inbox preview">
+                  <div className={styles.inboxBar}>
+                    <div>
+                      <p>Their inbox</p>
+                      <b>{sample ? fullName(sample) : "No lead"}</b>
+                    </div>
+                    <Select className={styles.previewPick} value={sample?.id ?? ""} aria-label="Preview as" onChange={(event) => setSampleId(event.target.value)}>
+                      {state.leads.map((lead) => <option key={lead.id} value={lead.id}>{fullName(lead)}</option>)}
+                    </Select>
+                  </div>
+                  <article className={styles.message}>
+                    <div className={styles.fromLine}>
+                      <span className="avatar" style={avatarStyle(session.name)}>{initials(session.name)}</span>
+                      <span>
+                        <b>{session.name}</b>
+                        <small>to {sample?.email || "a lead"}</small>
+                      </span>
+                    </div>
+                    <h3>{preview?.subject || "No subject yet"}</h3>
+                    <div className={styles.paperBody} dangerouslySetInnerHTML={{ __html: letterMarkup(preview?.body || "") }} />
+                  </article>
+                </aside>
+                </>
+              )}
+              </div>
+            </Drawer>
+          ) : null}
       </div>
-    </div>
-  );
+    );
 }

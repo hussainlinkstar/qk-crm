@@ -470,6 +470,34 @@ export const growth = {
     });
   },
 
+  updateSequence(id: string, input: { name: string; steps: { templateId: string; waitDays: number }[]; stopOnReply: boolean; stopOnSignup: boolean; stopOnPaid: boolean; stopOnUnsubscribe: boolean; allowOverlap: boolean }) {
+    let ok = false;
+    commit((draft) => {
+      const sequence = draft.sequences.find((item) => item.id === id);
+      if (!sequence) return;
+      const steps = input.steps
+        .filter((step) => draft.templates.some((item) => item.id === step.templateId))
+        .map((step) => ({ templateId: step.templateId, waitDays: Math.max(0, Math.round(step.waitDays) || 0) }));
+      if (!steps.length) return;
+      sequence.name = input.name.trim() || "Untitled sequence";
+      sequence.steps = steps;
+      sequence.stopOnReply = input.stopOnReply;
+      sequence.stopOnSignup = input.stopOnSignup;
+      sequence.stopOnPaid = input.stopOnPaid;
+      sequence.stopOnUnsubscribe = input.stopOnUnsubscribe;
+      sequence.allowOverlap = input.allowOverlap;
+      ok = true;
+    });
+    return ok;
+  },
+
+  setSequencePaused(id: string, paused: boolean) {
+    commit((draft) => {
+      const sequence = draft.sequences.find((item) => item.id === id);
+      if (sequence) sequence.paused = paused;
+    });
+  },
+
   createSequence(input: { name: string; steps: { templateId: string; waitDays: number }[]; stopOnReply: boolean; stopOnSignup: boolean; stopOnPaid: boolean; stopOnUnsubscribe: boolean; allowOverlap: boolean }) {
     let id = "";
     commit((draft) => {

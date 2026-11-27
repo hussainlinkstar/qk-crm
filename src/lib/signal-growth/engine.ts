@@ -231,7 +231,7 @@ export function runDue(state: GrowthState, now: number, origin: string): boolean
     if (new Date(enrollment.nextAt).getTime() > now) continue;
     const sequence = state.sequences.find((item) => item.id === enrollment.sequenceId);
     const lead = state.leads.find((item) => item.id === enrollment.leadId);
-    if (!sequence || !lead) continue;
+    if (!sequence || !lead || sequence.paused) continue;
     const step = sequence.steps[enrollment.stepIndex];
     const template = step ? state.templates.find((item) => item.id === step.templateId) : undefined;
     if (!template) {

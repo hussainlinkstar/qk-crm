@@ -156,6 +156,7 @@ export interface Sequence {
   stopOnPaid: boolean;
   stopOnUnsubscribe: boolean;
   allowOverlap: boolean;
+  paused?: boolean;
 }
 
 export interface Enrollment {

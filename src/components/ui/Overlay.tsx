@@ -71,25 +71,36 @@ interface DrawerProps {
   children: ReactNode;
   footer?: ReactNode;
   actions?: ReactNode;
+  header?: ReactNode;
   width?: number;
   focusPanel?: boolean;
 }
 
-export function Drawer({ title, kicker, onClose, children, footer, actions, width = 520, focusPanel = false }: DrawerProps) {
+export function Drawer({ title, kicker, onClose, children, footer, actions, header, width = 520, focusPanel = false }: DrawerProps) {
   const ref = useOverlay(onClose, focusPanel);
   const titleId = useId();
   return (
     <div className={`${styles.backdrop} ${styles.drawerBackdrop}`} onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <aside ref={ref} tabIndex={-1} className={styles.drawer} style={{ width: `min(${width}px, 100vw)` }} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className={styles.drawerHeader}>
-          <div className={styles.drawerTitle}>
-            {kicker && <p className="kicker">{kicker}</p>}
-            <h2 id={titleId}>{title}</h2>
-          </div>
-          <div className={styles.drawerActions}>
-            {actions}
-            <Button variant="ghost" size="small" icon="x" aria-label="Close panel" onClick={onClose} />
-          </div>
+          {header ? (
+            <div className={styles.drawerBanner}>
+              <h2 id={titleId} className={styles.srOnly}>{title}</h2>
+              <div className={styles.drawerBannerBody}>{header}</div>
+              <Button variant="ghost" size="small" icon="x" aria-label="Close panel" onClick={onClose} />
+            </div>
+          ) : (
+            <>
+              <div className={styles.drawerTitle}>
+                {kicker && <p className="kicker">{kicker}</p>}
+                <h2 id={titleId}>{title}</h2>
+              </div>
+              <div className={styles.drawerActions}>
+                {actions}
+                <Button variant="ghost" size="small" icon="x" aria-label="Close panel" onClick={onClose} />
+              </div>
+            </>
+          )}
         </header>
         <div className={styles.drawerBody}>{children}</div>
         {footer && <footer className={styles.drawerFooter}>{footer}</footer>}
