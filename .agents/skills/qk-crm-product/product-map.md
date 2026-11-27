@@ -27,7 +27,7 @@ Auth and shell:
 | `/login` | Any email signs in. `LoginView.tsx` calls `signIn` |
 | `/` | Home. Greeting + data lede, compact Ask Qiko, four outcome tiles (`homeOutcomes`), ranked "What matters now" (`buildTessiantHomePriorities`, limit 5), Pulse "best next move" (accept → task), my tasks, what changed this week |
 | `/tasks` | My Tasks. Cross-workspace action list. Top-level nav item with open-task count |
-| `/settings` | Profile, team members, automation rules (on/off, `#automations`), connector status (all demo/future), reset demo data |
+| `/settings` | Profile and the Qiko Signal data source. Sales team, Home automations, Pulse, staffing, and the old CRM reset are not on this page. |
 | `/brief` | Morning brief outside the shell: same numbers, best move, priorities, proposals and changes as Home, printable, "Copy as text". `lib/morning-brief.ts` |
 | `/confirm/[id]` | Associate-facing one-tap availability confirm page (no shell). Writes through `recordAvailabilityConfirmation` so the team's view updates at once |
 
@@ -70,7 +70,7 @@ Pulse (`src/components/pulse/PulseSubnav.tsx`, sets `data-product="pulse"`):
 | `/pulse/value` | Realised / pipeline / estimate, anti-double-count, plus Qiko's record strip (raised, acted on, outcomes, right-call rate from the feedback ledger; four verdicts seeded) |
 | `/pulse/connections` | Connector status. Not live integrations |
 
-Nav source of truth: `NAV` plus the Intelligence and Account blocks in `src/components/shell/AppShell.tsx`. Home and My Tasks are flat items; Sales and Staffing disclose their children only while active. My Tasks, Sales and Staffing show counts (my open tasks, open sales work, open unfilled requirements). Pulse is a top-level Intelligence link that opens in a new browser tab (its own product surface), not a child of Sales.
+Nav source of truth on v2: `NAV` plus the Account block in `src/components/shell/AppShell.tsx`. The sidebar is Overview (`/growth`) and the Signal sections, then Settings and Sign out. There is no separate Signal item, because it opened the same page as Overview. The workspace name in the shell is Qiko. Home, Sales, Staffing, My Tasks, Pulse, and Ask Qiko stay as routes but are not in the sidebar.
 
 ## Entities
 

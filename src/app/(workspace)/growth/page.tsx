@@ -22,8 +22,8 @@ const URGENCY: Stage[] = ["Checkout started", "Replied", "Signed up", "Audit run
 
 const TOUCHES: Array<{ key: "email" | "whatsapp" | "linkedin" | "Direct"; label: string; icon: IconName; tone: IconTone }> = [
   { key: "email", label: "Email", icon: "mail", tone: "brand" },
-  { key: "whatsapp", label: "WhatsApp", icon: "message", tone: "success" },
-  { key: "linkedin", label: "LinkedIn", icon: "link", tone: "info" },
+  { key: "whatsapp", label: "WhatsApp", icon: "whatsapp", tone: "success" },
+  { key: "linkedin", label: "LinkedIn", icon: "linkedin", tone: "info" },
   { key: "Direct", label: "Direct", icon: "globe", tone: "muted" },
 ];
 

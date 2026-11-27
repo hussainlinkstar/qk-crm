@@ -337,9 +337,9 @@
 }
 
 .subnav {
-  margin: 2px 0 4px 21px !important;
-  padding-left: 10px !important;
-  border-left: 1px solid var(--line);
+  margin: 2px 0 0 !important;
+  padding: 0 !important;
+  border: 0;
   animation: subIn var(--duration) var(--ease-out);
 }
 

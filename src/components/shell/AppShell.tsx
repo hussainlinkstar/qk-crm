@@ -4,9 +4,9 @@ import Image from "next/image";
 import DemoTour from "@/components/shell/DemoTour";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { signOut, useSession } from "@/lib/crm-store";
-import { buildPriorities, isOpen, salesAttentionCount } from "@/lib/insights";
+import { buildPriorities, isOpen } from "@/lib/insights";
 import { initials, todayKey, uid } from "@/lib/format";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { useWorkspaceData } from "@/components/ui/bits";
@@ -19,81 +19,24 @@ import PulseNavigation from "@/components/pulse/PulseNavigation";
 import { WorkspaceContext, type TaskFormRequest, type WorkspaceApi } from "./WorkspaceContext";
 import styles from "./AppShell.module.css";
 
-interface NavChild {
-  href: string;
-  label: string;
-  match: (path: string) => boolean;
-}
-
 interface NavItem {
   href: string;
   label: string;
   icon: IconName;
   match: (path: string) => boolean;
-  children?: NavChild[];
 }
 
-/**
- * Tessiant workspace IA. Home and My Tasks are flat; Sales and Staffing disclose their
- * sections only while active. Accounts live under Sales only (same rows as staffing clients).
- */
+/** v2 workspace. Overview is /growth; the other items are its sections. */
 const NAV: NavItem[] = [
-  {
-    href: "/",
-    label: "Home",
-    icon: "home",
-    match: (path) => path === "/",
-  },
-  {
-    href: "/tasks",
-    label: "My Tasks",
-    icon: "tasks",
-    match: (path) => path.startsWith("/tasks"),
-  },
-  {
-    href: "/sales",
-    label: "Sales",
-    icon: "sales",
-    match: (path) => path.startsWith("/sales"),
-    children: [
-      { href: "/sales", label: "Overview", match: (path) => path === "/sales" },
-      { href: "/sales/leads", label: "Leads", match: (path) => path.startsWith("/sales/leads") },
-      { href: "/sales/pipeline", label: "Opportunities", match: (path) => path.startsWith("/sales/pipeline") },
-      { href: "/sales/accounts", label: "Accounts", match: (path) => path.startsWith("/sales/accounts") },
-      { href: "/sales/contacts", label: "Contacts", match: (path) => path.startsWith("/sales/contacts") },
-      { href: "/sales/actions", label: "Activities", match: (path) => path.startsWith("/sales/actions") },
-    ],
-  },
-  {
-    href: "/staffing",
-    label: "Staffing",
-    icon: "users",
-    match: (path) => path.startsWith("/staffing"),
-    children: [
-      { href: "/staffing", label: "Overview", match: (path) => path === "/staffing" },
-      { href: "/staffing/associates", label: "Talent Network", match: (path) => path.startsWith("/staffing/associates") },
-      { href: "/staffing/requirements", label: "Requirements", match: (path) => path.startsWith("/staffing/requirements") },
-      { href: "/staffing/placements", label: "Assignments", match: (path) => path.startsWith("/staffing/placements") },
-      { href: "/staffing/offerings", label: "Offerings", match: (path) => path.startsWith("/staffing/offerings") },
-    ],
-  },
-  {
-    href: "/growth",
-    label: "Signal",
-    icon: "rocket",
-    match: (path) => path.startsWith("/growth"),
-    children: [
-      { href: "/growth", label: "Overview", match: (path) => path === "/growth" },
-      { href: "/growth/leads", label: "Leads", match: (path) => path.startsWith("/growth/leads") },
-      { href: "/growth/pipeline", label: "Pipeline", match: (path) => path.startsWith("/growth/pipeline") },
-      { href: "/growth/audits", label: "Audits", match: (path) => path.startsWith("/growth/audits") },
-      { href: "/growth/email", label: "Email", match: (path) => path.startsWith("/growth/email") },
-      { href: "/growth/sequences", label: "Sequences", match: (path) => path.startsWith("/growth/sequences") },
-      { href: "/growth/apollo", label: "Apollo", match: (path) => path.startsWith("/growth/apollo") },
-      { href: "/growth/whatsapp", label: "WhatsApp", match: (path) => path.startsWith("/growth/whatsapp") },
-      { href: "/growth/linkedin", label: "LinkedIn", match: (path) => path.startsWith("/growth/linkedin") },
-    ],
-  },
+  { href: "/growth", label: "Overview", icon: "chart", match: (path) => path === "/growth" },
+  { href: "/growth/leads", label: "Leads", icon: "users", match: (path) => path.startsWith("/growth/leads") },
+  { href: "/growth/pipeline", label: "Pipeline", icon: "board", match: (path) => path.startsWith("/growth/pipeline") },
+  { href: "/growth/audits", label: "Audits", icon: "scan", match: (path) => path.startsWith("/growth/audits") },
+  { href: "/growth/email", label: "Email", icon: "mail", match: (path) => path.startsWith("/growth/email") },
+  { href: "/growth/sequences", label: "Sequences", icon: "layers", match: (path) => path.startsWith("/growth/sequences") },
+  { href: "/growth/apollo", label: "Apollo", icon: "target", match: (path) => path.startsWith("/growth/apollo") },
+  { href: "/growth/whatsapp", label: "WhatsApp", icon: "whatsapp", match: (path) => path.startsWith("/growth/whatsapp") },
+  { href: "/growth/linkedin", label: "LinkedIn", icon: "linkedin", match: (path) => path.startsWith("/growth/linkedin") },
 ];
 
 function pageTitle(pathname: string): string {
@@ -127,12 +70,8 @@ function pageTitle(pathname: string): string {
   if (pathname.startsWith("/growth")) return "Signal growth";
   if (pathname.startsWith("/sales")) return "Sales";
   if (pathname.startsWith("/settings")) return "Settings";
-  return "Tessiant";
+  return "Qiko";
 }
-
-const subscribePlatform = () => () => {};
-const getMacPlatform = () => /Mac|iPhone|iPad|iPod/i.test(navigator.platform);
-const getServerPlatform = () => false;
 
 interface Toast {
   id: string;
@@ -164,7 +103,7 @@ export function ShellSplash() {
 function Workspace({ session, children }: { session: NonNullable<ReturnType<typeof useSession>>; children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { state, workspace } = useWorkspaceData();
+  const { workspace } = useWorkspaceData();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -175,7 +114,6 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [menu, setMenu] = useState<"notifications" | "user" | null>(null);
   const [search, setSearch] = useState("");
-  const macPlatform = useSyncExternalStore(subscribePlatform, getMacPlatform, getServerPlatform);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const toast = useCallback((message: string, tone: Toast["tone"] = "success") => {
@@ -255,17 +193,12 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
     ];
   }, [workspace, router]);
 
-  const salesAttention = workspace ? salesAttentionCount(workspace) : 0;
-  const tessiantAttention = state?.tessiant
-    ? state.tessiant.requirements.filter((req) => !req.archived && req.outcome === "active" && req.stage !== "Placed").length
-    : 0;
-  const myOpenTasks = state ? state.tasks.filter((task) => isOpen(task) && (task.ownerId === "me" || task.ownerId === null)).length : 0;
   const onStaffing = pathname.startsWith("/staffing");
   const onPulse = pathname.startsWith("/pulse");
   const currentLabel = pageTitle(pathname);
 
   useEffect(() => {
-    // Tessiant is the customer/workspace identity; Qiko remains the product layer (Core, Pulse, Ask Qiko).
+    // Qiko is the workspace identity. Pulse keeps its own product surface.
     document.documentElement.dataset.tenant = "tessiant";
     return () => {
       delete document.documentElement.dataset.tenant;
@@ -275,7 +208,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
   useEffect(() => {
     if (!onPulse) return;
     const previousTitle = document.title;
-    document.title = "Qiko Pulse · Tessiant";
+    document.title = "Qiko Pulse";
     return () => {
       document.title = previousTitle;
     };
@@ -302,7 +235,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
           ) : (
             <>
           <div className={styles.brandRow}>
-            <Link href="/" className={styles.brand} onClick={() => setMobileOpen(false)} aria-label="Tessiant workspace home">
+            <Link href="/growth" className={styles.brand} onClick={() => setMobileOpen(false)} aria-label="Qiko workspace home">
               {collapsed ? (
                 <Image src="/brand/qiko-icon.png" alt="Qiko" width={32} height={32} priority />
               ) : (
@@ -321,9 +254,9 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
           </div>
 
           <div className={styles.tenant}>
-            <span className={styles.tenantMark}>T</span>
+            <span className={styles.tenantMark}>Q</span>
             <span className={styles.hideCollapsed}>
-              <b>Tessiant</b>
+              <b>Qiko</b>
               <small>Operating workspace · {session.email}</small>
             </span>
           </div>
@@ -331,55 +264,14 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
           <nav className={styles.nav}>
             <p className={`kicker ${styles.section}`}>Workspace</p>
             <ul>
-              {NAV.map((item) => {
-                const active = item.match(pathname);
-                return (
-                  <li key={item.href}>
-                    <Link href={item.href} className={`${styles.navItem} ${active ? styles.active : ""}`} aria-current={pathname === item.href ? "page" : undefined} onClick={() => setMobileOpen(false)} title={collapsed ? item.label : undefined}>
-                      <Icon name={item.icon} size={17} />
-                      <span className={styles.hideCollapsed}>{item.label}</span>
-                      {item.label === "My Tasks" && myOpenTasks > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{myOpenTasks}</span>}
-                      {item.label === "Sales" && salesAttention > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{salesAttention}</span>}
-                      {item.label === "Staffing" && tessiantAttention > 0 && <span className={`${styles.meta} ${styles.hideCollapsed}`}>{tessiantAttention}</span>}
-                    </Link>
-                    {item.children && active && !collapsed && (
-                      <ul className={styles.subnav}>
-                        {item.children.map((child) => (
-                          <li key={child.href}>
-                            <Link href={child.href} className={`${styles.subItem} ${child.match(pathname) ? styles.subActive : ""}`} aria-current={child.match(pathname) ? "page" : undefined} onClick={() => setMobileOpen(false)}>
-                              {child.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-            <p className={`kicker ${styles.section} ${styles.sectionGap}`}>Intelligence</p>
-            <ul>
-              <li>
-                <Link
-                  href="/pulse"
-                  target="_blank"
-                  rel="noopener"
-                  className={`${styles.navItem} ${styles.navIntel} ${pathname.startsWith("/pulse") ? styles.active : ""}`}
-                  onClick={() => setMobileOpen(false)}
-                  title={collapsed ? "Qiko Pulse (opens in a new tab)" : "Opens in a new tab"}
-                >
-                  <Icon name="pulse" size={17} />
-                  <span className={styles.hideCollapsed}>Qiko Pulse</span>
-                  <Icon name="external" size={12} className={`${styles.navExternal} ${styles.hideCollapsed}`} />
-                </Link>
-              </li>
-              <li>
-                <button type="button" className={`${styles.navItem} ${styles.navIntel}`} onClick={() => { setMobileOpen(false); api.askQiko(); }} title={collapsed ? "Ask Qiko" : undefined}>
-                  <Icon name="sparkles" size={17} />
-                  <span className={styles.hideCollapsed}>Ask Qiko</span>
-                  <kbd className={`${styles.kbd} ${styles.hideCollapsed}`}>{macPlatform ? "⌘K" : "Ctrl K"}</kbd>
-                </button>
-              </li>
+              {NAV.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href} className={`${styles.navItem} ${item.match(pathname) ? styles.active : ""}`} aria-current={item.match(pathname) ? "page" : undefined} onClick={() => setMobileOpen(false)} title={collapsed ? item.label : undefined}>
+                    <Icon name={item.icon} size={17} />
+                    <span className={styles.hideCollapsed}>{item.label}</span>
+                  </Link>
+                </li>
+              ))}
             </ul>
             <p className={`kicker ${styles.section} ${styles.sectionGap}`}>Account</p>
             <ul>
@@ -411,9 +303,9 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                 </button>
                 <Image src="/brand/qiko-icon.png" alt="" width={28} height={28} className={styles.pulseMobileLogo} />
                 <span className={styles.mobileTitle}>{currentLabel}</span>
-                <Link href="/" className={styles.pulseCoreLink} aria-label="Back to Tessiant">
+                <Link href="/growth" className={styles.pulseCoreLink} aria-label="Back to Qiko">
                   <Icon name="arrowLeft" size={14} />
-                  <span>Back to Tessiant</span>
+                  <span>Back to Qiko</span>
                 </Link>
               </>
             ) : (
@@ -431,7 +323,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                 navigate(
                   onStaffing
                     ? `/staffing/associates${q ? `?q=${encodeURIComponent(q)}` : ""}`
-                    : `/sales/leads${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+                    : `/growth/leads${q ? `?q=${encodeURIComponent(q)}` : ""}`,
                 );
                 setSearch("");
               }}
@@ -440,8 +332,8 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder={onStaffing ? "Search talent, skills…" : "Search leads, accounts, contacts…"}
-                aria-label={onStaffing ? "Search talent network" : "Search sales"}
+                placeholder={onStaffing ? "Search talent, skills…" : "Search leads…"}
+                aria-label={onStaffing ? "Search talent network" : "Search leads"}
               />
             </form>
             <div className={styles.topActions} ref={menuRef}>
@@ -541,7 +433,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
       {addLeadOpen && <AddLeadModal onClose={() => setAddLeadOpen(false)} />}
       {confirmSignOut && (
         <ConfirmDialog
-          title="Sign out of Tessiant?"
+          title="Sign out of Qiko?"
           description="Your workspace changes stay saved in this browser for next time."
           confirmLabel="Sign out"
           onCancel={() => setConfirmSignOut(false)}

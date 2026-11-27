@@ -59,10 +59,10 @@ export default function PulseNavigation({
         </button>
       </div>
 
-      <Link href="/" className={`${styles.pulseWorkspace} ${styles.hideCollapsed}`} onClick={onNavigate} aria-label="Back to Tessiant workspace">
-        <span className={styles.pulseWorkspaceMark}>T</span>
+      <Link href="/growth" className={`${styles.pulseWorkspace} ${styles.hideCollapsed}`} onClick={onNavigate} aria-label="Back to Qiko workspace">
+        <span className={styles.pulseWorkspaceMark}>Q</span>
         <span>
-          <b>Tessiant</b>
+          <b>Qiko</b>
           <small>Back to operating workspace</small>
         </span>
       </Link>
@@ -109,9 +109,9 @@ export default function PulseNavigation({
       </nav>
 
       <div className={styles.sidebarFoot}>
-        <Link href="/" className={`${styles.navItem} ${styles.pulseBackFoot}`} onClick={onNavigate} title={collapsed ? "Back to Tessiant" : undefined}>
+        <Link href="/growth" className={`${styles.navItem} ${styles.pulseBackFoot}`} onClick={onNavigate} title={collapsed ? "Back to Qiko" : undefined}>
           <Icon name="arrowLeft" size={17} />
-          <span className={styles.hideCollapsed}>Back to Tessiant</span>
+          <span className={styles.hideCollapsed}>Back to Qiko</span>
         </Link>
       </div>
     </>

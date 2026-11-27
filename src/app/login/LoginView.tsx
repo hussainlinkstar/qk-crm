@@ -14,7 +14,7 @@ type View = "signin" | "forgot" | "sent";
 
 function nextPath() {
   const next = new URLSearchParams(window.location.search).get("next");
-  return next && next.startsWith("/") && !next.startsWith("//") && next !== "/login" ? next : "/";
+  return next && next.startsWith("/") && !next.startsWith("//") && next !== "/login" ? next : "/growth";
 }
 
 

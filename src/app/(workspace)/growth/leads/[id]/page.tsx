@@ -35,8 +35,8 @@ import signal from "../../signal.module.css";
 
 const CHANNEL_MARK: Record<Channel, { label: string; icon: IconName; tone: IconTone }> = {
   email: { label: "Email", icon: "mail", tone: "brand" },
-  whatsapp: { label: "WhatsApp", icon: "message", tone: "success" },
-  linkedin: { label: "LinkedIn", icon: "link", tone: "info" },
+  whatsapp: { label: "WhatsApp", icon: "whatsapp", tone: "success" },
+  linkedin: { label: "LinkedIn", icon: "linkedin", tone: "info" },
 };
 
 const CHANNEL_LABEL: Record<TimelineEvent["channel"], string> = {

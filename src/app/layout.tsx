@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Tessiant · Operating workspace",
-    template: "%s · Tessiant",
+    default: "Qiko · Operating workspace",
+    template: "%s · Qiko",
   },
-  description: "Tessiant consulting and staffing operations on Qiko Core — sales, talent, assignments and intelligence in one workspace.",
+  description: "Qiko operating workspace — signal growth, outreach, and follow-up in one place.",
 };
 
 export const viewport: Viewport = {
