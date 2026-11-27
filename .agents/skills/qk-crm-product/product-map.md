@@ -25,7 +25,7 @@ Auth and shell:
 | Route | Role |
 |---|---|
 | `/login` | Any email signs in. `LoginView.tsx` calls `signIn` |
-| `/` | Home. Greeting + data lede, compact Ask Qiko, four outcome tiles (`homeOutcomes`), ranked "What matters now" (`buildTessiantHomePriorities`, limit 5), Pulse "best next move" (accept → task), my tasks, what changed this week |
+| `/` | Signal overview. The old home is gone. `/growth` redirects here. Leads, pipeline, and the rest stay under `/growth/…`. |
 | `/tasks` | My Tasks. Cross-workspace action list. Top-level nav item with open-task count |
 | `/settings` | Profile and the Qiko Signal data source. Sales team, Home automations, Pulse, staffing, and the old CRM reset are not on this page. |
 | `/brief` | Morning brief outside the shell: same numbers, best move, priorities, proposals and changes as Home, printable, "Copy as text". `lib/morning-brief.ts` |
@@ -70,7 +70,7 @@ Pulse (`src/components/pulse/PulseSubnav.tsx`, sets `data-product="pulse"`):
 | `/pulse/value` | Realised / pipeline / estimate, anti-double-count, plus Qiko's record strip (raised, acted on, outcomes, right-call rate from the feedback ledger; four verdicts seeded) |
 | `/pulse/connections` | Connector status. Not live integrations |
 
-Nav source of truth on v2: `NAV` plus the Account block in `src/components/shell/AppShell.tsx`. The sidebar is Overview (`/growth`) and the Signal sections, then Settings and Sign out. There is no separate Signal item, because it opened the same page as Overview. The workspace name in the shell is Qiko. Home, Sales, Staffing, My Tasks, Pulse, and Ask Qiko stay as routes but are not in the sidebar.
+Nav source of truth on v2: `NAV` plus the Account block in `src/components/shell/AppShell.tsx`. The sidebar is Overview (`/growth`) and the Signal sections, then Sign out. Settings stays at `/settings` and in the account menu, not in the sidebar. The top-bar Ask Qiko button, tour control, and floating Ask Qiko button are hidden. There is no separate Signal item, because it opened the same page as Overview. The workspace name in the shell is Qiko. Home, Sales, Staffing, My Tasks, Pulse, and Ask Qiko stay as routes but are not in the sidebar.
 
 ## Entities
 

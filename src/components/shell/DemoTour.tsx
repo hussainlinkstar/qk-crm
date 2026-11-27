@@ -55,15 +55,7 @@ export default function DemoTour() {
     // Deferred so the first client render matches the server and the restore happens after hydration.
     const timer = window.setTimeout(() => {
       const saved = readStep();
-      if (saved !== null && saved >= 0 && saved < STEPS.length) {
-        setStep(saved);
-        return;
-      }
-      try {
-        if (!window.localStorage.getItem(SEEN_KEY)) setOffer(true);
-      } catch {
-        /* storage unavailable */
-      }
+      if (saved !== null && saved >= 0 && saved < STEPS.length) setStep(saved);
     }, 400);
     return () => window.clearTimeout(timer);
   }, []);

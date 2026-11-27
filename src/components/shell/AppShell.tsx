@@ -28,7 +28,7 @@ interface NavItem {
 
 /** v2 workspace. Overview is /growth; the other items are its sections. */
 const NAV: NavItem[] = [
-  { href: "/growth", label: "Overview", icon: "chart", match: (path) => path === "/growth" },
+  { href: "/", label: "Overview", icon: "chart", match: (path) => path === "/" || path === "/growth" },
   { href: "/growth/leads", label: "Leads", icon: "users", match: (path) => path.startsWith("/growth/leads") },
   { href: "/growth/pipeline", label: "Pipeline", icon: "board", match: (path) => path.startsWith("/growth/pipeline") },
   { href: "/growth/audits", label: "Audits", icon: "scan", match: (path) => path.startsWith("/growth/audits") },
@@ -40,7 +40,7 @@ const NAV: NavItem[] = [
 ];
 
 function pageTitle(pathname: string): string {
-  if (pathname === "/") return "Home";
+  if (pathname === "/" || pathname === "/growth") return "Signal growth";
   if (pathname.startsWith("/tasks")) return "My Tasks";
   if (pathname.startsWith("/pulse/knowledge")) return "Knowledge";
   if (pathname.startsWith("/pulse/insights")) return "Insights";
@@ -235,7 +235,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
           ) : (
             <>
           <div className={styles.brandRow}>
-            <Link href="/growth" className={styles.brand} onClick={() => setMobileOpen(false)} aria-label="Qiko workspace home">
+            <Link href="/" className={styles.brand} onClick={() => setMobileOpen(false)} aria-label="Qiko workspace home">
               {collapsed ? (
                 <Image src="/brand/qiko-icon.png" alt="Qiko" width={32} height={32} priority />
               ) : (
@@ -273,15 +273,6 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                 </li>
               ))}
             </ul>
-            <p className={`kicker ${styles.section} ${styles.sectionGap}`}>Account</p>
-            <ul>
-              <li>
-                <Link href="/settings" className={`${styles.navItem} ${pathname.startsWith("/settings") ? styles.active : ""}`} onClick={() => setMobileOpen(false)} title={collapsed ? "Settings" : undefined}>
-                  <Icon name="settings" size={17} />
-                  <span className={styles.hideCollapsed}>Settings</span>
-                </Link>
-              </li>
-            </ul>
           </nav>
 
           <div className={styles.sidebarFoot}>
@@ -303,7 +294,7 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
                 </button>
                 <Image src="/brand/qiko-icon.png" alt="" width={28} height={28} className={styles.pulseMobileLogo} />
                 <span className={styles.mobileTitle}>{currentLabel}</span>
-                <Link href="/growth" className={styles.pulseCoreLink} aria-label="Back to Qiko">
+                <Link href="/" className={styles.pulseCoreLink} aria-label="Back to Qiko">
                   <Icon name="arrowLeft" size={14} />
                   <span>Back to Qiko</span>
                 </Link>
@@ -337,13 +328,6 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
               />
             </form>
             <div className={styles.topActions} ref={menuRef}>
-              <button type="button" className={styles.askButton} onClick={() => api.askQiko()}>
-                <Icon name="sparkles" size={14} />
-                <span>Ask Qiko</span>
-              </button>
-              <button type="button" className={styles.iconButton} aria-label="Take the tour" title="Take the tour" onClick={() => window.dispatchEvent(new Event("qiko:tour"))}>
-                <Icon name="compass" size={18} />
-              </button>
               <div className={styles.menuWrap}>
                 <button type="button" className={styles.iconButton} aria-label={`Notifications (${notifications.length})`} aria-expanded={menu === "notifications"} onClick={() => setMenu(menu === "notifications" ? null : "notifications")}>
                   <Icon name="bell" size={18} />
@@ -405,17 +389,6 @@ function Workspace({ session, children }: { session: NonNullable<ReturnType<type
           <main className={styles.content}>{children}</main>
           <DemoTour />
         </div>
-
-        {!copilot.open && (
-          <button type="button" className={styles.qikoFab} onClick={() => api.askQiko()} aria-label="Ask Qiko">
-            <span className={styles.qikoFabBubble} aria-hidden="true">
-              Need a hand? Ask Qiko
-            </span>
-            <span className={styles.qikoFabMark}>
-              <Icon name="sparkles" size={20} />
-            </span>
-          </button>
-        )}
 
         <div className={styles.toasts} aria-live="polite">
           {toasts.map((item) => (
