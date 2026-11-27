@@ -613,8 +613,8 @@ export default function EmailPage() {
                     <button type="button" aria-pressed={bodyFormat === "html"} onClick={() => setBodyFormat("html")}>HTML</button>
                   </div>
                   <div className={`segmented ${styles.modeSwitch}`} role="group" aria-label="Editor mode">
-                    <button type="button" aria-pressed={editorMode === "edit"} onClick={() => setEditorMode("edit")}>Edit</button>
-                    <button type="button" aria-pressed={editorMode === "preview"} onClick={() => setEditorMode("preview")}>Preview</button>
+                    <button type="button" aria-pressed={true} onClick={() => setEditorMode("edit")}>Edit</button>
+                    <button type="button" aria-pressed={false} onClick={() => setEditorMode("preview")}>Preview</button>
                   </div>
                   <button type="button" className={styles.attach} aria-label="Attach files" onClick={() => fileRef.current?.click()}><Icon name="file" size={15} /> Attach</button>
                   <input ref={fileRef} type="file" multiple hidden onChange={(event) => addFiles(event.target.files)} />
@@ -660,8 +660,8 @@ export default function EmailPage() {
                 <>
                 <div className={styles.previewTools}>
                   <div className={`segmented ${styles.modeSwitch}`} role="group" aria-label="Editor mode">
-                    <button type="button" aria-pressed={editorMode === "edit"} onClick={() => setEditorMode("edit")}>Edit</button>
-                    <button type="button" aria-pressed={editorMode === "preview"} onClick={() => setEditorMode("preview")}>Preview</button>
+                    <button type="button" aria-pressed={false} onClick={() => setEditorMode("edit")}>Edit</button>
+                    <button type="button" aria-pressed={true} onClick={() => setEditorMode("preview")}>Preview</button>
                   </div>
                 </div>
                 <aside className={`${styles.inbox} ${styles.drawerInbox} ${styles.editorPreview}`} aria-label="Inbox preview">
